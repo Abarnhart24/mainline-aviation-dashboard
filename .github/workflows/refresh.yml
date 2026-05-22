@@ -1,0 +1,38 @@
+name: Daily Dashboard Refresh
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Fetch Springshot data & rebuild dashboard
+        env:
+          SPRINGSHOT_EMAIL:    ${{ secrets.SPRINGSHOT_EMAIL }}
+          SPRINGSHOT_PASSWORD: ${{ secrets.SPRINGSHOT_PASSWORD }}
+        run: python automation/github_action_refresh.py
+
+      - name: Commit & push refreshed dashboard
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Missions_Operations_Dashboard.html MissionsSummary_master.csv
+          git diff --cached --quiet || git commit -m "Dashboard refresh — $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push
