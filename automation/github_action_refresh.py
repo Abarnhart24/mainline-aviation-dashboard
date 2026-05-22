@@ -2,13 +2,17 @@
 github_action_refresh.py
 ────────────────────────
 Runs inside GitHub Actions (Ubuntu, no Chrome, no Windows).
-Logs into Springshot with email + password, fetches 30-day ATL data,
-rebuilds the dashboard HTML, and saves it to the repo root so GitHub
-Pages picks it up automatically.
+Uses Playwright (headless browser) to log into Springshot, then fetches
+30-day ATL data via the API, rebuilds the dashboard HTML, and saves it
+to the repo root so GitHub Pages picks it up automatically.
 
 Credentials are passed via environment variables (stored as GitHub Secrets):
     SPRINGSHOT_EMAIL
     SPRINGSHOT_PASSWORD
+
+Dependencies (installed by workflow):
+    pip install requests playwright
+    playwright install chromium --with-deps
 """
 
 import csv
@@ -42,87 +46,128 @@ def log(msg):
     print(f"[{datetime.now():%H:%M:%S}] {msg}", flush=True)
 
 
-# ── Step 1: Login ─────────────────────────────────────────────────────────────
+# ── Step 1: Login via Playwright (headless browser) ──────────────────────────
 def springshot_login(email: str, password: str) -> requests.Session:
     """
-    Log into Springshot and return an authenticated requests.Session.
+    Use Playwright to log into Springshot in a headless browser.
+    The SPA renders the login form via JavaScript (no CSRF token in raw HTML),
+    so a plain HTTP POST doesn't work — Playwright handles the full JS render.
 
-    Flow:
-      1. GET the login page to collect the CSRF token (if any).
-      2. POST credentials to the login endpoint.
-      3. Verify we have a valid session by probing a protected endpoint.
+    After login succeeds we extract all cookies and transfer them into a
+    requests.Session so the rest of the script can use plain HTTP calls.
     """
+    try:
+        from playwright.sync_api import sync_playwright, TimeoutError as PWTimeout
+    except ImportError:
+        log("ERROR: playwright not installed. Make sure the workflow installs it.")
+        sys.exit(1)
+
+    log("Launching headless browser …")
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        ctx     = browser.new_context(
+            user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                       "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        )
+        page = ctx.new_page()
+
+        # ── Navigate to login page ────────────────────────────────────────────
+        log(f"Navigating to {LOGIN_URL} …")
+        page.goto(LOGIN_URL, wait_until="networkidle", timeout=30000)
+
+        # ── Fill in credentials ───────────────────────────────────────────────
+        # Try common selectors for email/username and password fields
+        email_selectors = [
+            'input[name="email"]', 'input[type="email"]',
+            'input[name="username"]', 'input[placeholder*="email" i]',
+            'input[placeholder*="user" i]',
+        ]
+        pw_selectors = [
+            'input[name="password"]', 'input[type="password"]',
+            'input[placeholder*="password" i]',
+        ]
+
+        email_field = None
+        for sel in email_selectors:
+            try:
+                page.wait_for_selector(sel, timeout=5000)
+                email_field = sel
+                break
+            except PWTimeout:
+                continue
+
+        if not email_field:
+            log("ERROR: Could not find email/username field on login page.")
+            log(f"Page URL: {page.url}")
+            log(f"Page title: {page.title()}")
+            sys.exit(1)
+
+        pw_field = None
+        for sel in pw_selectors:
+            if page.query_selector(sel):
+                pw_field = sel
+                break
+
+        if not pw_field:
+            log("ERROR: Could not find password field on login page.")
+            sys.exit(1)
+
+        log(f"Filling credentials (email field: {email_field}) …")
+        page.fill(email_field, email)
+        page.fill(pw_field, password)
+
+        # ── Submit ────────────────────────────────────────────────────────────
+        submit_selectors = [
+            'button[type="submit"]', 'input[type="submit"]',
+            'button:has-text("Login")', 'button:has-text("Sign in")',
+            'button:has-text("Log in")',
+        ]
+        submitted = False
+        for sel in submit_selectors:
+            try:
+                page.click(sel, timeout=3000)
+                submitted = True
+                break
+            except PWTimeout:
+                continue
+
+        if not submitted:
+            log("Submit button not found — pressing Enter …")
+            page.keyboard.press("Enter")
+
+        # ── Wait for redirect away from login page ────────────────────────────
+        try:
+            page.wait_for_url(
+                lambda url: "authentication/login" not in url,
+                timeout=15000,
+            )
+        except PWTimeout:
+            log("ERROR: Still on login page after submit — check credentials.")
+            log(f"Page URL: {page.url}")
+            # Capture any visible error message on the page
+            err_text = page.text_content("body") or ""
+            err_lines = [l.strip() for l in err_text.split("\n") if l.strip()][:10]
+            log("Page content (first 10 lines): " + str(err_lines))
+            sys.exit(1)
+
+        log(f"Login succeeded — landed at {page.url}")
+
+        # ── Extract cookies into a requests.Session ───────────────────────────
+        pw_cookies = ctx.cookies()
+        browser.close()
+
     session = requests.Session()
     session.headers.update({
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
                       "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        "Accept":     "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Referer":    SPRINGSHOT_BASE,
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": f"{SPRINGSHOT_BASE}/dashboard",
     })
+    for c in pw_cookies:
+        session.cookies.set(c["name"], c["value"], domain=c.get("domain", ""))
 
-    # ── 1a. GET login page — grab CSRF token if present ──────────────────────
-    log("GET login page …")
-    get_resp = session.get(LOGIN_URL, timeout=30)
-    csrf_token = None
-
-    # Try standard <input name="_token" value="..."> pattern (Laravel / CakePHP)
-    for pattern in [
-        r'<input[^>]+name=["\']_token["\'][^>]*value=["\']([^"\']+)["\']',
-        r'<input[^>]+value=["\']([^"\']+)["\'][^>]*name=["\']_token["\']',
-        r'<meta[^>]+name=["\']csrf-token["\'][^>]*content=["\']([^"\']+)["\']',
-        r'"csrfToken"\s*:\s*"([^"]+)"',
-        r'csrfToken["\s:=]+["\']([a-zA-Z0-9+/=_-]{20,})["\']',
-    ]:
-        m = re.search(pattern, get_resp.text, re.I)
-        if m:
-            csrf_token = m.group(1)
-            log(f"CSRF token found ({len(csrf_token)} chars)")
-            break
-
-    if not csrf_token:
-        log("No CSRF token found — attempting login without one.")
-
-    # ── 1b. POST credentials ──────────────────────────────────────────────────
-    payload = {"email": email, "password": password}
-    if csrf_token:
-        payload["_token"] = csrf_token
-
-    log(f"POST credentials to {LOGIN_URL} …")
-    post_resp = session.post(
-        LOGIN_URL,
-        data=payload,
-        headers={
-            "Content-Type":  "application/x-www-form-urlencoded",
-            "Referer":       LOGIN_URL,
-            "X-Requested-With": "XMLHttpRequest",
-        },
-        allow_redirects=True,
-        timeout=30,
-    )
-
-    # ── 1c. Verify we landed on the dashboard (not still on login) ────────────
-    if "authentication/login" in post_resp.url and post_resp.status_code == 200:
-        # Might be a JSON API auth instead — try that
-        log("Form POST redirected back to login — trying JSON auth endpoint …")
-        json_resp = session.post(
-            f"{SPRINGSHOT_BASE}/api/v1/auth/login",
-            json={"email": email, "password": password},
-            headers={"Accept": "application/json", "Content-Type": "application/json"},
-            timeout=30,
-        )
-        if json_resp.status_code == 200:
-            data = json_resp.json()
-            token = data.get("token") or data.get("access_token") or data.get("data", {}).get("token")
-            if token:
-                session.headers["Authorization"] = f"Bearer {token}"
-                log("JSON auth succeeded — using Bearer token.")
-                return session
-        log(f"JSON auth also failed (HTTP {json_resp.status_code}).")
-        log("LOGIN FAILED — check SPRINGSHOT_EMAIL / SPRINGSHOT_PASSWORD secrets.")
-        log(f"Final URL: {post_resp.url}  |  Status: {post_resp.status_code}")
-        sys.exit(1)
-
-    log(f"Login succeeded (redirected to {post_resp.url})")
+    log(f"Transferred {len(pw_cookies)} cookies to requests session.")
     return session
 
 
