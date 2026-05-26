@@ -657,7 +657,6 @@ body.wall .wall-banner .pulse {
       <span style="font-family: var(--mono); font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em;">View:</span>
       <div class="tl-mode-switch">
         <button class="tl-mode active" data-mode="mission">Per Mission</button>
-        <button class="tl-mode" data-mode="lead_day">Per Team Lead · Day</button>
       </div>
       <span style="font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-left: auto;" id="tlModeHint">One row per mission, sorted most-recent first</span>
     </section>
@@ -1065,9 +1064,6 @@ function renderTimeline(rows) {
     delay: r.delay,
   })).filter(x => x.t0 && x.t1 && x.t2 && x.t3 && x.t4 && x.t5 && x.t5 > x.t0);
 
-  if (window.__tlMode === "lead_day") {
-    return renderTimelineLeadDay(parsed, list, more);
-  }
   return renderTimelinePerMission(parsed, list, more);
 }
 
@@ -1150,134 +1146,6 @@ function renderTimelinePerMission(parsed, list, more) {
     ? "Showing " + LIMIT + " of " + TL.length + " missions with full timeline data. Filter further to narrow down."
     : "Showing all " + TL.length + " missions with full timeline data.";
 }
-
-function renderTimelineLeadDay(parsed, list, more) {
-  const dayKey = (s) => { const m = s ? s.match(/^(\w+ \d+)/) : null; return m ? m[1] : ""; };
-  const groups = new Map();
-  for (const x of parsed) {
-    const day = dayKey(x.r.ms);
-    if (!day) continue;
-    const key = x.r.tl + "|" + day;
-    if (!groups.has(key)) groups.set(key, { tl: x.r.tl, day, missions: [] });
-    groups.get(key).missions.push(x);
-  }
-
-  const list_groups = [];
-  for (const g of groups.values()) {
-    g.missions.sort((a, b) => a.t3 - b.t3);
-    g.latestStart = g.missions[g.missions.length - 1].t3;
-    list_groups.push(g);
-  }
-  list_groups.sort((a, b) => b.latestStart - a.latestStart);
-
-  const LIMIT = 30;
-  const display = list_groups.slice(0, LIMIT);
-
-  if (!display.length) {
-    list.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--text-3);font-family:var(--mono);font-size:12px;">No team-lead-day data for current filters.</div>';
-    more.textContent = "";
-    return;
-  }
-
-  const _timeOf = (s) => { const x = s ? s.match(/(\d+:\d+)/) : null; return x ? x[1] : ""; };
-  const MISSION_COLORS = ["#22d3ee","#a78bfa","#4ade80","#fbbf24","#f87171","#2dd4bf","#60a5fa","#ec4899","#84cc16"];
-  const LANE_H = 22;  // px per lane in multi-mode
-
-  const html = display.map(g => {
-    let dayStart = Infinity, dayEnd = -Infinity;
-    for (const m of g.missions) {
-      const s = (m.tSched && m.tSched < m.t0) ? m.tSched : m.t0;
-      if (s < dayStart) dayStart = s;
-      if (m.t5 > dayEnd) dayEnd = m.t5;
-    }
-    const totalSpan = (dayEnd - dayStart) / 60000;
-    const pct = (t) => Math.max(0, Math.min(100, ((t - dayStart) / (dayEnd - dayStart)) * 100));
-
-    const N = g.missions.length;
-    const isMulti = N > 1;
-    const barHeight = isMulti ? Math.max(26, N * LANE_H + 4) : 26;
-
-    let segHtml = "";
-    let lateCount = 0, onTimeCount = 0;
-    const ticks = [];
-
-    for (let i = 0; i < N; i++) {
-      const m = g.missions[i];
-      const missionColor = MISSION_COLORS[i % MISSION_COLORS.length];
-      const missionClass = "m" + (Math.min(i, 8) + 1);
-
-      // Lane geometry — only meaningful in multi mode
-      const top = isMulti ? (i * LANE_H + 2) : 0;
-      const h = isMulti ? (LANE_H - 3) : 26;
-
-      if (isMulti) {
-        // Lane accent stripe + label
-        segHtml += '<div class="lane-accent" style="top:' + (top + 2) + 'px;height:' + (h - 4) + 'px;background:' + missionColor + '"></div>';
-        segHtml += '<div class="lane-label ' + missionClass + '" style="top:' + (top + (h-12)/2) + 'px">M' + (i+1) + '</div>';
-        if (i > 0) segHtml += '<div class="lane-divider" style="top:' + (i * LANE_H) + 'px"></div>';
-      }
-
-      const segs = [];
-      if (m.tSched && m.tSched < m.t0) {
-        segs.push({ cls: "delayed", from: pct(m.tSched), to: pct(m.t0),
-          label: "Flight late by " + Math.round((m.t0-m.tSched)/60000) + "m",
-          dur: (m.t0-m.tSched)/60000, fromTime: m.r.sched_fa, toTime: m.r.fa });
-      }
-      segs.push(
-        { cls: "pre",    from: pct(m.t0), to: pct(m.t1), label: "Pre-accept", dur: (m.t1-m.t0)/60000, fromTime: m.r.fa,   toTime: m.r.ma },
-        { cls: "drive",  from: pct(m.t1), to: pct(m.t2), label: "Drive",      dur: (m.t2-m.t1)/60000, fromTime: m.r.ma,   toTime: m.r.tarr },
-        { cls: "setup",  from: pct(m.t2), to: pct(m.t3), label: "Setup",      dur: (m.t3-m.t2)/60000, fromTime: m.r.tarr, toTime: m.r.ms },
-        { cls: "active", from: pct(m.t3), to: pct(m.t4), label: "Active",     dur: (m.t4-m.t3)/60000, fromTime: m.r.ms,   toTime: m.r.mc },
-        { cls: "buffer", from: pct(m.t4), to: pct(m.t5), label: "Buffer",     dur: (m.t5-m.t4)/60000, fromTime: m.r.mc,   toTime: m.r.fd },
-      );
-      const missionLabel = "M" + (i+1) + " — " + (m.r.al || "") + " " + (m.r.inb || "-") + "\u2192" + (m.r.outb || "-") + " (" + (m.r.ast || "") + ")";
-      const segStyleBase = isMulti ? ('top:' + top + 'px;height:' + h + 'px;') : "";
-      for (const s of segs.filter(s => s.to > s.from)) {
-        const w = s.to - s.from;
-        const tip = missionLabel + "\n" + s.label + ": " + fmtDur(s.dur) + "\n" + fmtClock(s.fromTime) + " \u2192 " + fmtClock(s.toTime);
-        segHtml += '<div class="seg ' + s.cls + '" style="' + segStyleBase + 'left:' + s.from.toFixed(2) + '%;width:' + w.toFixed(2) + '%" title="' + tip.replace(/"/g,"&quot;") + '"></div>';
-      }
-
-      // Tick labels — colored per mission
-      ticks.push({ cls: missionClass + " ma", ev: "M" + (i+1) + " ACC",  pos: pct(m.t1), tm: _timeOf(m.r.ma) });
-      ticks.push({ cls: missionClass + " mc", ev: "M" + (i+1) + " DONE", pos: pct(m.t4), tm: _timeOf(m.r.mc) });
-
-      if (m.r.ot === true) onTimeCount++;
-      else if (m.r.ot === false) lateCount++;
-    }
-
-    const labelsHtml = ticks.map(L =>
-      '<div class="lbl ' + L.cls + '" style="left:' + L.pos.toFixed(2) + '%"><span class="ev">' + L.ev + '</span><span class="tm">' + L.tm + '</span></div>'
-    ).join("");
-
-    const dayWindowStr = fmtClock(g.missions[0].r.fa) + " \u2192 " + fmtClock(g.missions[g.missions.length-1].r.fd);
-
-    return '<div class="tl-row">' +
-        '<div class="meta">' +
-          '<div class="hdr">' + g.tl + '</div>' +
-          '<div class="sub" style="color:var(--text-1);">' + g.day + ' \u00b7 ' + N + ' mission' + (N===1 ? "" : "s") + '</div>' +
-          '<div class="sub">' +
-            (onTimeCount ? '<span style="color:var(--neon-green)">' + onTimeCount + ' on time</span> ' : "") +
-            (lateCount ? '<span style="color:var(--neon-red)">\u26a0 ' + lateCount + ' late</span>' : "") +
-          '</div>' +
-        '</div>' +
-        '<div class="tl-bar-wrap">' +
-          '<div class="tl-bar' + (isMulti ? ' multi' : '') + '" style="height:' + barHeight + 'px">' + segHtml + '</div>' +
-          '<div class="tl-times">' + labelsHtml + '</div>' +
-        '</div>' +
-        '<div class="totals">' +
-          '<div class="big">' + fmtDur(totalSpan) + '</div>' +
-          '<div class="small">' + dayWindowStr + '</div>' +
-        '</div>' +
-      '</div>';
-  }).join("");
-
-  list.innerHTML = html;
-  more.textContent = list_groups.length > LIMIT
-    ? "Showing " + LIMIT + " of " + list_groups.length + " lead-days. Filter further to narrow down."
-    : "Showing all " + list_groups.length + " lead-days in current filter.";
-}
-
 
 function renderTimelinePerMission(TL, list, more) {
   const LIMIT = 25;
