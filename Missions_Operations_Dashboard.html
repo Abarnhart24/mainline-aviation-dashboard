@@ -1149,7 +1149,12 @@ function renderTimelinePerMission(parsed, list, more) {
 
 function renderTimelinePerMission(TL, list, more) {
   const LIMIT = 25;
-  const display = TL.slice(0, LIMIT);
+    TL = TL.slice().sort((a, b) => b.t3 - a.t3);
+  if (window.__tlRawLen !== TL.length) { window.__tlPage = 0; }
+  window.__tlRawLen = TL.length;
+  window.__tlRawData = TL; window.__tlList = list; window.__tlMore = more;
+  const page = window.__tlPage || 0;
+  const display = TL.slice(page * LIMIT, (page + 1) * LIMIT);
   if (!display.length) {
     list.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--text-3);font-family:var(--mono);font-size:12px;">No missions match the current filters with full timeline data.</div>';
     more.textContent = "";
@@ -1220,9 +1225,18 @@ function renderTimelinePerMission(TL, list, more) {
   }).join("");
 
   list.innerHTML = html;
-  more.textContent = TL.length > LIMIT
-    ? "Showing " + LIMIT + " of " + TL.length + " missions with full timeline data. Filter further to narrow down."
-    : "Showing all " + TL.length + " missions with full timeline data.";
+  const totalPages = Math.ceil(TL.length / LIMIT);
+  if (TL.length <= LIMIT) {
+    more.textContent = "Showing all " + TL.length + " missions with full timeline data.";
+  } else {
+    more.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;">'
+      + '<button class="tl-prev-btn"' + (page === 0 ? ' disabled' : '') + ' style="padding:4px 14px;cursor:pointer;border-radius:4px;">&#8592; Prev</button>'
+      + '<span style="font-weight:500;">Page ' + (page + 1) + ' of ' + totalPages + ' &#8212; ' + TL.length + ' missions total</span>'
+      + '<button class="tl-next-btn"' + (page >= totalPages - 1 ? ' disabled' : '') + ' style="padding:4px 14px;cursor:pointer;border-radius:4px;">Next &#8594;</button>'
+      + '</div>';
+    more.querySelector('.tl-prev-btn').onclick = function() { window.__tlPage = page - 1; renderTimelinePerMission(window.__tlRawData, window.__tlList, window.__tlMore); window.__tlList.scrollIntoView({behavior:'smooth',block:'start'}); };
+    more.querySelector('.tl-next-btn').onclick = function() { window.__tlPage = page + 1; renderTimelinePerMission(window.__tlRawData, window.__tlList, window.__tlMore); window.__tlList.scrollIntoView({behavior:'smooth',block:'start'}); };
+  }
 }
 
 
