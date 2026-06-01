@@ -27,7 +27,7 @@ thead th{padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid
 thead th.r{text-align:right;}thead th.c{text-align:center;}
 tbody tr{border-bottom:1px solid rgba(255,255,255,0.05);}
 tbody tr:hover{background:rgba(255,255,255,0.025);}
-tbody td{padding:10px 14px;}
+tbody td{padding:10px 14px;vertical-align:middle;}
 tbody td.r{text-align:right;}tbody td.c{text-align:center;}tbody td.dim{color:#64748b;font-size:12px;}
 tfoot td{padding:10px 14px;font-weight:700;background:rgba(255,255,255,0.04);border-top:2px solid rgba(255,255,255,0.1);}
 tfoot td.r{text-align:right;color:#60a5fa;}tfoot td.c{text-align:center;color:#64748b;}
@@ -35,6 +35,8 @@ tfoot td.r{text-align:right;color:#60a5fa;}tfoot td.c{text-align:center;color:#6
 .badge.v110{background:rgba(52,211,153,0.15);color:#34d399;}
 .green{color:#34d399;font-weight:600;}
 .mc{display:inline-block;background:rgba(255,255,255,0.07);border-radius:10px;padding:1px 8px;font-size:12px;color:#94a3b8;}
+.leads{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:3px 10px;font-size:12px;color:#cbd5e1;}
 </style>
 </head>
 <body>
@@ -44,7 +46,7 @@ tfoot td.r{text-align:right;color:#60a5fa;}tfoot td.c{text-align:center;color:#6
   <h3>Total Food Cost by Flight (USD)</h3>
   <div class="chart-wrap"><canvas id="chart"></canvas></div>
 </div>
-<div class="section-title">Cost per Mission</div>
+<div class="section-title">Cost per Mission by Team Lead</div>
 <div class="filters">
   <label>Flight:</label>
   <select id="fF" onchange="render()"><option value="">All</option><option value="104">V104 - ATL to LHR</option><option value="110">V110 - ATL to MAN</option></select>
@@ -54,41 +56,50 @@ tfoot td.r{text-align:right;color:#60a5fa;}tfoot td.c{text-align:center;color:#6
 </div>
 <div class="tbl-wrap"><table>
   <thead><tr>
-    <th>Date</th><th>Flight</th><th>Aircraft</th>
-    <th class="c">Missions</th><th class="r">Cost / Mission</th><th class="r">Daily Food Cost</th>
+    <th>Date</th><th>Flight</th><th>Aircraft</th><th>Team Lead(s)</th>
+    <th class="c">Missions</th><th class="r">Cost / Mission</th><th class="r">Total</th>
   </tr></thead>
   <tbody id="tbody"></tbody>
   <tfoot><tr>
-    <td colspan="3">Total</td>
+    <td colspan="4">Total</td>
     <td class="c" id="fm"></td><td class="r" id="fa"></td><td class="r" id="ft"></td>
   </tr></tfoot>
 </table></div>
 <script>
 var fc={"2026-05-01":{"104":8549.55,"110":6097.81},"2026-05-02":{"104":7696.54,"110":5747.35},"2026-05-03":{"104":8390.95,"110":6279.28},"2026-05-04":{"104":8300.94,"110":6396.47},"2026-05-05":{"104":7652.39,"110":6132.13},"2026-05-06":{"104":7356.35,"110":5658.77},"2026-05-07":{"104":7721.96,"110":5991.99},"2026-05-08":{"104":8131.25,"110":6033.51},"2026-05-09":{"104":8219.44,"110":6430.59},"2026-05-10":{"104":8233.10,"110":6047.14}};
 var raw=[
-  ["2026-05-01","104","350UNK",2,4274.77,8549.55],
-  ["2026-05-01","110","330UNK",2,3048.91,6097.81],
-  ["2026-05-02","104","350UNK",2,3848.27,7696.54],
-  ["2026-05-02","110","330UNK",2,2873.68,5747.35],
-  ["2026-05-03","104","A350_2",2,4195.48,8390.95],
-  ["2026-05-03","110","330UNK",1,6279.28,6279.28],
-  ["2026-05-04","104","A350_2",2,4150.47,8300.94],
-  ["2026-05-04","110","GVSXY",2,3198.24,6396.47],
-  ["2026-05-05","104","A350_2",2,3826.2,7652.39],
-  ["2026-05-05","110","330UNK",1,6132.13,6132.13]
+  ["2026-05-01","104","350UNK",1,4274.77,4274.77,["Bobbie Jackson III"]],
+  ["2026-05-01","104","350UNK",1,4274.77,4274.77,["Gabriel Silva Mane"]],
+  ["2026-05-01","110","330UNK",1,3048.91,3048.91,["Maurice Smith"]],
+  ["2026-05-01","110","330UNK",1,3048.91,3048.91,["Christian Lawson"]],
+  ["2026-05-02","104","350UNK",1,3848.27,3848.27,["Abubakarr Sessay"]],
+  ["2026-05-02","104","350UNK",1,3848.27,3848.27,["Christian Lawson"]],
+  ["2026-05-02","110","330UNK",1,2873.68,2873.68,["Bobbie Jackson III"]],
+  ["2026-05-02","110","330UNK",1,2873.68,2873.68,["Maurice Smith"]],
+  ["2026-05-03","104","A350_2",1,4195.48,4195.48,["Bobbie Jackson III"]],
+  ["2026-05-03","104","A350_2",1,4195.48,4195.48,["Claudette St. Juste"]],
+  ["2026-05-03","110","330UNK",1,6279.28,6279.28,["Gabriel Silva Mane"]],
+  ["2026-05-04","104","A350_2",1,4150.47,4150.47,["Claudette St. Juste"]],
+  ["2026-05-04","104","A350_2",1,4150.47,4150.47,["Abubakarr Sessay"]],
+  ["2026-05-04","110","GVSXY",1,3198.24,3198.24,["Bobbie Jackson III"]],
+  ["2026-05-04","110","GVSXY",1,3198.24,3198.24,["Issa Camara"]],
+  ["2026-05-05","104","A350_2",1,3826.2,3826.2,["Claudette St. Juste"]],
+  ["2026-05-05","104","A350_2",1,3826.2,3826.2,["Abubakarr Sessay"]],
+  ["2026-05-05","110","330UNK",1,6132.13,6132.13,["Christian Lawson"]]
 ];
 function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
-var data=raw.map(function(r){return{date:r[0],ob:r[1],asset:r[2],missions:r[3],cpm:r[4],dayCost:r[5]};});
+var data=raw.map(function(r){return{date:r[0],ob:r[1],asset:r[2],missions:r[3],cpm:r[4],total:r[5],leads:r[6]};});
 var dates=[...new Set(data.map(function(r){return r.date;}))].sort();
 dates.forEach(function(d){var o=document.createElement("option");o.value=d;o.textContent=fd(d);document.getElementById("fD").appendChild(o);});
 var gt=Object.keys(fc).reduce(function(s,d){return s+(fc[d]["104"]||0)+(fc[d]["110"]||0);},0);
 var tm=data.reduce(function(s,r){return s+r.missions;},0);
+var allLeads=new Set();data.forEach(function(r){r.leads.forEach(function(l){allLeads.add(l);});});
 document.getElementById("kpis").innerHTML=
   "<div class='kpi'><div class='label'>Total Food Cost</div><div class='value'>"+fmt(gt)+"</div><div class='delta'>May 1-10 V104 + V110</div></div>"+
   "<div class='kpi'><div class='label'>Total Missions</div><div class='value'>"+tm+"</div><div class='delta'>Completed missions only</div></div>"+
   "<div class='kpi'><div class='label'>Avg Cost / Mission</div><div class='value'>"+fmt(gt/tm)+"</div><div class='delta'>V104 + V110 combined</div></div>"+
-  "<div class='kpi'><div class='label'>V104 Total</div><div class='value'>"+fmt(Object.values(fc).reduce(function(s,d){return s+(d["104"]||0);},0))+"</div><div class='delta'>ATL to LHR</div></div>";
+  "<div class='kpi'><div class='label'>Team Leads</div><div class='value'>"+allLeads.size+"</div><div class='delta'>Across V104 + V110</div></div>";
 var cd=Object.keys(fc).sort();
 new Chart(document.getElementById("chart"),{type:"bar",data:{labels:cd.map(function(d){return fd(d).replace(", 2026","");}),datasets:[{label:"V104 ATL-LHR",data:cd.map(function(d){return fc[d]["104"]||0;}),backgroundColor:"rgba(96,165,250,0.75)",borderRadius:4},{label:"V110 ATL-MAN",data:cd.map(function(d){return fc[d]["110"]||0;}),backgroundColor:"rgba(52,211,153,0.75)",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});
 function render(){
@@ -97,8 +108,9 @@ function render(){
   var h2="",tm2=0,tc=0;
   rows.forEach(function(r){
     var bc=r.ob==="110"?"v110":"";
-    tm2+=r.missions;tc+=r.dayCost;
-    h2+="<tr><td>"+fd(r.date)+"</td><td><span class='badge "+bc+"'>V"+r.ob+"</span></td><td class='dim'>"+r.asset+"</td><td class='c'><span class='mc'>"+r.missions+"</span></td><td class='r green'>"+fmt(r.cpm)+"</td><td class='r'>"+fmt(r.dayCost)+"</td></tr>";
+    tm2+=r.missions;tc+=r.total;
+    var chips=r.leads.map(function(l){return "<span class='chip'>"+l+"</span>";}).join("");
+    h2+="<tr><td>"+fd(r.date)+"</td><td><span class='badge "+bc+"'>V"+r.ob+"</span></td><td class='dim'>"+r.asset+"</td><td><div class='leads'>"+chips+"</div></td><td class='c'><span class='mc'>"+r.missions+"</span></td><td class='r'>"+fmt(r.cpm)+"</td><td class='r green'>"+fmt(r.total)+"</td></tr>";
   });
   document.getElementById("tbody").innerHTML=h2;
   document.getElementById("info").textContent=rows.length+" rows";
