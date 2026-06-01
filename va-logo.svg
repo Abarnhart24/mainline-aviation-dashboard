@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 90" width="200" height="90">
+  <!-- Red wing / swoosh shape -->
+  <path d="M10,15 Q30,5 55,20 Q40,35 20,40 Z" fill="#C41E3A"/>
+  <path d="M18,38 Q45,28 70,10 Q80,6 90,8 Q75,25 55,38 Q38,48 18,38 Z" fill="#C41E3A"/>
+  <!-- Virgin text in red script style -->
+  <text x="60" y="38" font-family="Georgia, serif" font-size="28" font-style="italic" font-weight="bold" fill="#C41E3A" letter-spacing="-1">Virgin</text>
+  <!-- atlantic text in purple -->
+  <text x="14" y="62" font-family="Arial, sans-serif" font-size="22" font-weight="300" fill="#3D1152" letter-spacing="4">atlantic</text>
+</svg>
