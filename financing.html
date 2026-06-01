@@ -21,33 +21,35 @@ h3{font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px;}
 .filters label{font-size:12px;color:#64748b;font-weight:500;}
 .filters select{background:#0f1623;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8eef5;padding:5px 10px;font-size:12px;outline:none;}
 .info{font-size:12px;color:#64748b;margin-left:auto;}
-.tbl-wrap{border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;max-height:540px;overflow-y:auto;}
+.tbl-wrap{border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;background:#131826;position:sticky;top:0;z-index:1;}
+thead th{padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;background:#131826;}
 thead th.r{text-align:right;}
-tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);}
-tbody tr:hover{background:rgba(255,255,255,0.03);}
+thead th.c{text-align:center;}
+.date-row td{background:rgba(255,255,255,0.025);padding:6px 14px;font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid rgba(255,255,255,0.06);}
+tbody tr.data-row{border-bottom:1px solid rgba(255,255,255,0.04);}
+tbody tr.data-row:hover{background:rgba(255,255,255,0.03);}
 tbody td{padding:9px 14px;}
 tbody td.r{text-align:right;}
+tbody td.c{text-align:center;}
 tbody td.dim{color:#64748b;font-size:12px;}
 tfoot td{padding:10px 14px;font-weight:700;background:rgba(255,255,255,0.04);border-top:2px solid rgba(255,255,255,0.1);}
 tfoot td.r{text-align:right;color:#60a5fa;}
+tfoot td.c{text-align:center;color:#64748b;}
 .badge{display:inline-block;font-family:monospace;background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
 .badge.v110{background:rgba(52,211,153,0.15);color:#34d399;}
 .cpm{color:#34d399;font-weight:600;}
+.mc{display:inline-block;background:rgba(255,255,255,0.07);border-radius:10px;padding:1px 7px;font-size:11px;color:#94a3b8;margin-left:4px;}
 </style>
 </head>
 <body>
-
 <div class="kpis" id="kpis"></div>
-
 <div class="section-title">Daily Food Cost - May 2026</div>
 <div class="card">
-  <h3>Total Food Cost per Flight (USD)</h3>
+  <h3>Total Food Cost by Flight (USD)</h3>
   <div class="chart-wrap"><canvas id="chart"></canvas></div>
 </div>
-
-<div class="section-title">Food Cost Per Mission</div>
+<div class="section-title">Cost per Mission by Team Lead</div>
 <div class="filters">
   <label>Flight:</label>
   <select id="fFlight" onchange="render()">
@@ -65,21 +67,21 @@ tfoot td.r{text-align:right;color:#60a5fa;}
   <table>
     <thead>
       <tr>
-        <th>Date</th>
-        <th>Flight</th>
         <th>Team Lead</th>
+        <th>Flight</th>
         <th>Aircraft</th>
-        <th class="r">Food Cost / Mission</th>
-        <th class="r">Daily Total</th>
+        <th class="c">Missions</th>
+        <th class="r">Cost / Mission</th>
+        <th class="r">Lead Total</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
     <tfoot>
       <tr>
-        <td colspan="3">Showing total</td>
-        <td class="dim" id="fcount"></td>
-        <td class="r" id="fcpm"></td>
-        <td class="r" id="ftotal"></td>
+        <td colspan="3">Total</td>
+        <td class="c" id="ftotm"></td>
+        <td class="r" id="favg"></td>
+        <td class="r" id="ftot"></td>
       </tr>
     </tfoot>
   </table>
@@ -100,92 +102,75 @@ var foodCost = {
 };
 
 var raw = [
-  ["2026-05-05","110","Christian Lawson","330UNK","INC"],
-  ["2026-05-05","104","Claudette St. Juste","A350_2","INC"],
-  ["2026-05-05","104","Abubakarr Sessay","A350_2","INC"],
-  ["2026-05-04","110","Bobbie Jackson III","GVSXY","INC"],
-  ["2026-05-04","110","Issa Camara","GVSXY","INC"],
-  ["2026-05-04","104","Claudette St. Juste","A350_2","INC"],
-  ["2026-05-04","104","Abubakarr Sessay","A350_2","INC"],
-  ["2026-05-03","104","Bobbie Jackson III","A350_2","INC"],
-  ["2026-05-03","104","Claudette St. Juste","A350_2","INC"],
-  ["2026-05-03","110","Gabriel Silva Mane","330UNK","INC"],
-  ["2026-05-02","110","Bobbie Jackson III","330UNK","INC"],
-  ["2026-05-02","110","Maurice Smith","330UNK","INC"],
-  ["2026-05-02","104","Abubakarr Sessay","350UNK","INC"],
-  ["2026-05-02","104","Christian Lawson","350UNK","INC"],
-  ["2026-05-01","110","Maurice Smith","330UNK","INC"],
-  ["2026-05-01","110","Christian Lawson","330UNK","INC"],
-  ["2026-05-01","104","Bobbie Jackson III","350UNK","INC"],
-  ["2026-05-01","104","Gabriel Silva Mane","350UNK","INC"],
-  ["2026-05-10","104","Gabriel Silva Mane","350UNK","INC"],
-  ["2026-05-10","104","Rachel Lester","350UNK","INC"],
-  ["2026-05-10","110","Claudette St. Juste","330UNK","INC"],
-  ["2026-05-10","110","Maurice Smith","330UNK","INC"],
-  ["2026-05-09","110","Christian Lawson","330UNK","INC"],
-  ["2026-05-09","110","Bobbie Jackson III","330UNK","INC"],
-  ["2026-05-09","104","Maurice Smith","350UNK","INC"],
-  ["2026-05-09","104","Gabriel Silva Mane","350UNK","INC"],
-  ["2026-05-08","110","Christian Lawson","GVSXY","INC"],
-  ["2026-05-08","110","Bobbie Jackson III","GVSXY","INC"],
-  ["2026-05-08","104","Gabriel Silva Mane","350UNK","INC"],
-  ["2026-05-08","104","Maurice Smith","350UNK","INC"],
-  ["2026-05-07","110","Bobbie Jackson III","330UNK","INC"],
-  ["2026-05-07","104","Christian Lawson","350UNK","INC"],
-  ["2026-05-07","110","Abdou Diakhate","330UNK","INC"],
-  ["2026-05-07","104","Abdou Diakhate","350UNK","INC"],
-  ["2026-05-06","104","Christian Lawson","A350_2","INC"],
-  ["2026-05-06","104","Tecari Brown","350UNK","INC"],
-  ["2026-05-06","110","Claudette St. Juste","330UNK","INC"],
-  ["2026-05-06","110","Abdou Diakhate","330UNK","INC"],
-  ["2026-05-05","110","Christian Lawson","330UNK","INC"],
-  ["2026-05-05","104","Claudette St. Juste","A350_2","INC"],
-  ["2026-05-05","104","Abubakarr Sessay","A350_2","INC"],
-  ["2026-05-04","110","Bobbie Jackson III","GVSXY","INC"],
-  ["2026-05-04","110","Issa Camara","GVSXY","INC"],
-  ["2026-05-04","104","Claudette St. Juste","A350_2","INC"],
-  ["2026-05-04","104","Abubakarr Sessay","A350_2","INC"],
-  ["2026-05-03","104","Bobbie Jackson III","A350_2","INC"],
-  ["2026-05-03","104","Claudette St. Juste","A350_2","INC"],
-  ["2026-05-03","110","Gabriel Silva Mane","330UNK","INC"],
-  ["2026-05-02","110","Bobbie Jackson III","330UNK","INC"],
-  ["2026-05-02","110","Maurice Smith","330UNK","INC"],
-  ["2026-05-02","104","Abubakarr Sessay","350UNK","INC"],
-  ["2026-05-02","104","Christian Lawson","350UNK","INC"],
-  ["2026-05-01","110","Maurice Smith","330UNK","INC"],
-  ["2026-05-01","110","Christian Lawson","330UNK","INC"],
-  ["2026-05-01","104","Bobbie Jackson III","350UNK","INC"],
-  ["2026-05-01","104","Gabriel Silva Mane","350UNK","INC"]
+  ["2026-05-01","104","Bobbie Jackson III","350UNK",2],
+  ["2026-05-01","104","Gabriel Silva Mane","350UNK",2],
+  ["2026-05-01","110","Maurice Smith","330UNK",2],
+  ["2026-05-01","110","Christian Lawson","330UNK",2],
+  ["2026-05-02","104","Abubakarr Sessay","350UNK",2],
+  ["2026-05-02","104","Christian Lawson","350UNK",2],
+  ["2026-05-02","110","Bobbie Jackson III","330UNK",2],
+  ["2026-05-02","110","Maurice Smith","330UNK",2],
+  ["2026-05-03","104","Bobbie Jackson III","A350_2",2],
+  ["2026-05-03","104","Claudette St. Juste","A350_2",2],
+  ["2026-05-03","110","Gabriel Silva Mane","330UNK",2],
+  ["2026-05-04","104","Claudette St. Juste","A350_2",2],
+  ["2026-05-04","104","Abubakarr Sessay","A350_2",2],
+  ["2026-05-04","110","Bobbie Jackson III","GVSXY",2],
+  ["2026-05-04","110","Issa Camara","GVSXY",2],
+  ["2026-05-05","104","Claudette St. Juste","A350_2",2],
+  ["2026-05-05","104","Abubakarr Sessay","A350_2",2],
+  ["2026-05-05","110","Christian Lawson","330UNK",2],
+  ["2026-05-06","104","Christian Lawson","A350_2",1],
+  ["2026-05-06","104","Tecari Brown","350UNK",1],
+  ["2026-05-06","110","Claudette St. Juste","330UNK",1],
+  ["2026-05-06","110","Abdou Diakhate","330UNK",1],
+  ["2026-05-07","104","Christian Lawson","350UNK",1],
+  ["2026-05-07","104","Abdou Diakhate","350UNK",1],
+  ["2026-05-07","110","Bobbie Jackson III","330UNK",1],
+  ["2026-05-07","110","Abdou Diakhate","330UNK",1],
+  ["2026-05-08","104","Gabriel Silva Mane","350UNK",1],
+  ["2026-05-08","104","Maurice Smith","350UNK",1],
+  ["2026-05-08","110","Christian Lawson","GVSXY",1],
+  ["2026-05-08","110","Bobbie Jackson III","GVSXY",1],
+  ["2026-05-09","104","Maurice Smith","350UNK",1],
+  ["2026-05-09","104","Gabriel Silva Mane","350UNK",1],
+  ["2026-05-09","110","Christian Lawson","330UNK",1],
+  ["2026-05-09","110","Bobbie Jackson III","330UNK",1],
+  ["2026-05-10","104","Gabriel Silva Mane","350UNK",1],
+  ["2026-05-10","104","Rachel Lester","350UNK",1],
+  ["2026-05-10","110","Claudette St. Juste","330UNK",1],
+  ["2026-05-10","110","Maurice Smith","330UNK",1]
 ];
 
 function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
 
-// Count missions per date+outbound for cost split
-var mCount = {};
-raw.forEach(function(r){ var k=r[0]+"|"+r[1]; mCount[k]=(mCount[k]||0)+1; });
+// Total missions per date+ob
+var mTotals = {};
+raw.forEach(function(r){ var k=r[0]+"|"+r[1]; mTotals[k]=(mTotals[k]||0)+r[4]; });
 
-// Enrich each row
+// Enrich
 var data = raw.map(function(r){
-  var dayCost = (foodCost[r[0]]||{})[r[1]]||0;
-  var total = mCount[r[0]+"|"+r[1]]||1;
-  return { date:r[0], ob:r[1], lead:r[2], asset:r[3], type:r[4], cpm:dayCost/total, dayCost:dayCost };
-}).sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:a.ob.localeCompare(b.ob); });
+  var dayCost=(foodCost[r[0]]||{})[r[1]]||0;
+  var tot=mTotals[r[0]+"|"+r[1]]||1;
+  var cpm=dayCost/tot;
+  return {date:r[0],ob:r[1],lead:r[2],asset:r[3],missions:r[4],cpm:cpm,leadTotal:cpm*r[4]};
+});
 
-// Populate filters
+// Filters
 var allDates=[...new Set(data.map(function(r){return r.date;}))].sort();
 var allLeads=[...new Set(data.map(function(r){return r.lead;}))].sort();
-var fd2=document.getElementById("fDate"), fl=document.getElementById("fLead");
-allDates.forEach(function(d){var o=document.createElement("option");o.value=d;o.textContent=fd(d);fd2.appendChild(o);});
-allLeads.forEach(function(l){var o=document.createElement("option");o.value=l;o.textContent=l;fl.appendChild(o);});
+allDates.forEach(function(d){var o=document.createElement("option");o.value=d;o.textContent=fd(d);document.getElementById("fDate").appendChild(o);});
+allLeads.forEach(function(l){var o=document.createElement("option");o.value=l;o.textContent=l;document.getElementById("fLead").appendChild(o);});
 
 // KPIs
 var gtCost=Object.keys(foodCost).reduce(function(s,d){return s+(foodCost[d]["104"]||0)+(foodCost[d]["110"]||0);},0);
+var totMissions=data.reduce(function(s,r){return s+r.missions;},0);
 document.getElementById("kpis").innerHTML=
   "<div class='kpi'><div class='label'>Total Food Cost</div><div class='value'>"+fmt(gtCost)+"</div><div class='delta'>May 1-10 - V104 + V110</div></div>"+
-  "<div class='kpi'><div class='label'>Matched Missions</div><div class='value'>"+data.length+"</div><div class='delta'>With Excel food cost data</div></div>"+
-  "<div class='kpi'><div class='label'>Avg Cost per Mission</div><div class='value'>"+fmt(gtCost/data.length)+"</div><div class='delta'>Equally split by day</div></div>"+
-  "<div class='kpi'><div class='label'>Team Leads</div><div class='value'>"+allLeads.length+"</div><div class='delta'>Across both flights</div></div>";
+  "<div class='kpi'><div class='label'>Total Missions</div><div class='value'>"+totMissions+"</div><div class='delta'>Matched with Excel</div></div>"+
+  "<div class='kpi'><div class='label'>Avg Cost / Mission</div><div class='value'>"+fmt(gtCost/totMissions)+"</div><div class='delta'>Split equally per day</div></div>"+
+  "<div class='kpi'><div class='label'>Unique Leads</div><div class='value'>"+allLeads.length+"</div><div class='delta'>Across V104 + V110</div></div>";
 
 // Chart
 var cd=Object.keys(foodCost).sort();
@@ -196,26 +181,32 @@ function render(){
   var fdt=document.getElementById("fDate").value;
   var fld=document.getElementById("fLead").value;
   var rows=data.filter(function(r){return(!flt||r.ob===flt)&&(!fdt||r.date===fdt)&&(!fld||r.lead===fld);});
-  var html2="",totCpm=0,totDay=0,seen={};
+
+  // Group by date for section headers
+  var html2="", lastDate="", totM=0, totCost=0;
   rows.forEach(function(r){
-    totCpm+=r.cpm;
-    var dk=r.date+"|"+r.ob;
-    if(!seen[dk]){totDay+=r.dayCost;seen[dk]=true;}
+    if(r.date!==lastDate){
+      if(lastDate) html2+="<tr class='date-row'><td colspan='6'></td></tr>";
+      html2+="<tr class='date-row'><td colspan='6'>"+fd(r.date)+"</td></tr>";
+      lastDate=r.date;
+    }
     var bc=r.ob==="110"?"v110":"";
-    html2+="<tr>";
-    html2+="<td>"+fd(r.date)+"</td>";
-    html2+="<td><span class='badge "+bc+"'>V"+r.ob+"</span></td>";
+    totM+=r.missions; totCost+=r.leadTotal;
+    html2+="<tr class='data-row'>";
     html2+="<td><strong>"+r.lead+"</strong></td>";
+    html2+="<td><span class='badge "+bc+"'>V"+r.ob+"</span></td>";
     html2+="<td class='dim'>"+r.asset+"</td>";
-    html2+="<td class='r cpm'>"+fmt(r.cpm)+"</td>";
-    html2+="<td class='r dim'>"+fmt(r.dayCost)+"</td>";
+    html2+="<td class='c'><span class='mc'>"+r.missions+"</span></td>";
+    html2+="<td class='r'>"+fmt(r.cpm)+"</td>";
+    html2+="<td class='r cpm'>"+fmt(r.leadTotal)+"</td>";
     html2+="</tr>";
   });
+
   document.getElementById("tbody").innerHTML=html2;
-  document.getElementById("info").textContent=rows.length+" missions shown";
-  document.getElementById("fcount").textContent=rows.length+" missions";
-  document.getElementById("fcpm").textContent=fmt(totCpm);
-  document.getElementById("ftotal").textContent=fmt(totDay);
+  document.getElementById("info").textContent=rows.length+" leads shown";
+  document.getElementById("ftotm").textContent=totM+" missions";
+  document.getElementById("favg").textContent=fmt(totCost/totM);
+  document.getElementById("ftot").textContent=fmt(totCost);
 }
 render();
 </script>
