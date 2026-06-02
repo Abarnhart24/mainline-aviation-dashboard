@@ -1476,7 +1476,17 @@ tfoot td.r{text-align:right;color:#60a5fa;}
   <div class="card"><h3>Food Cost by Flight (USD)</h3><div class="chart-wrap"><canvas id="vs-chart"></canvas></div></div>
   <div class="section-title">Cost Breakdown &mdash; All 20 Flights</div>
   
-  <div class="tbl-wrap"><table>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+  <div id="fin-filters" style="display:none;gap:8px;align-items:center;">
+    <label style="font-size:12px;color:#64748b;font-weight:500;">Month:</label>
+    <select id="vs-fM" onchange="renderVS()" style="background:#0f1623;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8eef5;padding:5px 10px;font-size:12px;outline:none;">
+      <option value="">All</option>
+      <option value="2026-05" selected>May 2026</option>
+    </select>
+  </div>
+  <button onclick="(function(){var f=document.getElementById('fin-filters');var b=document.getElementById('fin-toggle');var shown=f.style.display!=='none';f.style.display=shown?'none':'flex';b.textContent=shown?'&#128204; Filters':'&#128205; Hide Filters';})()" id="fin-toggle" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#94a3b8;padding:5px 12px;font-size:12px;cursor:pointer;">&#128204; Filters</button>
+</div>
+<div class="tbl-wrap"><table>
     <thead><tr><th>Date</th><th>Flight</th><th>Airline</th><th>Route</th><th>Team Lead(s)</th><th class="r">Food Cost</th></tr></thead>
     <tbody id="vs-tbody"></tbody>
     <tfoot><tr><td colspan="5">Total</td><td class="r" id="vs-ft"></td></tr></tfoot>
