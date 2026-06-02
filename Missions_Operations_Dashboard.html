@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Mainline Aviation ÃÂÃÂÃÂÃÂ· Sullivan Rd Missions Dashboard</title>
+<title>Mainline Aviation · Sullivan Rd Missions Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/gridjs.umd.js" integrity="sha384-/XXDzxe4FsGiAe50i/u9pY/Vy/uX654MHB1xoc1BJNnH1WXHhqHga9g3q5tF4gj7" crossorigin="anonymous"></script>
 <style>
@@ -366,7 +366,7 @@ body.wall .wall-banner .pulse {
   border-radius: 2px;
   pointer-events: none;
 }
-/* Mission colors ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ applied to lane-label and lane-accent via inline style */
+/* Mission colors — applied to lane-label and lane-accent via inline style */
 .tl-times .lbl.m1 .ev, .tl-bar.multi .lane-label.m1 { color: #22d3ee; }
 .tl-times .lbl.m2 .ev, .tl-bar.multi .lane-label.m2 { color: #a78bfa; }
 .tl-times .lbl.m3 .ev, .tl-bar.multi .lane-label.m3 { color: #4ade80; }
@@ -578,7 +578,7 @@ body.wall .wall-banner .pulse {
     <label>Asset Type</label>
     <select id="fAsset"><option value="">All</option></select>
     <button class="reset" id="resetBtn">Reset</button>
-    <span class="badge" id="countBadge">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ missions</span>
+    <span class="badge" id="countBadge">— missions</span>
   </section>
 
   <div class="tab-panel active" id="panel-overview">
@@ -593,7 +593,7 @@ body.wall .wall-banner .pulse {
     <div class="section-title">Volume</div>
     <section class="grid grid-1">
       <div class="card">
-        <h3>Mission Volume by Hour <span class="hint">when work began ÃÂÃÂÃÂÃÂ· EDT</span></h3>
+        <h3>Mission Volume by Hour <span class="hint">when work began · EDT</span></h3>
         <div class="card-chart"><canvas id="cHour"></canvas></div>
       </div>
     </section>
@@ -616,7 +616,7 @@ body.wall .wall-banner .pulse {
     <div class="section-title">Mission Count by Team Lead</div>
     <section class="grid grid-1">
       <div class="card">
-        <h3>Total missions per lead <span class="hint">in current filter ÃÂÃÂÃÂÃÂ· sorted most-active first</span></h3>
+        <h3>Total missions per lead <span class="hint">in current filter · sorted most-active first</span></h3>
         <div class="card-chart xtall"><canvas id="cMissionCount"></canvas></div>
       </div>
     </section>
@@ -624,21 +624,21 @@ body.wall .wall-banner .pulse {
     <div class="section-title">Avg Intra-Shift Transit Gap</div>
     <section class="grid grid-1">
       <div class="card">
-        <h3>Prior Mission Completed ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Next Team Arrival <span class="hint">intra-shift only ÃÂÃÂÃÂÃÂ· sorted fastest first</span></h3>
+        <h3>Prior Mission Completed → Next Team Arrival <span class="hint">intra-shift only · sorted fastest first</span></h3>
         <div class="card-chart xtall"><canvas id="cTransit"></canvas></div>
       </div>
     </section>
     <div class="section-title">Avg Response Time</div>
     <section class="grid grid-1">
       <div class="card">
-        <h3>Mission Accepted ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Team Arrival <span class="hint">engagement > 0%</span></h3>
+        <h3>Mission Accepted → Team Arrival <span class="hint">engagement > 0%</span></h3>
         <div class="card-chart xtall"><canvas id="cResponse"></canvas></div>
       </div>
     </section>
     <div class="section-title">Avg Productivity</div>
     <section class="grid grid-1">
       <div class="card">
-        <h3>Per-Lead Productivity Score <span class="hint">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ¥5 missions ÃÂÃÂÃÂÃÂ· 100% target</span></h3>
+        <h3>Per-Lead Productivity Score <span class="hint">≥5 missions · 100% target</span></h3>
         <div class="card-chart xtall"><canvas id="cTeamLead"></canvas></div>
       </div>
     </section>
@@ -653,7 +653,7 @@ body.wall .wall-banner .pulse {
   </div>
 
     <div class="tab-panel" id="panel-timeline">
-    <div class="section-title">Mission Timeline ÃÂÃÂÃÂÃÂ· most recent first</div>
+    <div class="section-title">Mission Timeline · most recent first</div>
 
     <section class="card" style="padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
       <span style="font-family: var(--mono); font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em;">View:</span>
@@ -665,17 +665,17 @@ body.wall .wall-banner .pulse {
 
     <section class="card" style="padding: 14px 18px; margin-bottom: 14px;">
       <div class="timeline-legend">
-        <span class="tl-seg delayed"></span><span>Flight late ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ scheduled vs actual arrival gap</span>
-        <span class="tl-seg pre"></span><span>Pre-acceptance ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ flight on ground, mission waiting</span>
-        <span class="tl-seg drive"></span><span>Response ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ accepted ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ team driving to gate</span>
-        <span class="tl-seg setup"></span><span>Setup ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ team arrived ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ starting work</span>
-        <span class="tl-seg active"></span><span>Active mission ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ in progress</span>
-        <span class="tl-seg buffer"></span><span>Buffer ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ completed ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ flight departure</span>
+        <span class="tl-seg delayed"></span><span>Flight late — scheduled vs actual arrival gap</span>
+        <span class="tl-seg pre"></span><span>Pre-acceptance — flight on ground, mission waiting</span>
+        <span class="tl-seg drive"></span><span>Response — accepted → team driving to gate</span>
+        <span class="tl-seg setup"></span><span>Setup — team arrived → starting work</span>
+        <span class="tl-seg active"></span><span>Active mission — in progress</span>
+        <span class="tl-seg buffer"></span><span>Buffer — completed → flight departure</span>
       </div>
     </section>
 
     <section class="card" style="padding: 16px 18px;">
-      <h3>Timeline rows <span class="hint">each row spans Scheduled/Actual Arrival ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ Flight Departure ÃÂÃÂÃÂÃÂ· hover for details</span></h3>
+      <h3>Timeline rows <span class="hint">each row spans Scheduled/Actual Arrival → Flight Departure · hover for details</span></h3>
       <div id="timelineList"></div>
       <div id="timelineMore" class="timeline-more"></div>
     </section>
@@ -684,12 +684,12 @@ body.wall .wall-banner .pulse {
   <div class="tab-panel" id="panel-missions">
     <div class="section-title">Mission Detail</div>
     <section class="table-card">
-      <h3>All Missions <span class="hint" style="font-weight:400;color:var(--text-3)">ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ click any column header to sort ÃÂÃÂÃÂÃÂ· search to filter further</span></h3>
+      <h3>All Missions <span class="hint" style="font-weight:400;color:var(--text-3)">— click any column header to sort · search to filter further</span></h3>
       <div id="tbl"></div>
     </section>
   </div>
 
-  <footer>Mainline Aviation ÃÂÃÂÃÂÃÂ· ATL Operations</footer>
+  <footer>Mainline Aviation · ATL Operations</footer>
 </div>
 
 <script>
@@ -707,9 +707,9 @@ const PALETTE = {
   continuity: { intra: "#22d3ee", shift_break: "#94a3b8", overlap: "#f87171", skipped: "#fbbf24", first: "#a78bfa" },
 };
 
-function fmtPct(v, d=0) { return v == null ? "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ" : v.toFixed(d) + "%"; }
-function fmtMin(v, d=0) { return v == null ? "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ" : v.toFixed(d) + " min"; }
-function fmtNum(v) { return v == null ? "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ" : v.toLocaleString(); }
+function fmtPct(v, d=0) { return v == null ? "—" : v.toFixed(d) + "%"; }
+function fmtMin(v, d=0) { return v == null ? "—" : v.toFixed(d) + " min"; }
+function fmtNum(v) { return v == null ? "—" : v.toLocaleString(); }
 function uniqueSorted(arr) { return [...new Set(arr)].filter(Boolean).sort(); }
 function avg(arr) { const v = arr.filter(x => x != null); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; }
 function median(arr) {
@@ -783,10 +783,10 @@ function renderKpis(rows) {
     return v>=hi ? "good" : (v<lo ? "bad" : "warn");
   };
   const kpis = [
-    { label: "Total Missions", value: fmtNum(total), delta: proper + " proper ÃÂÃÂÃÂÃÂ· " + (total-proper) + " skipped" },
+    { label: "Total Missions", value: fmtNum(total), delta: proper + " proper · " + (total-proper) + " skipped" },
     { label: "On-Time Rate",   value: fmtPct(onTime,1), delta: lateCount + " late completions", cls: cls(onTime, 95, 85) },
     { label: "Avg Response",   value: fmtMin(respAvg,1), delta: "median " + fmtMin(respMed,0), cls: cls(respAvg, 60, 100, true) },
-    { label: "Avg Intra-Shift Transit", value: fmtMin(transitAvg,1), delta: "median " + fmtMin(transitMed,0) + " ÃÂÃÂÃÂÃÂ· n=" + intraRows.length, cls: cls(transitAvg, 15, 30, true) },
+    { label: "Avg Intra-Shift Transit", value: fmtMin(transitAvg,1), delta: "median " + fmtMin(transitMed,0) + " · n=" + intraRows.length, cls: cls(transitAvg, 15, 30, true) },
     { label: "Avg Productivity", value: fmtPct(prod,1), delta: "vs. 100% target", cls: cls(prod, 100, 70) },
     { label: "Avg Engagement",   value: fmtPct(eng,1), delta: "team participation", cls: cls(eng, 95, 80) },
   ];
@@ -796,7 +796,7 @@ function renderKpis(rows) {
        <div class="value">${k.value}</div>
        <div class="delta">${k.delta||""}</div>
      </div>`).join("");
-  document.getElementById("countBadge").textContent = "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ " + fmtNum(total) + " missions";
+  document.getElementById("countBadge").textContent = "● " + fmtNum(total) + " missions";
 }
 
 function renderLeaderboard(rows) {
@@ -818,19 +818,19 @@ function renderLeaderboard(rows) {
   cards.sort((a,b) => (b.prod ?? -1) - (a.prod ?? -1));
   const html = cards.slice(0, 12).map((c, i) => {
     const rankClass = i < 3 ? "top" : "";
-    const medal = i === 0 ? "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ" : (i === 1 ? "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ¦" : (i === 2 ? "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ§" : "#" + (i+1)));
+    const medal = i === 0 ? "★" : (i === 1 ? "✦" : (i === 2 ? "✧" : "#" + (i+1)));
     return `<div class="leader">
       <div class="rank ${rankClass}">${medal} ${i < 3 ? ["GOLD","SILVER","BRONZE"][i] : "RANK " + (i+1)}</div>
       <div class="name">${c.name}</div>
       <div class="stats">
         <span>Prod <b>${fmtPct(c.prod,0)}</b></span>
         <span>Resp <b>${fmtMin(c.resp,0)}</b></span>
-        <span>Transit <b>${c.transit != null ? Math.round(c.transit) + "m" : "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ"}</b></span>
+        <span>Transit <b>${c.transit != null ? Math.round(c.transit) + "m" : "—"}</b></span>
         <span>Missions <b>${c.n}</b></span>
       </div>
     </div>`;
   }).join("");
-  document.getElementById("leaderboard").innerHTML = html || `<div class="leader"><div class="name" style="color:var(--text-3)">No leads with ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ¥5 missions in this filter</div></div>`;
+  document.getElementById("leaderboard").innerHTML = html || `<div class="leader"><div class="name" style="color:var(--text-3)">No leads with ≥5 missions in this filter</div></div>`;
 }
 
 const charts = {};
@@ -1011,12 +1011,12 @@ function renderCharts(rows) {
   const transitByLead = makeAvg(intraOnly, "tl", "transit").filter(e => e[2] >= 3).sort((a,b) => a[1] - b[1]);
   bar("cTransit",
     transitByLead.map(e => [e[0], +e[1].toFixed(1)]),
-    { horizontal: true, label: "Avg transit", suffix: " min", color: PALETTE.cyan, counts: transitByLead.map(e => e[2]), xtitle: "Avg minutes (prior completed ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ next arrival)" });
+    { horizontal: true, label: "Avg transit", suffix: " min", color: PALETTE.cyan, counts: transitByLead.map(e => e[2]), xtitle: "Avg minutes (prior completed → next arrival)" });
 
   const respLead = makeAvg(rows, "tl", "resp").filter(e => e[2] >= 5).sort((a,b) => a[1] - b[1]);
   bar("cResponse",
     respLead.map(e => [e[0], +e[1].toFixed(1)]),
-    { horizontal: true, label: "Avg Response", suffix: " min", color: PALETTE.purple, counts: respLead.map(e => e[2]), xtitle: "Avg minutes (accepted ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ team arrival)" });
+    { horizontal: true, label: "Avg Response", suffix: " min", color: PALETTE.purple, counts: respLead.map(e => e[2]), xtitle: "Avg minutes (accepted → team arrival)" });
 
   const tl = makeAvg(rows, "tl", "prod").filter(e => e[2] >= 5);
   bar("cTeamLead",
@@ -1037,13 +1037,13 @@ function parseSpringshotTs(s) {
   return new Date(year, monthIdx, parseInt(m[2]), parseInt(m[3]), parseInt(m[4])).getTime();
 }
 function fmtDur(min) {
-  if (min == null) return "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ";
+  if (min == null) return "—";
   if (min < 60) return Math.round(min) + "m";
   const h = Math.floor(min/60), mm = Math.round(min%60);
   return h + "h " + (mm < 10 ? "0" + mm : mm) + "m";
 }
 function fmtClock(s) {
-  if (!s) return "ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ";
+  if (!s) return "—";
   const m = s.match(/^(\w+ \d+), (\d+:\d+)/);
   return m ? m[1] + " " + m[2] : s;
 }
@@ -1231,7 +1231,221 @@ function renderTimelinePerMission(TL, list, more) {
   if (TL.length <= LIMIT) {
     more.textContent = "Showing all " + TL.length + " missions with full timeline data.";
   } else {
-    more.innerHTML = '
+    more.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;">'
+      + '<button class="tl-prev-btn"' + (page === 0 ? ' disabled' : '') + ' style="padding:4px 14px;cursor:pointer;border-radius:4px;">&#8592; Prev</button>'
+      + '<span style="font-weight:500;">Page ' + (page + 1) + ' of ' + totalPages + ' &#8212; ' + TL.length + ' missions total</span>'
+      + '<button class="tl-next-btn"' + (page >= totalPages - 1 ? ' disabled' : '') + ' style="padding:4px 14px;cursor:pointer;border-radius:4px;">Next &#8594;</button>'
+      + '</div>';
+    more.querySelector('.tl-prev-btn').onclick = function() { window.__tlPage = page - 1; renderTimelinePerMission(window.__tlRawData, window.__tlList, window.__tlMore); window.__tlList.scrollIntoView({behavior:'smooth',block:'start'}); };
+    more.querySelector('.tl-next-btn').onclick = function() { window.__tlPage = page + 1; renderTimelinePerMission(window.__tlRawData, window.__tlList, window.__tlMore); window.__tlList.scrollIntoView({behavior:'smooth',block:'start'}); };
+  }
+}
+
+
+
+let grid = null;
+function transitDisplay(r) {
+  if (r.transit_kind === "skipped") return "— (skipped)";
+  if (r.transit_kind === "first") return "— (first)";
+  if (r.transit == null) return "—";
+  if (r.transit_kind === "overlap") return r.transit.toFixed(0) + "m ⚠";
+  if (r.transit_kind === "shift_break") return Math.round(r.transit) + "m (break)";
+  if (r.transit_kind === "intra") return r.transit.toFixed(0) + "m";
+  return "—";
+}
+function renderTable(rows) {
+  const data = rows.map(r => [
+    r.tl, r.al, r.mt, r.atype, r.ast, r.loc,
+    r.proper ? "Yes" : "No",
+    r.eng != null ? r.eng + "%" : "—",
+    r.prod != null ? r.prod + "%" : "—",
+    r.resp != null ? r.resp.toFixed(0) + "m" : "—",
+    r.dur != null ? r.dur.toFixed(0) + "m" : "—",
+    transitDisplay(r),
+    r.ot == null ? "—" : (r.ot ? "On time" : "Late"),
+    r.ma, r.tarr, r.ms, r.mc, r.fd, r.inb, r.outb,
+  ]);
+  const target = document.getElementById("tbl");
+  if (grid) {
+    grid.updateConfig({ data }).forceRender();
+  } else {
+    grid = new gridjs.Grid({
+      columns: [
+        "Team Lead","AL","Type","Asset","#","Loc",
+        "Proper","Eng","Prod","Resp","Dur","Transit","On-Time",
+        "Accepted","Team Arr","Started","Completed","Flight Dep",
+        "Inb","Outb",
+      ],
+      data,
+      pagination: { enabled: true, limit: 25, summary: true },
+      sort: true, search: true, resizable: true,
+    });
+    grid.render(target);
+  }
+}
+
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.id === "panel-" + name));
+  // Resize all charts so any that rendered while their tab was hidden pick up
+  // proper dimensions now that they're visible.
+  setTimeout(() => {
+    Object.values(charts).forEach(c => { try { c.resize(); } catch (e) {} });
+    // For tabs whose charts may have rendered at 0×0, re-run the full render
+    // pass once visible. Cheap (in-memory) and guarantees correct sizing.
+    rerenderAll();
+  }, 50);
+}
+
+function rerenderAll() {
+  const rows = applyFilters();
+  const safe = (name, fn) => { try { fn(); } catch (e) { console.error("[" + name + "] failed:", e); } };
+  safe("renderKpis",        () => renderKpis(rows));
+  safe("renderCharts",      () => renderCharts(rows));
+  safe("renderLeaderboard", () => renderLeaderboard(rows));
+  safe("renderTimeline",    () => renderTimeline(rows));
+  safe("renderTable",       () => renderTable(rows));
+  const leadSet = new Set(rows.map(r => r.tl));
+  document.getElementById("leadCount").textContent = "(" + leadSet.size + ")";
+  document.getElementById("missionCount").textContent = "(" + rows.length + ")";
+}
+function init() {
+  document.getElementById("snaptime").textContent = SNAPSHOT_TIME;
+  populateFilters();
+
+  // Default Month filter to current calendar month if data exists for it
+  const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const _now = new Date();
+  const currentMonthLabel = MONTHS_SHORT[_now.getMonth()] + " " + _now.getFullYear();
+  const fMonthSel = document.getElementById("fMonth");
+  if ([...fMonthSel.options].some(o => o.value === currentMonthLabel)) {
+    fMonthSel.value = currentMonthLabel;
+  }
+
+  ["fMonth","fAirline","fType","fLead","fAsset"].forEach(id => {
+    document.getElementById(id).addEventListener("change", rerenderAll);
+  });
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    // Reset = clear all filters back to "All" (bypasses the month default)
+    ["fMonth","fAirline","fType","fLead","fAsset"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    rerenderAll();
+  });
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => switchTab(t.dataset.tab));
+  });
+
+  // Timeline view-mode toggle
+  window.__tlMode = "mission";
+  document.querySelectorAll(".tl-mode").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tl-mode").forEach(b => b.classList.toggle("active", b === btn));
+      window.__tlMode = btn.dataset.mode;
+      const hint = document.getElementById("tlModeHint");
+      if (hint) hint.textContent = btn.dataset.mode === "lead_day"
+        ? "One row per team lead per day, all missions overlaid"
+        : "One row per mission, sorted most-recent first";
+      try { renderTimeline(applyFilters()); } catch (e) { console.error(e); }
+    });
+  });
+  // Timeline mode toggle
+  document.querySelectorAll(".tl-toggle-btn").forEach(b => {
+    b.addEventListener("click", () => {
+      window._timelineMode = b.dataset.mode;
+      document.querySelectorAll(".tl-toggle-btn").forEach(x => x.classList.toggle("active", x.dataset.mode === b.dataset.mode));
+      rerenderAll();
+    });
+  });
+  rerenderAll();
+
+  // ====== WALL DISPLAY MODE (?wall=1) ======
+  const _params = new URLSearchParams(location.search);
+  const _isWall = _params.get("wall") === "1";
+  const _refreshSec = Math.max(15, parseInt(_params.get("refresh") || "60", 10));
+  if (_isWall) {
+    document.body.classList.add("wall");
+    // Force Overview tab regardless of any prior state
+    switchTab("overview");
+    // Add a small "watching for new data" indicator at the bottom-right
+    const banner = document.createElement("div");
+    banner.className = "wall-banner";
+    banner.innerHTML = '<span class="pulse"></span><span>LIVE · checking for new data every ' + _refreshSec + 's · <span id="wall-stamp"></span></span>';
+    document.body.appendChild(banner);
+    document.getElementById("wall-stamp").textContent = SNAPSHOT_TIME;
+
+    // Smart auto-reload: poll the file itself, only reload when SNAPSHOT_TIME changes
+    setInterval(async () => {
+      try {
+        const r = await fetch(location.pathname + "?_=" + Date.now(), { cache: "no-cache" });
+        if (!r.ok) return;
+        const txt = await r.text();
+        const m = txt.match(/const SNAPSHOT_TIME = "([^"]+)"/);
+        if (m && m[1] !== SNAPSHOT_TIME) {
+          location.reload();
+        }
+      } catch (e) { /* network blip — ignore, keep showing current data */ }
+    }, _refreshSec * 1000);
+  }
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+
+<div class="tab-panel" id="panel-financing">
+<style id="fin-styles">
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e1a;color:#e8eef5;padding:24px;}
+.page-title{font-size:20px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
+.page-sub{font-size:13px;color:#64748b;margin-bottom:24px;}
+.airline-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+.atab{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;background:#131826;}
+.atab:hover{border-color:rgba(255,255,255,0.15);}
+.atab.active{border-color:rgba(255,255,255,0.25);background:#1e2a3a;}
+.atab .dot{width:10px;height:10px;border-radius:50%;}
+.atab .aname{font-size:13px;font-weight:600;color:#e8eef5;}
+.atab .atotal{font-size:12px;color:#64748b;}
+.atab .abadge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;color:#fff;}
+.panel{display:none;}
+.panel.active{display:block;}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;}
+.kpi{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 20px;}
+.kpi .label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px;}
+.kpi .value{font-size:22px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
+.kpi .delta{font-size:12px;color:#64748b;}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#475569;margin:24px 0 12px;}
+.card{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:20px;margin-bottom:16px;}
+h3{font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px;}
+.chart-wrap{height:220px;position:relative;}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.filters label{font-size:12px;color:#64748b;font-weight:500;}
+.filters select{background:#0f1623;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8eef5;padding:5px 10px;font-size:12px;outline:none;}
+.info{font-size:12px;color:#64748b;margin-left:auto;}
+.tbl-wrap{border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;background:#131826;}
+thead th.r{text-align:right;}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.05);}
+tbody tr:hover{background:rgba(255,255,255,0.025);}
+tbody td{padding:10px 14px;vertical-align:middle;}
+tbody td.r{text-align:right;}tbody td.dim{color:#64748b;font-size:12px;}
+tfoot td{padding:10px 14px;font-weight:700;background:rgba(255,255,255,0.04);border-top:2px solid rgba(255,255,255,0.1);}
+tfoot td.r{text-align:right;color:#60a5fa;}
+.badge{display:inline-block;font-family:monospace;background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+.badge.v110{background:rgba(52,211,153,0.15);color:#34d399;}
+.green{color:#34d399;font-weight:600;}
+.leads{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:3px 10px;font-size:12px;color:#cbd5e1;}
+.empty-state{text-align:center;padding:60px 20px;}
+.empty-state .icon{font-size:32px;margin-bottom:12px;opacity:0.3;}
+.empty-state .msg{font-size:15px;font-weight:600;color:#475569;margin-bottom:6px;}
+.empty-state .sub{font-size:13px;color:#334155;}
+</style>
+<div id="fin-content" style="padding:24px;">
+<div class="page-title">Airline Food Cost Financing</div>
+<div class="page-sub">Sullivan Rd Missions Dashboard &mdash; ATL Hub</div>
+
+<div class="airline-tabs">
   <div class="atab active" onclick="switchAirline('vs')">
     <div class="dot" style="background:#C41E3A;"></div>
     <div><div class="aname">Virgin Atlantic</div><div class="atotal" id="vs-total">Loading...</div></div>
@@ -1251,6 +1465,13 @@ function renderTimelinePerMission(TL, list, more) {
     <div class="dot" style="background:#003F87;"></div>
     <div><div class="aname">SAS Scandinavian</div><div class="atotal">No data yet</div></div>
     <span class="abadge" style="background:#003F87;">SK</span>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px;padding:4px 0;">
+    <label style="font-size:12px;color:#64748b;font-weight:500;">Month:</label>
+    <select id="vs-fM" onchange="renderVS()" style="background:#0f1623;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8eef5;padding:5px 10px;font-size:12px;outline:none;">
+      <option value="">All</option>
+      <option value="2026-05" selected>May 2026</option>
+    </select>
   </div>
 </div>
 
@@ -1335,7 +1556,7 @@ var vsChart=null;
   vsChart=new Chart(document.getElementById("vs-chart"),{type:"bar",data:{labels:cd.map(function(d){return fd(d).replace(", 2026","");}),datasets:[{label:"V104 ATL-LHR",data:cd.map(function(d){return(vsData.find(function(r){return r.date===d&&r.ob==="104";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.7)",borderRadius:4},{label:"V110 ATL-MAN",data:cd.map(function(d){return(vsData.find(function(r){return r.date===d&&r.ob==="110";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.35)",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});
 })();
 function renderVS(){
-  var fmo="";
+  var fmo=document.getElementById("vs-fM").value;
   var rows=vsData.filter(function(r){return(!fmo||r.date.startsWith(fmo));});
   var h2="",tc=0;
   rows.forEach(function(r){
@@ -1364,7 +1585,7 @@ function switchAirline(code){
     <div style="font-size:17px;font-weight:600;color:#e2e8f0;margin-bottom:36px;">Sullivan Rd Missions Dashboard</div>
     <input type="password" id="pw-input" placeholder="Password" autofocus style="width:100%;box-sizing:border-box;padding:13px 16px;background:#0b0f1a;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;font-size:15px;outline:none;margin-bottom:12px;" onkeydown="if(event.key==='Enter')doLogin()">
     <button onclick="doLogin()" style="width:100%;padding:13px;background:#2563eb;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">Access Dashboard</button>
-    <div id="pw-error" style="color:#f87171;font-size:13px;margin-top:12px;visibility:hidden;">Incorrect password ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ please try again.</div>
+    <div id="pw-error" style="color:#f87171;font-size:13px;margin-top:12px;visibility:hidden;">Incorrect password — please try again.</div>
   </div>
 </div>
 <script>
