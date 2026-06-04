@@ -1608,8 +1608,14 @@ renderVS();
 function switchAirline(code){
   document.querySelectorAll(".atab").forEach(function(t){t.classList.remove("active");});
   document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active");});
-  event.currentTarget.classList.add("active");
+  // Activate the tab button safely without relying on event
+  document.querySelectorAll(".atab").forEach(function(t){
+    if(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1)t.classList.add("active");
+  });
   document.getElementById("panel-"+code).classList.add("active");
+  // Show/hide Virgin Atlantic data based on selected airline
+  var vsData=document.getElementById("vs-data");
+  if(vsData)vsData.style.display=code==="vs"?"":"none";
 }
 </script>
 </div>
