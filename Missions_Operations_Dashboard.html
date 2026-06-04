@@ -541,6 +541,8 @@ body.wall .wall-banner .pulse {
 #vs-kpis .kpi{padding:12px 14px!important;min-width:0!important;}
 #vs-kpis .kpi .label{font-size:10px!important;}
 #vs-kpis .kpi .value{font-size:17px!important;}
+#vs-kpis{display:flex!important;flex-wrap:nowrap!important;gap:8px!important;margin-bottom:24px!important;}
+#vs-kpis .kpi{flex:1 1 0!important;min-width:0!important;overflow:hidden!important;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 </head>
@@ -1527,7 +1529,7 @@ tfoot td.r{text-align:right;color:#60a5fa;}
 
 <!-- Virgin Atlantic Panel -->
 <div class="panel active" id="panel-vs">
-  <div style="display:grid !important;grid-template-columns:repeat(5,1fr) !important;gap:8px !important;margin-bottom:24px !important;" id="vs-kpis">
+  <div style="display:flex !important;flex-wrap:nowrap !important;gap:8px !important;margin-bottom:24px !important;" id="vs-kpis">
 <div class="kpi"><div class="label">Total Food Cost</div><div class="value" id="fin-total-val">--</div><div class="delta">May 1-10 - V104 + V110</div></div>
 <div class="kpi"><div class="label">V104 - ATL to LHR</div><div class="value" id="fin-v104-val">--</div><div class="delta">10 departures</div></div>
 <div class="kpi"><div class="label">V110 - ATL to MAN</div><div class="value" id="fin-v110-val">--</div><div class="delta">10 departures</div></div>
