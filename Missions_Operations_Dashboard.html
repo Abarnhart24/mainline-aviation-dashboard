@@ -1527,7 +1527,13 @@ tfoot td.r{text-align:right;color:#60a5fa;}
 
 <!-- Virgin Atlantic Panel -->
 <div class="panel active" id="panel-vs">
-  <div class="kpis" id="vs-kpis" style="grid-template-columns:repeat(5,1fr);gap:8px;"></div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:24px;" id="vs-kpis">
+<div class="kpi"><div class="label">Total Food Cost</div><div class="value" id="fin-total-val">--</div><div class="delta">May 1-10 - V104 + V110</div></div>
+<div class="kpi"><div class="label">V104 - ATL to LHR</div><div class="value" id="fin-v104-val">--</div><div class="delta">10 departures</div></div>
+<div class="kpi"><div class="label">V110 - ATL to MAN</div><div class="value" id="fin-v110-val">--</div><div class="delta">10 departures</div></div>
+<div class="kpi"><div class="label">Avg Cost / Mission</div><div class="value" style="color:#34d399;">$2,519.06</div><div class="delta">56 matched missions</div></div>
+<div class="kpi"><div class="label">Avg Cost / Flight</div><div class="value" style="color:#60a5fa;">$7,053.38</div><div class="delta">20 flights - May 2026</div></div>
+</div>
   </div>
   
   <div id="vs-data">
