@@ -1487,6 +1487,19 @@ tfoot td.r{text-align:right;color:#60a5fa;}
   </table></div>
 </div>
   
+<script id="vs-override">
+window.switchAirline=function(code){
+  document.querySelectorAll(".atab").forEach(function(t){t.classList.remove("active");});
+  document.querySelectorAll("#panel-financing .panel").forEach(function(p){p.classList.remove("active");});
+  var activePanel=document.getElementById("panel-"+code);
+  if(activePanel)activePanel.classList.add("active");
+  var vsData=document.getElementById("vs-data");
+  if(vsData)vsData.style.display=code==="vs"?"":"none";
+  document.querySelectorAll(".atab").forEach(function(t){
+    if(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1)t.classList.add("active");
+  });
+};
+</script>
 <!-- American Airlines Panel -->
 
 <div class="panel" id="panel-aa">
