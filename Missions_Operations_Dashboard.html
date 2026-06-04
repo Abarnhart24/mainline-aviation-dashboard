@@ -1392,6 +1392,30 @@ function init() {
 }
 document.addEventListener("DOMContentLoaded", init);
 </script>
+<script>
+// Override airline tab switching to properly hide/show VS data
+(function(){
+  function patchSwitch(){
+    var origFn=window.switchAirline;
+    window.switchAirline=function(code){
+      // Run original but catch event.currentTarget error
+      try{origFn&&origFn.call({},code);}catch(e){}
+      // Show/hide VS-specific data
+      var vsData=document.getElementById("vs-data");
+      if(vsData)vsData.style.display=code==="vs"?"":"none";
+      // Fix active states
+      document.querySelectorAll(".atab").forEach(function(t){
+        t.classList.toggle("active",!!(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1));
+      });
+      document.querySelectorAll("#panel-financing .panel").forEach(function(p){p.classList.remove("active");});
+      var ap=document.getElementById("panel-"+code);
+      if(ap)ap.classList.add("active");
+    };
+  }
+  if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",patchSwitch);}
+  else{patchSwitch();}
+})();
+</script>
 </body>
 
 <div class="tab-panel" id="panel-financing">
