@@ -1679,65 +1679,7 @@ renderVSForMonth(vsMonths[vsMonths.length-1]);
   </div>
 </div>
 
-<script>
-var vsRaw=[["2026-05-01","104","ATL-LHR",8549.55,["Bobbie Jackson III","Gabriel Silva Mane"]],
-  ["2026-05-01","110","ATL-MAN",6097.81,["Maurice Smith","Christian Lawson"]],
-  ["2026-05-02","104","ATL-LHR",7696.54,["Abubakarr Sessay","Christian Lawson"]],
-  ["2026-05-02","110","ATL-MAN",5747.35,["Bobbie Jackson III","Maurice Smith"]],
-  ["2026-05-03","104","ATL-LHR",8390.95,["Bobbie Jackson III","Claudette St. Juste"]],
-  ["2026-05-03","110","ATL-MAN",6279.28,["Gabriel Silva Mane"]],
-  ["2026-05-04","104","ATL-LHR",8300.94,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-04","110","ATL-MAN",6396.47,["Bobbie Jackson III","Issa Camara"]],
-  ["2026-05-05","104","ATL-LHR",7652.39,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-05","110","ATL-MAN",6132.13,["Christian Lawson"]],
-  ["2026-05-06","104","ATL-LHR",7356.35,["Christian Lawson","Tecari Brown"]],
-  ["2026-05-06","110","ATL-MAN",5658.77,["Claudette St. Juste","Abdou Diakhate"]],
-  ["2026-05-07","104","ATL-LHR",7721.96,["Christian Lawson","Abdou Diakhate"]],
-  ["2026-05-07","110","ATL-MAN",5991.99,["Bobbie Jackson III","Abdou Diakhate"]],
-  ["2026-05-08","104","ATL-LHR",8131.25,["Gabriel Silva Mane","Maurice Smith"]],
-  ["2026-05-08","110","ATL-MAN",6033.51,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-09","104","ATL-LHR",8219.44,["Maurice Smith","Gabriel Silva Mane"]],
-  ["2026-05-09","110","ATL-MAN",6430.59,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-10","104","ATL-LHR",8233.1,["Gabriel Silva Mane","Rachel Lester"]],
-  ["2026-05-10","110","ATL-MAN",6047.14,["Claudette St. Juste","Maurice Smith"]]];
-function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
-var vsData=vsRaw.map(function(r){return{date:r[0],ob:r[1],route:r[2],cost:r[3],leads:r[4]};});
-var gt=vsData.reduce(function(s,r){return s+r.cost;},0);
-var v104t=vsData.filter(function(r){return r.ob==="104";}).reduce(function(s,r){return s+r.cost;},0);
-var v110t=vsData.filter(function(r){return r.ob==="110";}).reduce(function(s,r){return s+r.cost;},0);
-document.getElementById("vs-total").textContent=fmt(gt);
-document.getElementById("vs-kpis").innerHTML=
-  "<div class='kpi'><div class='label'>Total Food Cost</div><div class='value'>"+fmt(gt)+"</div><div class='delta'>May 1-10 &mdash; V104 + V110</div></div>"+
-  "<div class='kpi'><div class='label'>V104 &mdash; ATL to LHR</div><div class='value'>"+fmt(v104t)+"</div><div class='delta'>10 departures</div></div>"+
-  "<div class='kpi'><div class='label'>V110 &mdash; ATL to MAN</div><div class='value'>"+fmt(v110t)+"</div><div class='delta'>10 departures</div></div><div class=\'kpi\'><div class=\'label\'>Avg Cost / Mission</div><div class=\'value\' style=\'color:#34d399;\'>$2,519.06</div><div class=\'delta\'>56 missions - May 2026</div></div>";
-var dates=[...new Set(vsData.map(function(r){return r.date;}))].sort();
 
-var vsChart=null;
-(function(){
-  var cd=dates;
-  vsChart=new Chart(document.getElementById("vs-chart"),{type:"bar",data:{labels:cd.map(function(d){return fd(d).replace(", 2026","");}),datasets:[{label:"V104 ATL-LHR",data:cd.map(function(d){return(vsData.find(function(r){return r.date===d&&r.ob==="104";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.7)",borderRadius:4},{label:"V110 ATL-MAN",data:cd.map(function(d){return(vsData.find(function(r){return r.date===d&&r.ob==="110";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.35)",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});
-})();
-function renderVS(){
-  var rows=vsData;
-  var h2="",tc=0;
-  rows.forEach(function(r){
-    var bc=r.ob==="110"?"v110":"";tc+=r.cost;
-    var lh=r.leads.map(function(l){return "<span class='chip'>"+l+"</span>";}).join("");
-    h2+="<tr><td>"+fd(r.date)+"</td><td><span class='badge "+bc+"'>V"+r.ob+"</span></td><td><span style='background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;'>Virgin Atlantic</span></td><td class='dim'>"+r.route+"</td><td><div class='leads'>"+lh+"</div></td><td class='r green'>"+fmt(r.cost)+"</td></tr>";
-  });
-  document.getElementById("vs-tbody").innerHTML=h2;
-  document.getElementById("vs-info").textContent=rows.length+" rows";
-  document.getElementById("vs-ft").textContent=fmt(tc);
-}
-renderVS();
-function switchAirline(code){
-  document.querySelectorAll(".atab").forEach(function(t){t.classList.remove("active");});
-  document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active");});
-  event.currentTarget.classList.add("active");
-  document.getElementById("panel-"+code).classList.add("active");
-}
-</script>
 </div>
 </div>
 <div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:#0b0f1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
