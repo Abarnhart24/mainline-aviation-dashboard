@@ -2184,30 +2184,5 @@ renderVSForMonth(vsMonths[vsMonths.length-1]);
 
 </div>
 </div>
-<div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:#0b0f1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <div style="background:#131929;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:48px 44px;width:380px;max-width:90vw;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
-    <div style="width:52px;height:52px;background:#1e3a5f;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px;font-weight:700;color:#60a5fa;letter-spacing:-0.02em;">MA</div>
-    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.2em;color:#64748b;font-weight:600;margin-bottom:6px;">Mainline Aviation</div>
-    <div style="font-size:17px;font-weight:600;color:#e2e8f0;margin-bottom:36px;">Sullivan Rd Missions Dashboard</div>
-    <input type="password" id="pw-input" placeholder="Password" autofocus style="width:100%;box-sizing:border-box;padding:13px 16px;background:#0b0f1a;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;font-size:15px;outline:none;margin-bottom:12px;" onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()" style="width:100%;padding:13px;background:#2563eb;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">Access Dashboard</button>
-    <div id="pw-error" style="color:#f87171;font-size:13px;margin-top:12px;visibility:hidden;">Incorrect password — please try again.</div>
-  </div>
-</div>
-<script>
-(function(){if(sessionStorage.getItem('ma_dash_auth')==='1'){document.getElementById('login-overlay').style.display='none';}})();
-async function doLogin(){
-  const pw=document.getElementById('pw-input').value;
-  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-  const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  if(hex==='976cde1020d3eaa062913df972c6e436e509109e2f68b4e0fea641dbc8595a18'){
-    sessionStorage.setItem('ma_dash_auth','1');
-    document.getElementById('login-overlay').style.display='none';
-  } else {
-    document.getElementById('pw-error').style.visibility='visible';
-    document.getElementById('pw-input').value='';
-    document.getElementById('pw-input').focus();
-  }
-}
-</script>
+
 </body></html>
