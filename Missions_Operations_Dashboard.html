@@ -1422,28 +1422,7 @@ document.addEventListener("DOMContentLoaded", init);
   else{patchSwitch();}
 })();
 </script>
-<script id="avg-flight-kpi">
-(function(){
-  function addFlightKpi(){
-    var k=document.getElementById("vs-kpis");
-    if(!k||document.getElementById("avg-flight"))return;
-    var d=document.createElement("div");
-    d.className="kpi";d.id="avg-flight";
-    d.innerHTML="<div class='label'>Avg Cost / Flight</div><div class='value' style='color:#60a5fa;'>$7,053.38</div><div class='delta'>20 flights - May 2026</div>";
-    k.appendChild(d);
-  }
-  setTimeout(addFlightKpi,150);
-  setTimeout(addFlightKpi,600);
-  setTimeout(addFlightKpi,1200);
-  var obs=new MutationObserver(function(){
-    var old=document.getElementById("avg-flight");
-    if(old)old.remove();
-    setTimeout(addFlightKpi,50);
-  });
-  var kpis=document.getElementById("vs-kpis");
-  if(kpis){obs.observe(kpis,{childList:true});kpis.style.setProperty("grid-template-columns","repeat(5,1fr)","important");}
-})();
-</script>
+
 </body>
 
 <div class="tab-panel" id="panel-financing">
