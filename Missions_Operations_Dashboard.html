@@ -1509,11 +1509,12 @@ tfoot td.r{text-align:right;color:#60a5fa;}
 <!-- Virgin Atlantic Panel -->
 <div class="panel active" id="panel-vs">
   <div id="vs-month-filter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;"><span style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-right:4px;">Month:</span></div>
+<div id="fin-data-stamp" style="font-size:11px;color:#94a3b8;margin-bottom:10px;font-style:italic;padding-left:2px;"></div>
   <div style="display:flex !important;flex-wrap:nowrap !important;gap:8px !important;margin-bottom:24px !important;" id="vs-kpis">
 <div class="kpi"><div class="label">Total Food Cost</div><div class="value" id="fin-total-val">--</div><div class="delta" id="fin-total-delta">May 2026 — V104 + V110</div></div>
 <div class="kpi"><div class="label">V104 - ATL to LHR</div><div class="value" id="fin-v104-val">--</div><div class="delta" id="fin-v104-delta">10 departures</div></div>
 <div class="kpi"><div class="label">V110 - ATL to MAN</div><div class="value" id="fin-v110-val">--</div><div class="delta" id="fin-v110-delta">10 departures</div></div>
-<div class="kpi"><div class="label">Avg Cost / Mission</div><div class="value" id="fin-avg-mission-val" style="color:#34d399;">--</div><div class="delta">56 matched missions</div></div>
+<div class="kpi"><div class="label">Avg Cost / Mission</div><div class="value" id="fin-avg-mission-val" style="color:#34d399;">--</div><div class="delta" id="fin-avg-mission-delta">56 matched missions</div></div>
 <div class="kpi"><div class="label">Avg Cost / Flight</div><div class="value" id="fin-avg-flight-val" style="color:#60a5fa;">--</div><div class="delta" id="fin-avg-flight-delta">-- flights</div></div>
 </div>
   </div>
@@ -1563,7 +1564,7 @@ window.switchAirline=function(code){
   <div class="empty-state">
     <div class="icon">&#9992;</div>
     <div class="msg">No data uploaded for American Airlines</div>
-    <div class="sub">Upload an AA supplier invoice Excel sheet to populate this section</div>
+    <div class="sub">Data expected Q3 2026 · upload an AA supplier invoice to populate this section</div>
   </div>
 </div>
 
@@ -1572,7 +1573,7 @@ window.switchAirline=function(code){
   <div class="empty-state">
     <div class="icon">&#9992;</div>
     <div class="msg">No data uploaded for Ethiopian Airlines</div>
-    <div class="sub">Upload an ET supplier invoice Excel sheet to populate this section</div>
+    <div class="sub">Data expected Q3 2026 · upload an ET supplier invoice to populate this section</div>
   </div>
 </div>
 
@@ -1581,7 +1582,7 @@ window.switchAirline=function(code){
   <div class="empty-state">
     <div class="icon">&#9992;</div>
     <div class="msg">No data uploaded for SAS Scandinavian Airlines</div>
-    <div class="sub">Upload an SK supplier invoice Excel sheet to populate this section</div>
+    <div class="sub">Data expected Q3 2026 · upload an SK supplier invoice to populate this section</div>
   </div>
 </div>
 
@@ -1612,6 +1613,7 @@ var vsAllData=vsRaw.map(function(r){return{date:r[0],ob:r[1],route:r[2],cost:r[3
 var vsMonths=[...new Set(vsAllData.map(function(r){return r.date.substring(0,7);}))].sort();
 (function(){var s=document.createElement("style");s.textContent=".month-pill{background:#131826;border:1px solid rgba(255,255,255,0.08);color:#94a3b8;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}.month-pill:hover{border-color:rgba(255,255,255,0.2);color:#e8eef5;}.month-pill.active{background:rgba(196,30,58,0.15);border-color:rgba(196,30,58,0.5);color:#fca5a5;}";document.head.appendChild(s);})();
 (function(){var container=document.getElementById("vs-month-filter");if(!container)return;vsMonths.forEach(function(m){var d=new Date(m+"-01T12:00:00");var label=d.toLocaleDateString("en-US",{month:"long",year:"numeric"});var btn=document.createElement("button");btn.className="month-pill";btn.dataset.month=m;btn.textContent=label;btn.onclick=function(){document.querySelectorAll(".month-pill").forEach(function(b){b.classList.remove("active");});btn.classList.add("active");renderVSForMonth(m);};container.appendChild(btn);});var pills=container.querySelectorAll(".month-pill");if(pills.length)pills[pills.length-1].classList.add("active");})();
+var vsMonthMissions={"2026-05":56};
 var vsChart=null;
 function renderVSForMonth(monthKey){
   var filtered=vsAllData.filter(function(r){return r.date.startsWith(monthKey);});
@@ -1629,7 +1631,10 @@ function renderVSForMonth(monthKey){
   el=document.getElementById("fin-v104-delta");if(el)el.textContent=v104.length+" departures";
   el=document.getElementById("fin-v110-val");if(el)el.textContent=fmt(v110t);
   el=document.getElementById("fin-v110-delta");if(el)el.textContent=v110.length+" departures";
-  el=document.getElementById("fin-avg-mission-val");if(el)el.textContent=filtered.length?fmt(gt/56):"--";
+  el=document.getElementById("fin-avg-mission-val");var mCount=vsMonthMissions[monthKey]||filtered.length;if(el)el.textContent=filtered.length?fmt(gt/mCount):"--";
+  el=document.getElementById("fin-avg-mission-delta");if(el)el.textContent=mCount+" matched missions";
+  var maxDate=filtered.length?filtered.reduce(function(a,b){return a.date>b.date?a:b;}).date:null;
+  el=document.getElementById("fin-data-stamp");if(el)el.textContent=maxDate?"Data as of "+fd(maxDate):"";
   el=document.getElementById("fin-avg-flight-val");if(el)el.textContent=filtered.length?fmt(gt/filtered.length):"--";
   el=document.getElementById("fin-avg-flight-delta");if(el)el.textContent=filtered.length+" flights — "+mLabel;
   el=document.getElementById("vs-section-title");if(el)el.textContent="Daily Food Cost — "+mLabel;
