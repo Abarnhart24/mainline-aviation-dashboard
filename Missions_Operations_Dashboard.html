@@ -1648,297 +1648,85 @@ document.addEventListener("DOMContentLoaded", init);
     return isNaN(n)?'—':'
 
 </script>
-<div class="tab-panel" id="panel-financing">
-<style id="fin-styles">
-#vs-kpis{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;}
-#vs-kpis .kpi{padding:12px 14px!important;}
-#vs-kpis .kpi .label{font-size:10px!important;margin-bottom:4px!important;}
-#vs-kpis .kpi .value{font-size:17px!important;margin-bottom:2px!important;}
-#vs-kpis .kpi .delta{font-size:11px!important;}
-#panel-financing { padding-top: 0 !important; }
-#vs-kpis { grid-template-columns: repeat(4, 1fr) !important; }
-#vs-fM, #vs-info, #panel-financing .filters, #panel-financing > .filters { display:none !important; }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e1a;color:#e8eef5;padding:24px;}
-.page-title{font-size:20px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
-.page-sub{font-size:13px;color:#64748b;margin-bottom:24px;}
-.airline-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
-.atab{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;background:#131826;}
-.atab:hover{border-color:rgba(255,255,255,0.15);}
-.atab.active{border-color:rgba(255,255,255,0.25);background:#1e2a3a;}
-.atab .dot{width:10px;height:10px;border-radius:50%;}
-.atab .aname{font-size:13px;font-weight:600;color:#e8eef5;}
-.atab .atotal{font-size:12px;color:#64748b;}
-.atab .abadge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;color:#fff;}
-.panel{display:none;}
-.panel.active{display:block;}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;}
-.kpi{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 20px;}
-.kpi .label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px;}
-.kpi .value{font-size:22px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
-.kpi .delta{font-size:12px;color:#64748b;}
-.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#475569;margin:24px 0 12px;}
-.card{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:20px;margin-bottom:16px;}
-h3{font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px;}
-.chart-wrap{height:220px;position:relative;}
-.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
-.filters label{font-size:12px;color:#64748b;font-weight:500;}
-.filters select{background:#0f1623;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8eef5;padding:5px 10px;font-size:12px;outline:none;}
-.info{font-size:12px;color:#64748b;margin-left:auto;}
-.tbl-wrap{border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;background:#131826;}
-thead th.r{text-align:right;}
-tbody tr{border-bottom:1px solid rgba(255,255,255,0.05);}
-tbody tr:hover{background:rgba(255,255,255,0.025);}
-tbody td{padding:10px 14px;vertical-align:middle;}
-tbody td.r{text-align:right;}tbody td.dim{color:#64748b;font-size:12px;}
-tfoot td{padding:10px 14px;font-weight:700;background:rgba(255,255,255,0.04);border-top:2px solid rgba(255,255,255,0.1);}
-tfoot td.r{text-align:right;color:#60a5fa;}
-.badge{display:inline-block;font-family:monospace;background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
-.badge.v110{background:rgba(52,211,153,0.15);color:#34d399;}
-.green{color:#34d399;font-weight:600;}
-.leads{display:flex;flex-wrap:wrap;gap:5px;}
-.chip{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:3px 10px;font-size:12px;color:#cbd5e1;}
-.empty-state{text-align:center;padding:60px 20px;}
-.empty-state .icon{font-size:32px;margin-bottom:12px;opacity:0.3;}
-.empty-state .msg{font-size:15px;font-weight:600;color:#475569;margin-bottom:6px;}
-.empty-state .sub{font-size:13px;color:#334155;}
-</style>
-<div id="fin-content" style="padding:0 0 24px 0;">
-<div class="airline-tabs" style="justify-content:center;">
-  <div class="atab active" onclick="switchAirline('vs')">
-    <div class="dot" style="background:#C41E3A;"></div>
-    <div><div class="aname">Virgin Atlantic</div><div class="atotal" id="vs-total">Loading...</div></div>
-    <span class="abadge" style="background:#C41E3A;">VS</span>
-  </div>
-  <div class="atab" onclick="switchAirline('aa')">
-    <div class="dot" style="background:#0078D7;"></div>
-    <div><div class="aname">American Airlines</div><div class="atotal">No data yet</div></div>
-    <span class="abadge" style="background:#0078D7;">AA</span>
-  </div>
-  <div class="atab" onclick="switchAirline('et')">
-    <div class="dot" style="background:#007A4D;"></div>
-    <div><div class="aname">Ethiopian Airlines</div><div class="atotal">No data yet</div></div>
-    <span class="abadge" style="background:#007A4D;">ET</span>
-  </div>
-  <div class="atab" onclick="switchAirline('sk')">
-    <div class="dot" style="background:#003F87;"></div>
-    <div><div class="aname">SAS Scandinavian</div><div class="atotal">No data yet</div></div>
-    <span class="abadge" style="background:#003F87;">SK</span>
-  </div>
-</div>
-
-<!-- Virgin Atlantic Panel -->
-<div class="panel active" id="panel-vs">
-  <div id="vs-month-filter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;"><span style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-right:4px;">Month:</span></div>
-<div id="fin-data-stamp" style="font-size:11px;color:#94a3b8;margin-bottom:10px;font-style:italic;padding-left:2px;"></div>
-  <div style="display:flex !important;flex-wrap:nowrap !important;gap:8px !important;margin-bottom:24px !important;" id="vs-kpis">
-<div class="kpi"><div class="label">Total Food Cost</div><div class="value" id="fin-total-val">--</div><div class="delta" id="fin-total-delta">May 2026 — V104 + V110</div></div>
-<div class="kpi"><div class="label">V104 - ATL to LHR</div><div class="value" id="fin-v104-val">--</div><div class="delta" id="fin-v104-delta">10 departures</div></div>
-<div class="kpi"><div class="label">V110 - ATL to MAN</div><div class="value" id="fin-v110-val">--</div><div class="delta" id="fin-v110-delta">10 departures</div></div>
-<div class="kpi"><div class="label">Avg Cost / Mission</div><div class="value" id="fin-avg-mission-val" style="color:#34d399;">--</div><div class="delta" id="fin-avg-mission-delta">56 matched missions</div></div>
-<div class="kpi"><div class="label">Avg Cost / Flight</div><div class="value" id="fin-avg-flight-val" style="color:#60a5fa;">--</div><div class="delta" id="fin-avg-flight-delta">-- flights</div></div>
-</div>
-  </div>
-  
-  <div id="vs-data">
-<div class="section-title" id="vs-section-title">Daily Food Cost &mdash; May 2026</div>
-  <div class="card"><h3>Food Cost by Flight (USD)</h3><div class="chart-wrap"><canvas id="vs-chart"></canvas></div></div>
-  <div class="section-title">Cost Breakdown &mdash; All 20 Flights</div>
-  
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>Date</th><th>Flight</th><th>Airline</th><th>Route</th><th>Team Lead(s)</th><th class="r">Food Cost</th></tr></thead>
-    <tbody id="vs-tbody"></tbody>
-    <tfoot><tr><td colspan="5">Total</td><td class="r" id="vs-ft"></td></tr></tfoot>
-  </table></div>
-</div>
-  
-
 <script id="fin-data">
-var AA_DATA=[{"date": "2026-01-01", "invoice": "AAATL020526-C1A-DEC", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.05.26 invoice - A-DEC", "cost": 778.47}, {"date": "2026-01-01", "invoice": "AAATL021226-C1A-DEC", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.12.26 invoice - A-DEC", "cost": 3874.9}, {"date": "2026-01-04", "invoice": "AAATL010826-C1B-JAN", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.08.26 invoice B-JAN", "cost": 8812.04}, {"date": "2026-01-04", "invoice": "AAATL010826-C9B-JAN", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.08.26 invoice B-JAN", "cost": 2715.5}, {"date": "2026-01-11", "invoice": "AAATL011526-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.15.26 invoice", "cost": 10225.35}, {"date": "2026-01-11", "invoice": "AAATL011526-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.15.26 invoice", "cost": 6868.61}, {"date": "2026-01-18", "invoice": "AAATL012226-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.22.26 invoice", "cost": 9901.81}, {"date": "2026-01-18", "invoice": "AAATL012226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.22.26 invoice", "cost": 6868.61}, {"date": "2026-01-25", "invoice": "AAATL012926-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.29.26 invoice", "cost": 10491.04}, {"date": "2026-01-25", "invoice": "AAATL012926-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.29.26 invoice", "cost": 5430.99}, {"date": "2026-01-31", "invoice": "AAATL020526-C1B-JAN", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.05.26 invoice - B-JAN", "cost": 8646.9}, {"date": "2026-01-31", "invoice": "AAATL021226-C1B-JAN", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.12.26 invoice - B-JAN", "cost": 2494.72}, {"date": "2026-01-31", "invoice": "AAATL020526-C9A-JAN", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.05.26 invoice A-JAN", "cost": 4312.85}, {"date": "2026-02-01", "invoice": "AAATL020526-C1C-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.05.26 invoice - C-FEB", "cost": 1789.0}, {"date": "2026-02-01", "invoice": "AAATL020526-C9B-FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.05.26 invoice B-FEB", "cost": 958.41}, {"date": "2026-02-01", "invoice": "AAATL022626-C9A-JAN", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.26.26 invoice A-JAN", "cost": 159.74}, {"date": "2026-02-08", "invoice": "AAATL021226-C1C-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.12.26 invoice - C-FEB", "cost": 9185.69}, {"date": "2026-02-08", "invoice": "AAATL021226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.12.26 invoice", "cost": 6868.61}, {"date": "2026-02-15", "invoice": "AAATL021926-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.19.26 invoice", "cost": 12028.25}, {"date": "2026-02-15", "invoice": "AAATL021926-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.19.26 invoice", "cost": 6069.93}, {"date": "2026-02-22", "invoice": "AAATL022626-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.26.26 invoice", "cost": 14530.66}, {"date": "2026-02-22", "invoice": "AAATL022626-C9B-FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.26.26 invoice B-FEB", "cost": 5750.46}, {"date": "2026-02-28", "invoice": "AAATL030526-C1A-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.05.26 invoice A-FEB", "cost": 12518.22}, {"date": "2026-02-28", "invoice": "AAATL030526-C9A-FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.05.26 invoice A-FEB", "cost": 4792.05}, {"date": "2026-03-01", "invoice": "AAATL030526-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.05.26 invoice B-MAR", "cost": 1497.44}, {"date": "2026-03-01", "invoice": "AAATL030526-C9B-MAR", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.05.26 invoice B-MAR", "cost": 958.41}, {"date": "2026-03-01", "invoice": "AAATL031226-C1A-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.12.26 invoice A-FEB", "cost": 2310.89}, {"date": "2026-03-01", "invoice": "AAATL031926-C1A-JAN_FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.19.26 invoice A-JAN_FEB", "cost": 347.8}, {"date": "2026-03-01", "invoice": "AAATL032626-C1A-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.26.26 invoice A-FEB", "cost": 1402.6}, {"date": "2026-03-01", "invoice": "AAATL031926-C9A-JAN_FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.19.26 invoice A-JAN_FEB", "cost": 85.54}, {"date": "2026-03-08", "invoice": "AAATL031226-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.12.26 invoice B-MAR", "cost": 15220.61}, {"date": "2026-03-08", "invoice": "AAATL031226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.12.26 invoice", "cost": 5590.73}, {"date": "2026-03-15", "invoice": "AAATL031926-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.19.26 invoice B-MAR", "cost": 15583.72}, {"date": "2026-03-15", "invoice": "AAATL031926-C9B-MAR", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.15.26 invoice B-MAR", "cost": 5291.16}, {"date": "2026-03-22", "invoice": "AAATL032626-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.26.26 invoice B-MAR", "cost": 16447.14}, {"date": "2026-03-22", "invoice": "AAATL032626-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.26.26 invoice", "cost": 5120.1}, {"date": "2026-03-29", "invoice": "AAATL040226-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.02.26 invoice", "cost": 16230.78}, {"date": "2026-03-29", "invoice": "AAATL040226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.02.26 invoice", "cost": 5280.1}, {"date": "2026-03-31", "invoice": "AAATL040926-C1A-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.09.26 invoice A-MAR", "cost": 4412.13}, {"date": "2026-03-31", "invoice": "AAATL040926-C9A-MAR", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.09.26 invoice A-MAR", "cost": 1440.03}, {"date": "2026-03-31", "invoice": "AAATL041626-C1A-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.16.26 invoice A-MAR", "cost": 2994.77}, {"date": "2026-04-05", "invoice": "AAATL040926-C1B-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.09.26 invoice B-APR", "cost": 12006.17}, {"date": "2026-04-05", "invoice": "AAATL040926-C9B-APR", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.09.26 invoice B-APR", "cost": 4000.08}, {"date": "2026-04-12", "invoice": "AAATL041626-C1B-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.16.26 invoice B-APR", "cost": 17361.91}, {"date": "2026-04-12", "invoice": "AAATL041626-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.16.26 invoice", "cost": 6975.23}, {"date": "2026-04-19", "invoice": "AAATL042326-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.23.26 invoice", "cost": 15496.02}, {"date": "2026-04-19", "invoice": "AAATL042326-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.23.26 invoice", "cost": 7390.9}, {"date": "2026-04-26", "invoice": "AAATL043026-C1B-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.30.26 invoice B-APR", "cost": 16066.06}, {"date": "2026-04-26", "invoice": "AAATL043026-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.30.26 invoice", "cost": 7390.9}, {"date": "2026-04-30", "invoice": "AAATL050726-C1A-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 05.07.26 invoice A-APR", "cost": 9202.35}, {"date": "2026-04-30", "invoice": "AAATL050726-C9A-APR", "concourse": "C9", "desc": "AA ATL-C9 F&S 05.07.26 invoice A-APR", "cost": 4031.4}, {"date": "2026-05-03", "invoice": "AAATL050726-C1B-MAY", "concourse": "C1", "desc": "AA ATL-C1 F&S 05.07.26 invoice B-MAY", "cost": 7134.82}, {"date": "2026-05-03", "invoice": "AAATL050726-C9B-MAY", "concourse": "C9", "desc": "AA ATL-C9 F&S 05.07.26 invoice B-MAY", "cost": 3023.55}];
-var ET_DATA=[{"date": "2025-12-17", "flight": "ET509", "route": "ATL-ADD", "cost": 7526.95}, {"date": "2025-12-19", "flight": "ET509", "route": "ATL-ADD", "cost": 7658.2}, {"date": "2025-12-21", "flight": "ET509", "route": "ATL-ADD", "cost": 7023.05}, {"date": "2025-12-22", "flight": "ET509", "route": "ATL-ADD", "cost": 8726.33}, {"date": "2025-12-24", "flight": "ET509", "route": "ATL-ADD", "cost": 7414.51}, {"date": "2025-12-26", "flight": "ET509", "route": "ATL-ADD", "cost": 7392.45}, {"date": "2025-12-28", "flight": "ET509", "route": "ATL-ADD", "cost": 7518.26}, {"date": "2025-12-29", "flight": "ET509", "route": "ATL-ADD", "cost": 14023.68}, {"date": "2025-12-31", "flight": "ET509", "route": "ATL-ADD", "cost": 6823.57}, {"date": "2026-01-02", "flight": "ET509", "route": "ATL-ADD", "cost": 3935.13}, {"date": "2026-01-04", "flight": "ET509", "route": "ATL-ADD", "cost": 5810.31}, {"date": "2026-01-05", "flight": "ET509", "route": "ATL-ADD", "cost": 5693.54}, {"date": "2026-01-07", "flight": "ET509", "route": "ATL-ADD", "cost": 3722.9}, {"date": "2026-01-09", "flight": "ET509", "route": "ATL-ADD", "cost": 3346.77}, {"date": "2026-01-11", "flight": "ET509", "route": "ATL-ADD", "cost": 6280.89}, {"date": "2026-01-12", "flight": "ET509", "route": "ATL-ADD", "cost": 6752.07}, {"date": "2026-01-16", "flight": "ET509", "route": "ATL-ADD", "cost": 6162.45}, {"date": "2026-01-19", "flight": "ET509", "route": "ATL-ADD", "cost": 4919.55}, {"date": "2026-01-21", "flight": "ET509", "route": "ATL-ADD", "cost": 4787.6}, {"date": "2026-01-23", "flight": "ET509", "route": "ATL-ADD", "cost": 3683.32}, {"date": "2026-01-26", "flight": "ET509", "route": "ATL-ADD", "cost": 3483.87}, {"date": "2026-01-28", "flight": "ET509", "route": "ATL-ADD", "cost": 7216.75}, {"date": "2026-02-02", "flight": "ET509", "route": "ATL-ADD", "cost": 5898.81}];
-var SK_DATA=[{"date": "2025-12-01", "flight": "SK-7713478", "route": "ATL-CPH", "cost": 6600.5}, {"date": "2025-12-04", "flight": "SK-7714672", "route": "ATL-CPH", "cost": 6465.06}, {"date": "2025-12-05", "flight": "SK-7715102", "route": "ATL-CPH", "cost": 6337.6}, {"date": "2025-12-06", "flight": "SK-7715476", "route": "ATL-CPH", "cost": 6507.3}, {"date": "2025-12-07", "flight": "SK-7715890", "route": "ATL-CPH", "cost": 5829.94}, {"date": "2025-12-08", "flight": "SK-7716283", "route": "ATL-CPH", "cost": 6332.99}, {"date": "2025-12-11", "flight": "SK-7717401", "route": "ATL-CPH", "cost": 6536.88}, {"date": "2025-12-12", "flight": "SK-7717791", "route": "ATL-CPH", "cost": 6278.44}, {"date": "2025-12-13", "flight": "SK-7718161", "route": "ATL-CPH", "cost": 6570.39}, {"date": "2025-12-14", "flight": "SK-7718554", "route": "ATL-CPH", "cost": 6528.23}, {"date": "2025-12-15", "flight": "SK-7719457", "route": "ATL-CPH", "cost": 6630.69}, {"date": "2025-12-19", "flight": "SK-7720655", "route": "ATL-CPH", "cost": 6656.81}, {"date": "2025-12-21", "flight": "SK-7721403", "route": "ATL-CPH", "cost": 6689.03}, {"date": "2025-12-26", "flight": "SK-7722883", "route": "ATL-CPH", "cost": 6720.64}, {"date": "2025-12-28", "flight": "SK-7723607", "route": "ATL-CPH", "cost": 6132.14}, {"date": "2026-01-02", "flight": "SK-7725141", "route": "ATL-CPH", "cost": 6686.38}, {"date": "2026-01-03", "flight": "SK-7725550", "route": "ATL-CPH", "cost": 6662.74}, {"date": "2026-01-04", "flight": "SK-7725955", "route": "ATL-CPH", "cost": 6599.58}, {"date": "2026-01-09", "flight": "SK-7727396", "route": "ATL-CPH", "cost": 6431.6}, {"date": "2026-01-10", "flight": "SK-7727397", "route": "ATL-CPH", "cost": 6326.58}, {"date": "2026-01-12", "flight": "SK-7728276", "route": "ATL-CPH", "cost": 4915.48}, {"date": "2026-01-15", "flight": "SK-7730126", "route": "ATL-CPH", "cost": 6214.02}, {"date": "2026-01-16", "flight": "SK-7730511", "route": "ATL-CPH", "cost": 6603.7}, {"date": "2026-01-17", "flight": "SK-7730892", "route": "ATL-CPH", "cost": 5969.89}, {"date": "2026-01-19", "flight": "SK-7730893", "route": "ATL-CPH", "cost": 3677.44}, {"date": "2026-01-22", "flight": "SK-7732766", "route": "ATL-CPH", "cost": 5765.93}, {"date": "2026-01-23", "flight": "SK-7732764", "route": "ATL-CPH", "cost": 5165.26}, {"date": "2026-01-26", "flight": "SK-7733586", "route": "ATL-CPH", "cost": 4582.55}, {"date": "2026-01-29", "flight": "SK-7735643", "route": "ATL-CPH", "cost": 6023.81}, {"date": "2026-01-30", "flight": "SK-7736058", "route": "ATL-CPH", "cost": 5208.58}, {"date": "2026-01-31", "flight": "SK-7736059", "route": "ATL-CPH", "cost": 5302.95}, {"date": "2026-02-02", "flight": "SK-7737370", "route": "ATL-CPH", "cost": 3669.54}, {"date": "2026-02-05", "flight": "SK-7738631", "route": "ATL-CPH", "cost": 5301.55}, {"date": "2026-02-06", "flight": "SK-7738632", "route": "ATL-CPH", "cost": 5148.96}, {"date": "2026-02-07", "flight": "SK-7738633", "route": "ATL-CPH", "cost": 5121.37}, {"date": "2026-02-09", "flight": "SK-7740422", "route": "ATL-CPH", "cost": 4856.55}, {"date": "2026-02-12", "flight": "SK-7741720", "route": "ATL-CPH", "cost": 6395.32}, {"date": "2026-02-13", "flight": "SK-7742153", "route": "ATL-CPH", "cost": 6500.02}, {"date": "2026-02-14", "flight": "SK-7742600", "route": "ATL-CPH", "cost": 6343.86}, {"date": "2026-02-16", "flight": "SK-7743490", "route": "ATL-CPH", "cost": 5950.4}, {"date": "2026-02-19", "flight": "SK-7744745", "route": "ATL-CPH", "cost": 5332.12}, {"date": "2026-02-20", "flight": "SK-7745147", "route": "ATL-CPH", "cost": 5764.93}, {"date": "2026-02-21", "flight": "SK-7745560", "route": "ATL-CPH", "cost": 6328.88}, {"date": "2026-02-23", "flight": "SK-7746416", "route": "ATL-CPH", "cost": 6094.09}, {"date": "2026-02-26", "flight": "SK-7747664", "route": "ATL-CPH", "cost": 6365.93}, {"date": "2026-02-27", "flight": "SK-7748115", "route": "ATL-CPH", "cost": 6389.56}, {"date": "2026-02-28", "flight": "SK-7748590", "route": "ATL-CPH", "cost": 6350.16}, {"date": "2026-03-02", "flight": "SK-7749524", "route": "ATL-CPH", "cost": 5578.57}, {"date": "2026-03-05", "flight": "SK-7750794", "route": "ATL-CPH", "cost": 6289.49}, {"date": "2026-03-07", "flight": "SK-7751228", "route": "ATL-CPH", "cost": 5937.04}, {"date": "2026-03-08", "flight": "SK-7752147", "route": "ATL-CPH", "cost": 5996.52}, {"date": "2026-03-09", "flight": "SK-7752616", "route": "ATL-CPH", "cost": 5516.6}, {"date": "2026-03-12", "flight": "SK-7753071", "route": "ATL-CPH", "cost": 6261.15}, {"date": "2026-03-14", "flight": "SK-7754273", "route": "ATL-CPH", "cost": 6310.96}, {"date": "2026-03-15", "flight": "SK-7755195", "route": "ATL-CPH", "cost": 6202.3}, {"date": "2026-03-16", "flight": "SK-7755196", "route": "ATL-CPH", "cost": 6080.5}, {"date": "2026-03-19", "flight": "SK-7756150", "route": "ATL-CPH", "cost": 6063.38}, {"date": "2026-03-20", "flight": "SK-7757369", "route": "ATL-CPH", "cost": 6374.16}, {"date": "2026-03-22", "flight": "SK-7757824", "route": "ATL-CPH", "cost": 5654.45}, {"date": "2026-03-23", "flight": "SK-7758266", "route": "ATL-CPH", "cost": 6192.42}, {"date": "2026-03-26", "flight": "SK-7759158", "route": "ATL-CPH", "cost": 6133.77}, {"date": "2026-03-28", "flight": "SK-7760888", "route": "ATL-CPH", "cost": 5283.15}, {"date": "2026-03-29", "flight": "SK-7760437", "route": "ATL-CPH", "cost": 4050.07}, {"date": "2026-03-31", "flight": "SK-7761329", "route": "ATL-CPH", "cost": 5744.29}, {"date": "2026-04-04", "flight": "SK-7762943", "route": "ATL-CPH", "cost": 6203.47}, {"date": "2026-04-05", "flight": "SK-7763804", "route": "ATL-CPH", "cost": 6098.9}, {"date": "2026-04-07", "flight": "SK-7765313", "route": "ATL-CPH", "cost": 6178.02}, {"date": "2026-04-09", "flight": "SK-7766166", "route": "ATL-CPH", "cost": 6096.59}, {"date": "2026-04-11", "flight": "SK-7766167", "route": "ATL-CPH", "cost": 6214.52}, {"date": "2026-04-12", "flight": "SK-7767135", "route": "ATL-CPH", "cost": 5226.81}, {"date": "2026-04-14", "flight": "SK-7768550", "route": "ATL-CPH", "cost": 6458.12}, {"date": "2026-04-16", "flight": "SK-7769386", "route": "ATL-CPH", "cost": 6363.31}, {"date": "2026-04-18", "flight": "SK-7769385", "route": "ATL-CPH", "cost": 6318.66}, {"date": "2026-04-19", "flight": "SK-7770334", "route": "ATL-CPH", "cost": 6247.59}, {"date": "2026-04-21", "flight": "SK-7770779", "route": "ATL-CPH", "cost": 6246.05}, {"date": "2026-04-23", "flight": "SK-7772560", "route": "ATL-CPH", "cost": 6247.2}, {"date": "2026-04-25", "flight": "SK-7772561", "route": "ATL-CPH", "cost": 6272.8}, {"date": "2026-04-26", "flight": "SK-7773034", "route": "ATL-CPH", "cost": 6337.34}, {"date": "2026-04-28", "flight": "SK-7774003", "route": "ATL-CPH", "cost": 6387.82}, {"date": "2026-04-30", "flight": "SK-7775721", "route": "ATL-CPH", "cost": 6283.92}];
+var VS_DATA=[{"date": "2026-01", "food": 229644.41, "service": 140927.3, "total": 370571.71}, {"date": "2026-02", "food": 186972.31, "service": 114949.32, "total": 301921.63}, {"date": "2026-03", "food": 241979.11, "service": 127316.08, "total": 369295.19}, {"date": "2026-04", "food": 285489.64, "service": 142136.08, "total": 427625.72}, {"date": "2026-05", "food": 302760.27, "service": 149155.53, "total": 451915.8}];
+var AA_DATA=[{"date": "2026-01-01", "food": 4653.37, "service": 0, "total": 4653.37}, {"date": "2026-01-04", "food": 1725.76, "service": 9801.78, "total": 11527.54}, {"date": "2026-01-11", "food": 2240.11, "service": 14853.85, "total": 17093.96}, {"date": "2026-01-18", "food": 2327.43, "service": 14442.99, "total": 16770.42}, {"date": "2026-01-25", "food": 2385.76, "service": 13536.27, "total": 15922.03}, {"date": "2026-01-31", "food": 6246.17, "service": 9208.3, "total": 15454.47}, {"date": "2026-02-01", "food": 528.47, "service": 2378.68, "total": 2907.15}, {"date": "2026-02-08", "food": 2453.21, "service": 13601.09, "total": 16054.3}, {"date": "2026-02-15", "food": 2659.18, "service": 15439.0, "total": 18098.18}, {"date": "2026-02-22", "food": 2884.78, "service": 17396.34, "total": 20281.12}, {"date": "2026-02-28", "food": 2452.76, "service": 14857.51, "total": 17310.27}, {"date": "2026-03-01", "food": 4485.91, "service": 1791.77, "total": 6277.68}, {"date": "2026-03-08", "food": 3881.66, "service": 16929.68, "total": 20811.34}, {"date": "2026-03-15", "food": 4797.89, "service": 16076.99, "total": 20874.88}, {"date": "2026-03-22", "food": 5421.1, "service": 16146.14, "total": 21567.24}, {"date": "2026-03-29", "food": 4673.37, "service": 16837.51, "total": 21510.88}, {"date": "2026-03-31", "food": 4041.49, "service": 4805.44, "total": 8846.93}, {"date": "2026-04-01", "food": 0, "service": -1325.0, "total": -1325.0}, {"date": "2026-04-05", "food": 3914.46, "service": 12091.79, "total": 16006.25}, {"date": "2026-04-12", "food": 6730.62, "service": 17606.52, "total": 24337.14}, {"date": "2026-04-19", "food": 4342.34, "service": 18544.58, "total": 22886.92}, {"date": "2026-04-26", "food": 4651.73, "service": 18805.23, "total": 23456.96}, {"date": "2026-04-30", "food": 2522.48, "service": 10711.27, "total": 13233.75}, {"date": "2026-05-03", "food": 1890.43, "service": 8267.94, "total": 10158.37}];
+var ET_DATA=[{"date": "2026-01-08", "food": 63302.84, "service": 5535.0, "total": 68837.84}, {"date": "2026-01-19", "food": 35275.77, "service": 4920.0, "total": 40195.77}, {"date": "2026-02-04", "food": 26563.54, "service": 4305.0, "total": 30868.54}, {"date": "2026-02-23", "food": 5283.81, "service": 615.0, "total": 5898.81}];
+var SK_DATA=[{"date": "2026-01-07", "food": 85416.64, "service": 11400.0, "total": 96816.64}, {"date": "2026-02-09", "food": 79976.49, "service": 12160.0, "total": 92136.49}, {"date": "2026-03-11", "food": 79753.24, "service": 12160.0, "total": 91913.24}, {"date": "2026-04-08", "food": 86748.82, "service": 12920.0, "total": 99668.82}, {"date": "2026-05-11", "food": 87021.12, "service": 12160.0, "total": 99181.12}];
 
 function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
-function fds(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});}
-function buildChart(id,labels,datasets,color){
+function fdLabel(s){
+  if(s.length===7){var d=new Date(s+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"short",year:"numeric"});}
+  var d=new Date(s+"T12:00:00");return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+}
+function fdFull(s){
+  var d=new Date((s.length===7?s+"-01":s)+"T12:00:00");
+  return s.length===7?d.toLocaleDateString("en-US",{month:"long",year:"numeric"}):d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+}
+
+function buildSplitChart(id,labels,foodData,svcData){
   if(charts[id])charts[id].destroy();
-  charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b",maxTicksLimit:14},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});
-}
-
-function renderVS(){
-  var fmo=document.getElementById("vs-fM").value;
-  var ffl=document.getElementById("vs-fF").value;
-  var rows=VS_DATA.filter(r=>(!fmo||r.date.startsWith(fmo))&&(!ffl||r.flight===ffl));
-  var h="",tc=0;
-  rows.forEach(r=>{tc+=r.cost;var bc=r.flight==="V110"?"rgba(196,30,58,0.15)":"rgba(196,30,58,0.25)";h+=`<tr><td>${fd(r.date)}</td><td><span style="background:${bc};color:#fca5a5;font-family:monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">${r.flight}</span></td><td class="dim">${r.route}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
-  document.getElementById("vs-tbody").innerHTML=h;
-  document.getElementById("vs-info").textContent=rows.length+" rows";
-  document.getElementById("vs-ft").textContent=fmt(tc);
-  var fv=VS_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
-  var dates=[...new Set(fv.map(r=>r.date))].sort();
-  buildChart("vs-chart",dates.map(fds),[
-    {label:"V104 ATL-LHR",data:dates.map(d=>fv.filter(r=>r.date===d&&r.flight==="V104").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(196,30,58,0.75)",borderRadius:3},
-    {label:"V110 ATL-MAN",data:dates.map(d=>fv.filter(r=>r.date===d&&r.flight==="V110").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(196,30,58,0.35)",borderRadius:3}
-  ]);
-}
-
-function renderAA(){
-  var fmo=document.getElementById("aa-fM").value;
-  var fco=document.getElementById("aa-fC").value;
-  var rows=AA_DATA.filter(r=>(!fmo||r.date.startsWith(fmo))&&(!fco||r.concourse===fco));
-  var h="",tc=0;
-  rows.forEach(r=>{tc+=r.cost;var bg=r.concourse==="C1"?"rgba(0,120,215,0.2)":"rgba(0,120,215,0.1)";h+=`<tr><td>${fd(r.date)}</td><td class="dim" style="font-family:monospace;font-size:11px;">${r.invoice}</td><td><span style="background:${bg};color:#60a5fa;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">${r.concourse}</span></td><td class="dim">${r.desc}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
-  document.getElementById("aa-tbody").innerHTML=h;
-  document.getElementById("aa-info").textContent=rows.length+" invoices";
-  document.getElementById("aa-ft").textContent=fmt(tc);
-  var fa=AA_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
-  var dates=[...new Set(fa.map(r=>r.date))].sort();
-  buildChart("aa-chart",dates.map(fds),[
-    {label:"Concourse C1",data:dates.map(d=>fa.filter(r=>r.date===d&&r.concourse==="C1").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(0,120,215,0.7)",borderRadius:3},
-    {label:"Concourse C9",data:dates.map(d=>fa.filter(r=>r.date===d&&r.concourse==="C9").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(0,120,215,0.3)",borderRadius:3}
-  ]);
-}
-
-function renderET(){
-  var fmo=document.getElementById("et-fM").value;
-  var rows=ET_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
-  var h="",tc=0;
-  rows.forEach(r=>{tc+=r.cost;h+=`<tr><td>${fd(r.date)}</td><td class="dim">${r.flight}</td><td class="dim">${r.route}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
-  document.getElementById("et-tbody").innerHTML=h;
-  document.getElementById("et-info").textContent=rows.length+" services";
-  document.getElementById("et-ft").textContent=fmt(tc);
-  buildChart("et-chart",rows.map(r=>fds(r.date)),[
-    {label:"ET ATL-ADD",data:rows.map(r=>r.cost),backgroundColor:"rgba(0,122,77,0.7)",borderRadius:3}
-  ]);
-}
-
-function renderSK(){
-  var fmo=document.getElementById("sk-fM").value;
-  var rows=SK_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
-  var h="",tc=0;
-  rows.forEach(r=>{tc+=r.cost;h+=`<tr><td>${fd(r.date)}</td><td class="dim" style="font-family:monospace;font-size:11px;">${r.flight}</td><td class="dim">${r.route}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
-  document.getElementById("sk-tbody").innerHTML=h;
-  document.getElementById("sk-info").textContent=rows.length+" flights";
-  document.getElementById("sk-ft").textContent=fmt(tc);
-  buildChart("sk-chart",rows.map(r=>fds(r.date)),[
-    {label:"SK ATL-CPH",data:rows.map(r=>r.cost),backgroundColor:"rgba(0,63,135,0.8)",borderRadius:3}
-  ]);
-}
-
-</script>
-<script id="vs-override">
-window.switchAirline=function(code){
-  document.querySelectorAll(".atab").forEach(function(t){t.classList.remove("active");});
-  document.querySelectorAll("#panel-financing .panel").forEach(function(p){p.classList.remove("active");});
-  var activePanel=document.getElementById("panel-"+code);
-  if(activePanel)activePanel.classList.add("active");
-  var vsData=document.getElementById("vs-data");
-  if(vsData)vsData.style.display=code==="vs"?"":"none";
-  document.querySelectorAll(".atab").forEach(function(t){
-    if(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1)t.classList.add("active");
-  });
-  // Destroy existing chart and re-render so Chart.js gets real canvas dimensions
-  if(window.charts && window.charts[code+"-chart"]){
-    window.charts[code+"-chart"].destroy();
-    delete window.charts[code+"-chart"];
-  }
-  if(code==="aa"&&typeof renderAA==="function") renderAA();
-  if(code==="et"&&typeof renderET==="function") renderET();
-  if(code==="sk"&&typeof renderSK==="function") renderSK();
-};
-// Hook switchTab so financing tab always re-shows the active airline panel
-(function(){
-  var _orig=window.switchTab;
-  if(typeof _orig==="function"){
-    window.switchTab=function(name){
-      _orig(name);
-      if(name==="financing"){
-        var active=document.querySelector("#panel-financing .atab.active");
-        var code=active?(active.getAttribute("onclick")||"").replace(/.*'([^']+)'.*/,"$1"):"vs";
-        window.switchAirline(code||"vs");
+  var totals=foodData.map(function(f,i){return f+svcData[i];});
+  var avg=totals.reduce(function(s,v){return s+v;},0)/totals.length;
+  charts[id]=new Chart(document.getElementById(id),{
+    type:"bar",
+    data:{
+      labels:labels,
+      datasets:[
+        {label:"Food Revenue",data:foodData,backgroundColor:"rgba(52,211,153,0.82)",borderRadius:3,stack:"rev"},
+        {label:"Service Revenue",data:svcData,backgroundColor:"rgba(96,165,250,0.82)",borderRadius:3,stack:"rev"},
+        {label:"Avg Total",data:labels.map(function(){return avg;}),type:"line",borderColor:"rgba(251,191,36,0.9)",borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false,tension:0}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:"#94a3b8",boxWidth:12,padding:16}},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},
+        y:{stacked:true,ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}
       }
-    };
-  }
-})();
-</script>
-<!-- American Airlines Panel -->
-
-
-
-<!-- Ethiopian Airlines Panel -->
-
-
-<!-- SAS Panel -->
-
-
-<script>
-var vsRaw=[["2026-05-01","104","ATL-LHR",8549.55,["Bobbie Jackson III","Gabriel Silva Mane"]],
-  ["2026-05-01","110","ATL-MAN",6097.81,["Maurice Smith","Christian Lawson"]],
-  ["2026-05-02","104","ATL-LHR",7696.54,["Abubakarr Sessay","Christian Lawson"]],
-  ["2026-05-02","110","ATL-MAN",5747.35,["Bobbie Jackson III","Maurice Smith"]],
-  ["2026-05-03","104","ATL-LHR",8390.95,["Bobbie Jackson III","Claudette St. Juste"]],
-  ["2026-05-03","110","ATL-MAN",6279.28,["Gabriel Silva Mane"]],
-  ["2026-05-04","104","ATL-LHR",8300.94,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-04","110","ATL-MAN",6396.47,["Bobbie Jackson III","Issa Camara"]],
-  ["2026-05-05","104","ATL-LHR",7652.39,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-05","110","ATL-MAN",6132.13,["Christian Lawson"]],
-  ["2026-05-06","104","ATL-LHR",7356.35,["Christian Lawson","Tecari Brown"]],
-  ["2026-05-06","110","ATL-MAN",5658.77,["Claudette St. Juste","Abdou Diakhate"]],
-  ["2026-05-07","104","ATL-LHR",7721.96,["Christian Lawson","Abdou Diakhate"]],
-  ["2026-05-07","110","ATL-MAN",5991.99,["Bobbie Jackson III","Abdou Diakhate"]],
-  ["2026-05-08","104","ATL-LHR",8131.25,["Gabriel Silva Mane","Maurice Smith"]],
-  ["2026-05-08","110","ATL-MAN",6033.51,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-09","104","ATL-LHR",8219.44,["Maurice Smith","Gabriel Silva Mane"]],
-  ["2026-05-09","110","ATL-MAN",6430.59,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-10","104","ATL-LHR",8233.1,["Gabriel Silva Mane","Rachel Lester"]],
-  ["2026-05-10","110","ATL-MAN",6047.14,["Claudette St. Juste","Maurice Smith"]]];
-function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
-var vsAllData=vsRaw.map(function(r){return{date:r[0],ob:r[1],route:r[2],cost:r[3],leads:r[4]};});
-var vsMonths=[...new Set(vsAllData.map(function(r){return r.date.substring(0,7);}))].sort();
-(function(){var s=document.createElement("style");s.textContent=".month-pill{background:#131826;border:1px solid rgba(255,255,255,0.08);color:#94a3b8;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}.month-pill:hover{border-color:rgba(255,255,255,0.2);color:#e8eef5;}.month-pill.active{background:rgba(196,30,58,0.15);border-color:rgba(196,30,58,0.5);color:#fca5a5;}";document.head.appendChild(s);})();
-(function(){var container=document.getElementById("vs-month-filter");if(!container)return;container.querySelectorAll('.month-pill').forEach(function(b){b.remove();});vsMonths.forEach(function(m){var d=new Date(m+"-01T12:00:00");var label=d.toLocaleDateString("en-US",{month:"long",year:"numeric"});var btn=document.createElement("button");btn.className="month-pill";btn.dataset.month=m;btn.textContent=label;btn.onclick=function(){document.querySelectorAll(".month-pill").forEach(function(b){b.classList.remove("active");});btn.classList.add("active");renderVSForMonth(m);};container.appendChild(btn);});var pills=container.querySelectorAll(".month-pill");if(pills.length)pills[pills.length-1].classList.add("active");})();
-var vsMonthMissions={"2026-05":56};
-var vsChart=null;
-function renderVSForMonth(monthKey){
-  var filtered=vsAllData.filter(function(r){return r.date.startsWith(monthKey);});
-  var gt=filtered.reduce(function(s,r){return s+r.cost;},0);
-  var v104=filtered.filter(function(r){return r.ob==="104";});
-  var v110=filtered.filter(function(r){return r.ob==="110";});
-  var v104t=v104.reduce(function(s,r){return s+r.cost;},0);
-  var v110t=v110.reduce(function(s,r){return s+r.cost;},0);
-  var yr=monthKey.substring(0,4);
-  var mLabel=new Date(monthKey+"-01T12:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"});
-  var el;
-  el=document.getElementById("fin-total-val");if(el)el.textContent=fmt(gt);
-  el=document.getElementById("fin-total-delta");if(el)el.textContent=mLabel+" — V104 + V110";
-  el=document.getElementById("fin-v104-val");if(el)el.textContent=fmt(v104t);
-  el=document.getElementById("fin-v104-delta");if(el)el.textContent=v104.length+" departures";
-  el=document.getElementById("fin-v110-val");if(el)el.textContent=fmt(v110t);
-  el=document.getElementById("fin-v110-delta");if(el)el.textContent=v110.length+" departures";
-  el=document.getElementById("fin-avg-mission-val");var mCount=vsMonthMissions[monthKey]||filtered.length;if(el)el.textContent=filtered.length?fmt(gt/mCount):"--";
-  el=document.getElementById("fin-avg-mission-delta");if(el)el.textContent=mCount+" matched missions";
-  var maxDate=filtered.length?filtered.reduce(function(a,b){return a.date>b.date?a:b;}).date:null;
-  el=document.getElementById("fin-data-stamp");if(el)el.textContent=maxDate?"Data as of "+fd(maxDate):"";
-  el=document.getElementById("fin-avg-flight-val");if(el)el.textContent=filtered.length?fmt(gt/filtered.length):"--";
-  el=document.getElementById("fin-avg-flight-delta");if(el)el.textContent=filtered.length+" flights — "+mLabel;
-  el=document.getElementById("vs-section-title");if(el)el.textContent="Daily Food Cost — "+mLabel;
-  el=document.getElementById("vs-total");if(el)el.textContent=fmt(gt);
-  var tbody=document.getElementById("vs-tbody");
-  if(tbody){var h="",tc=0;filtered.forEach(function(r){var bc=r.ob==="110"?"v110":"";tc+=r.cost;var lh=r.leads.map(function(l){return "<span class='chip'>"+l+"</span>";}).join("");h+="<tr><td>"+fd(r.date)+"</td><td><span class='badge "+bc+"'>V"+r.ob+"</span></td><td><span style='background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;'>Virgin Atlantic</span></td><td class='dim'>"+r.route+"</td><td><div class='leads'>"+lh+"</div></td><td class='r green'>"+fmt(r.cost)+"</td></tr>";});tbody.innerHTML=h;var ft=document.getElementById("vs-ft");if(ft)ft.textContent=fmt(tc);}
-  var dates=[...new Set(filtered.map(function(r){return r.date;}))].sort();
-  if(vsChart){vsChart.data.labels=dates.map(function(d){return fd(d).replace(", "+yr,"");});vsChart.data.datasets[0].data=dates.map(function(d){return(filtered.find(function(r){return r.date===d&&r.ob==="104";})||{cost:0}).cost;});vsChart.data.datasets[1].data=dates.map(function(d){return(filtered.find(function(r){return r.date===d&&r.ob==="110";})||{cost:0}).cost;});vsChart.update();}
+    }
+  });
 }
-(function(){var dates=[...new Set(vsAllData.map(function(r){return r.date;}))].sort();vsChart=new Chart(document.getElementById("vs-chart"),{type:"bar",data:{labels:dates.map(function(d){return fd(d).replace(", 2026","");}),datasets:[{label:"V104 ATL-LHR",data:dates.map(function(d){return(vsAllData.find(function(r){return r.date===d&&r.ob==="104";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.7)",borderRadius:4},{label:"V110 ATL-MAN",data:dates.map(function(d){return(vsAllData.find(function(r){return r.date===d&&r.ob==="110";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.35)",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});})();
-renderVSForMonth(vsMonths[vsMonths.length-1]);
-</script>
-</div>
-</div>
 
-<!-- American Airlines Panel -->
+function renderAirline(code,data,periodLabel){
+  var foodTotal=data.reduce(function(s,r){return s+r.food;},0);
+  var svcTotal=data.reduce(function(s,r){return s+r.service;},0);
+  var combined=foodTotal+svcTotal;
+  var n=data.length;
+  var el;
+  el=document.getElementById(code+"-food-val");if(el)el.textContent=fmt(foodTotal);
+  el=document.getElementById(code+"-svc-val");if(el)el.textContent=fmt(svcTotal);
+  el=document.getElementById(code+"-total-val");if(el)el.textContent=fmt(combined);
+  el=document.getElementById(code+"-avg-val");if(el)el.textContent=fmt(combined/n);
+  el=document.getElementById(code+"-avg-delta");if(el)el.textContent="avg per "+periodLabel;
+  el=document.getElementById(code+"-info");if(el)el.textContent=n+" "+periodLabel+"s";
+  var labels=data.map(function(r){return fdLabel(r.date);});
+  var foodArr=data.map(function(r){return r.food;});
+  var svcArr=data.map(function(r){return r.service;});
+  buildSplitChart(code+"-chart",labels,foodArr,svcArr);
+  var tbody=document.getElementById(code+"-tbody");
+  if(tbody){
+    var h="",ft=0,st=0;
+    data.forEach(function(r){
+      ft+=r.food;st+=r.service;
+      h+="<tr><td>"+fdFull(r.date)+"</td><td class=\"r\">"+fmt(r.food)+"</td><td class=\"r\">"+fmt(r.service)+"</td><td class=\"r bold\">"+fmt(r.total)+"</td></tr>";
+    });
+    tbody.innerHTML=h;
+    el=document.getElementById(code+"-food-ft");if(el)el.textContent=fmt(ft);
+    el=document.getElementById(code+"-svc-ft");if(el)el.textContent=fmt(st);
+    el=document.getElementById(code+"-ft");if(el)el.textContent=fmt(ft+st);
+  }
+}
+
+function renderVS(){renderAirline("vs",VS_DATA,"month");}
+function renderAA(){renderAirline("aa",AA_DATA,"period");}
+function renderET(){renderAirline("et",ET_DATA,"period");}
+function renderSK(){renderAirline("sk",SK_DATA,"month");}
+</script>
 <div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:#0b0f1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
   <div style="background:#131929;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:48px 44px;width:380px;max-width:90vw;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
     <div style="width:52px;height:52px;background:#1e3a5f;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:20px;font-weight:700;color:#60a5fa;letter-spacing:-0.02em;">MA</div>
@@ -1968,287 +1756,162 @@ async function doLogin(){
 
 <div class="tab-panel" id="panel-financing">
 <style id="fin-styles">
-#vs-kpis{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;}
-#vs-kpis .kpi{padding:12px 14px!important;}
-#vs-kpis .kpi .label{font-size:10px!important;margin-bottom:4px!important;}
-#vs-kpis .kpi .value{font-size:17px!important;margin-bottom:2px!important;}
-#vs-kpis .kpi .delta{font-size:11px!important;}
 #panel-financing { padding-top: 0 !important; }
-#vs-kpis { grid-template-columns: repeat(4, 1fr) !important; }
-#vs-fM, #vs-info, #panel-financing .filters, #panel-financing > .filters { display:none !important; }
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e1a;color:#e8eef5;padding:24px;}
-.page-title{font-size:20px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
-.page-sub{font-size:13px;color:#64748b;margin-bottom:24px;}
-.airline-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
-.atab{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;background:#131826;}
-.atab:hover{border-color:rgba(255,255,255,0.15);}
-.atab.active{border-color:rgba(255,255,255,0.25);background:#1e2a3a;}
-.atab .dot{width:10px;height:10px;border-radius:50%;}
-.atab .aname{font-size:13px;font-weight:600;color:#e8eef5;}
-.atab .atotal{font-size:12px;color:#64748b;}
-.atab .abadge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;color:#fff;}
-.panel{display:none;}
-.panel.active{display:block;}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;}
-.kpi{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 20px;}
-.kpi .label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px;}
-.kpi .value{font-size:22px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
-.kpi .delta{font-size:12px;color:#64748b;}
-.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#475569;margin:24px 0 12px;}
-.card{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:20px;margin-bottom:16px;}
-h3{font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px;}
-.chart-wrap{height:220px;position:relative;}
-.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
-.filters label{font-size:12px;color:#64748b;font-weight:500;}
-.filters select{background:#0f1623;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8eef5;padding:5px 10px;font-size:12px;outline:none;}
-.info{font-size:12px;color:#64748b;margin-left:auto;}
-.tbl-wrap{border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;background:#131826;}
-thead th.r{text-align:right;}
-tbody tr{border-bottom:1px solid rgba(255,255,255,0.05);}
-tbody tr:hover{background:rgba(255,255,255,0.025);}
-tbody td{padding:10px 14px;vertical-align:middle;}
-tbody td.r{text-align:right;}tbody td.dim{color:#64748b;font-size:12px;}
-tfoot td{padding:10px 14px;font-weight:700;background:rgba(255,255,255,0.04);border-top:2px solid rgba(255,255,255,0.1);}
-tfoot td.r{text-align:right;color:#60a5fa;}
-.badge{display:inline-block;font-family:monospace;background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
-.badge.v110{background:rgba(52,211,153,0.15);color:#34d399;}
-.green{color:#34d399;font-weight:600;}
-.leads{display:flex;flex-wrap:wrap;gap:5px;}
-.chip{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:3px 10px;font-size:12px;color:#cbd5e1;}
-.empty-state{text-align:center;padding:60px 20px;}
-.empty-state .icon{font-size:32px;margin-bottom:12px;opacity:0.3;}
-.empty-state .msg{font-size:15px;font-weight:600;color:#475569;margin-bottom:6px;}
-.empty-state .sub{font-size:13px;color:#334155;}
+.panel { display:none; }
+.panel.active { display:block; }
+.kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+.kpi { background:#131826; border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:16px 20px; }
+.kpi .label { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:.08em; font-weight:600; margin-bottom:6px; }
+.kpi .value { font-size:20px; font-weight:700; color:#e8eef5; margin-bottom:4px; }
+.kpi .delta { font-size:12px; color:#64748b; }
+.section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#475569; margin:24px 0 12px; }
+.card { background:#131826; border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:20px; margin-bottom:16px; }
+h3 { font-size:13px; font-weight:600; color:#94a3b8; margin-bottom:14px; }
+.chart-wrap { height:240px; position:relative; }
+.tbl-wrap { border-radius:10px; border:1px solid rgba(255,255,255,0.07); overflow:hidden; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+thead th { padding:10px 14px; font-weight:600; color:#64748b; border-bottom:1px solid rgba(255,255,255,0.08); text-align:left; background:#0f1623; }
+thead th.r { text-align:right; }
+tbody tr { border-bottom:1px solid rgba(255,255,255,0.05); }
+tbody tr:hover { background:rgba(255,255,255,0.025); }
+tbody td { padding:9px 14px; }
+tbody td.r { text-align:right; }
+.bold { font-weight:700; color:#e8eef5; }
+tfoot td { padding:10px 14px; font-weight:700; background:rgba(255,255,255,0.04); border-top:2px solid rgba(255,255,255,0.1); }
+tfoot td.r { text-align:right; color:#60a5fa; }
+.airline-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; justify-content:center; }
+.atab { display:flex; align-items:center; gap:8px; padding:10px 16px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); cursor:pointer; background:rgba(255,255,255,0.02); }
+.atab:hover { border-color:rgba(255,255,255,0.15); }
+.atab.active { border-color:rgba(255,255,255,0.25); background:#1e2a3a; }
+.atab .dot { width:10px; height:10px; border-radius:50%; }
+.atab .aname { font-size:13px; font-weight:600; color:#e8eef5; }
+.atab .atotal { font-size:12px; color:#64748b; }
+.atab .abadge { font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px; color:#fff; }
 </style>
-<div id="fin-content" style="padding:0 0 24px 0;">
-<div class="airline-tabs" style="justify-content:center;">
+<div id="fin-content">
+<div class="airline-tabs">
   <div class="atab active" onclick="switchAirline('vs')">
     <div class="dot" style="background:#C41E3A;"></div>
-    <div><div class="aname">Virgin Atlantic</div><div class="atotal" id="vs-total">$141,067.51</div></div>
+    <div><div class="aname">Virgin Atlantic</div><div class="atotal">$1,921,330.05</div></div>
     <span class="abadge" style="background:#C41E3A;">VS</span>
   </div>
   <div class="atab" onclick="switchAirline('aa')">
     <div class="dot" style="background:#0078D7;"></div>
-    <div><div class="aname">American Airlines</div><div class="atotal">No data yet</div></div>
+    <div><div class="aname">American Airlines</div><div class="atotal">$364,716.15</div></div>
     <span class="abadge" style="background:#0078D7;">AA</span>
   </div>
   <div class="atab" onclick="switchAirline('et')">
     <div class="dot" style="background:#007A4D;"></div>
-    <div><div class="aname">Ethiopian Airlines</div><div class="atotal">No data yet</div></div>
+    <div><div class="aname">Ethiopian Airlines</div><div class="atotal">$145,800.96</div></div>
     <span class="abadge" style="background:#007A4D;">ET</span>
   </div>
   <div class="atab" onclick="switchAirline('sk')">
     <div class="dot" style="background:#003F87;"></div>
-    <div><div class="aname">SAS Scandinavian</div><div class="atotal">No data yet</div></div>
+    <div><div class="aname">SAS Scandinavian</div><div class="atotal">$479,716.31</div></div>
     <span class="abadge" style="background:#003F87;">SK</span>
   </div>
 </div>
 
-<!-- Virgin Atlantic Panel -->
-<div class="panel active" id="panel-vs">
-  <div id="vs-month-filter" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;"><span style="font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-right:4px;">Month:</span></div>
-<div id="fin-data-stamp" style="font-size:11px;color:#94a3b8;margin-bottom:10px;font-style:italic;padding-left:2px;">Data as of May 10, 2026</div>
-  <div style="display:flex !important;flex-wrap:nowrap !important;gap:8px !important;margin-bottom:24px !important;" id="vs-kpis">
-<div class="kpi"><div class="label">Total Food Cost</div><div class="value" id="fin-total-val">$141,067.51</div><div class="delta" id="fin-total-delta">May 2026 — V104 + V110</div></div>
-<div class="kpi"><div class="label">V104 - ATL to LHR</div><div class="value" id="fin-v104-val">$80,252.47</div><div class="delta" id="fin-v104-delta">10 departures</div></div>
-<div class="kpi"><div class="label">V110 - ATL to MAN</div><div class="value" id="fin-v110-val">$60,815.04</div><div class="delta" id="fin-v110-delta">10 departures</div></div>
-<div class="kpi"><div class="label">Avg Cost / Mission</div><div class="value" id="fin-avg-mission-val" style="color:#34d399;">$2,519.06</div><div class="delta" id="fin-avg-mission-delta">56 matched missions</div></div>
-<div class="kpi"><div class="label">Avg Cost / Flight</div><div class="value" id="fin-avg-flight-val" style="color:#60a5fa;">$7,053.38</div><div class="delta" id="fin-avg-flight-delta">20 flights — May 2026</div></div>
-</div>
+<div class="panel" id="panel-vs">
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="vs-food-val">$1,246,845.74</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="vs-svc-val">$674,484.31</div><div class="delta" style="color:#60a5fa;">413909</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="vs-total-val">$1,921,330.05</div><div class="delta">food + service</div></div>
+    <div class="kpi"><div class="label">Avg / Month</div><div class="value" id="vs-avg-val">$384,266.01</div><div class="delta" id="vs-avg-delta">avg per month</div></div>
   </div>
-  
-  <div id="vs-data">
-<div class="section-title" id="vs-section-title">Daily Food Cost — May 2026</div>
-  <div class="card"><h3>Food Cost by Flight (USD)</h3><div class="chart-wrap"><canvas id="vs-chart" height="0" style="display: block; box-sizing: border-box; height: 0px; width: 0px;" width="0"></canvas></div></div>
-  <div class="section-title">Cost Breakdown — All 20 Flights</div>
-  
+  <div class="section-title">Food vs. Service Revenue</div>
+  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="vs-chart"></canvas></div></div>
+  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="vs-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
   <div class="tbl-wrap"><table>
-    <thead><tr><th>Date</th><th>Flight</th><th>Airline</th><th>Route</th><th>Team Lead(s)</th><th class="r">Food Cost</th></tr></thead>
-    <tbody id="vs-tbody"><tr><td>May 1, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Bobbie Jackson III</span><span class="chip">Gabriel Silva Mane</span></div></td><td class="r green">$8,549.55</td></tr><tr><td>May 1, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Maurice Smith</span><span class="chip">Christian Lawson</span></div></td><td class="r green">$6,097.81</td></tr><tr><td>May 2, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Abubakarr Sessay</span><span class="chip">Christian Lawson</span></div></td><td class="r green">$7,696.54</td></tr><tr><td>May 2, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Bobbie Jackson III</span><span class="chip">Maurice Smith</span></div></td><td class="r green">$5,747.35</td></tr><tr><td>May 3, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Bobbie Jackson III</span><span class="chip">Claudette St. Juste</span></div></td><td class="r green">$8,390.95</td></tr><tr><td>May 3, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Gabriel Silva Mane</span></div></td><td class="r green">$6,279.28</td></tr><tr><td>May 4, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Claudette St. Juste</span><span class="chip">Abubakarr Sessay</span></div></td><td class="r green">$8,300.94</td></tr><tr><td>May 4, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Bobbie Jackson III</span><span class="chip">Issa Camara</span></div></td><td class="r green">$6,396.47</td></tr><tr><td>May 5, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Claudette St. Juste</span><span class="chip">Abubakarr Sessay</span></div></td><td class="r green">$7,652.39</td></tr><tr><td>May 5, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Christian Lawson</span></div></td><td class="r green">$6,132.13</td></tr><tr><td>May 6, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Christian Lawson</span><span class="chip">Tecari Brown</span></div></td><td class="r green">$7,356.35</td></tr><tr><td>May 6, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Claudette St. Juste</span><span class="chip">Abdou Diakhate</span></div></td><td class="r green">$5,658.77</td></tr><tr><td>May 7, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Christian Lawson</span><span class="chip">Abdou Diakhate</span></div></td><td class="r green">$7,721.96</td></tr><tr><td>May 7, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Bobbie Jackson III</span><span class="chip">Abdou Diakhate</span></div></td><td class="r green">$5,991.99</td></tr><tr><td>May 8, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Gabriel Silva Mane</span><span class="chip">Maurice Smith</span></div></td><td class="r green">$8,131.25</td></tr><tr><td>May 8, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Christian Lawson</span><span class="chip">Bobbie Jackson III</span></div></td><td class="r green">$6,033.51</td></tr><tr><td>May 9, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Maurice Smith</span><span class="chip">Gabriel Silva Mane</span></div></td><td class="r green">$8,219.44</td></tr><tr><td>May 9, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Christian Lawson</span><span class="chip">Bobbie Jackson III</span></div></td><td class="r green">$6,430.59</td></tr><tr><td>May 10, 2026</td><td><span class="badge ">V104</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-LHR</td><td><div class="leads"><span class="chip">Gabriel Silva Mane</span><span class="chip">Rachel Lester</span></div></td><td class="r green">$8,233.10</td></tr><tr><td>May 10, 2026</td><td><span class="badge v110">V110</span></td><td><span style="background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">Virgin Atlantic</span></td><td class="dim">ATL-MAN</td><td><div class="leads"><span class="chip">Claudette St. Juste</span><span class="chip">Maurice Smith</span></div></td><td class="r green">$6,047.14</td></tr></tbody>
-    <tfoot><tr><td colspan="5">Total</td><td class="r" id="vs-ft">$141,067.51</td></tr></tfoot>
+    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
+    <tbody id="vs-tbody"></tbody>
+    <tfoot><tr><td colspan="1">Total</td><td class="r" id="vs-food-ft"></td><td class="r" id="vs-svc-ft"></td><td class="r" id="vs-ft"></td></tr></tfoot>
   </table></div>
 </div>
-  
-<script id="vs-override">
-// On load: move airline panels into fin-content so they render in correct position
+<div class="panel" id="panel-aa">
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="aa-food-val">$81,910.48</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="aa-svc-val">$282,805.67</div><div class="delta" style="color:#60a5fa;">413909</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="aa-total-val">$364,716.15</div><div class="delta">food + service</div></div>
+    <div class="kpi"><div class="label">Avg / Period</div><div class="value" id="aa-avg-val">$15,196.51</div><div class="delta" id="aa-avg-delta">avg per period</div></div>
+  </div>
+  <div class="section-title">Food vs. Service Revenue</div>
+  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="aa-chart"></canvas></div></div>
+  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="aa-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
+    <tbody id="aa-tbody"></tbody>
+    <tfoot><tr><td colspan="1">Total</td><td class="r" id="aa-food-ft"></td><td class="r" id="aa-svc-ft"></td><td class="r" id="aa-ft"></td></tr></tfoot>
+  </table></div>
+</div>
+<div class="panel" id="panel-et">
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="et-food-val">$130,425.96</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="et-svc-val">$15,375.00</div><div class="delta" style="color:#60a5fa;">413909</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="et-total-val">$145,800.96</div><div class="delta">food + service</div></div>
+    <div class="kpi"><div class="label">Avg / Period</div><div class="value" id="et-avg-val">$36,450.24</div><div class="delta" id="et-avg-delta">avg per period</div></div>
+  </div>
+  <div class="section-title">Food vs. Service Revenue</div>
+  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="et-chart"></canvas></div></div>
+  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="et-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
+    <tbody id="et-tbody"></tbody>
+    <tfoot><tr><td colspan="1">Total</td><td class="r" id="et-food-ft"></td><td class="r" id="et-svc-ft"></td><td class="r" id="et-ft"></td></tr></tfoot>
+  </table></div>
+</div>
+<div class="panel" id="panel-sk">
+  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="sk-food-val">$418,916.31</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="sk-svc-val">$60,800.00</div><div class="delta" style="color:#60a5fa;">413909</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="sk-total-val">$479,716.31</div><div class="delta">food + service</div></div>
+    <div class="kpi"><div class="label">Avg / Month</div><div class="value" id="sk-avg-val">$95,943.26</div><div class="delta" id="sk-avg-delta">avg per month</div></div>
+  </div>
+  <div class="section-title">Food vs. Service Revenue</div>
+  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="sk-chart"></canvas></div></div>
+  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="sk-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
+    <tbody id="sk-tbody"></tbody>
+    <tfoot><tr><td colspan="1">Total</td><td class="r" id="sk-food-ft"></td><td class="r" id="sk-svc-ft"></td><td class="r" id="sk-ft"></td></tr></tfoot>
+  </table></div>
+</div>
+
+</div><!-- end fin-content -->
+<script>
 (function(){
-  var fc=document.getElementById('fin-content');
-  if(!fc)return;
-  ['panel-aa','panel-et','panel-sk'].forEach(function(id){
-    var p=document.getElementById(id);
-    if(p&&!fc.contains(p))fc.appendChild(p);
-  });
-  // Remove any hardcoded active from AA/ET/SK; make VS active by default
   document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
   var pvs=document.getElementById('panel-vs');
-  if(pvs)pvs.classList.add('active');
-  document.querySelectorAll('.atab').forEach(function(t){
-    t.classList.remove('active');
-    if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'vs'")!==-1)t.classList.add('active');
-  });
+  if(pvs){pvs.classList.add('active'); try{renderVS();}catch(e){} }
 })();
 window.switchAirline=function(code){
-  document.querySelectorAll(".atab").forEach(function(t){t.classList.remove("active");});
-  document.querySelectorAll("#fin-content .panel").forEach(function(p){p.classList.remove("active");});
-  var activePanel=document.getElementById("panel-"+code);
-  if(activePanel)activePanel.classList.add("active");
-  var vsData=document.getElementById("vs-data");
-  if(vsData)vsData.style.display=code==="vs"?"":"none";
-  document.querySelectorAll(".atab").forEach(function(t){
-    if(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1)t.classList.add("active");
+  document.querySelectorAll('.atab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
+  var p=document.getElementById('panel-'+code);
+  if(p)p.classList.add('active');
+  document.querySelectorAll('.atab').forEach(function(t){
+    if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+code+"'")!==-1)t.classList.add('active');
   });
-  try{if(window.charts&&window.charts[code+"-chart"]){window.charts[code+"-chart"].destroy();delete window.charts[code+"-chart"];}}catch(e){}
-  if(code==="aa"){try{renderAA();}catch(e){console.error("renderAA failed:",e);}}
-  if(code==="et"){try{renderET();}catch(e){console.error("renderET failed:",e);}}
-  if(code==="sk"){try{renderSK();}catch(e){console.error("renderSK failed:",e);}}
+  if(code==='vs'){try{renderVS();}catch(e){console.error(e);}}
+  if(code==='aa'){try{renderAA();}catch(e){console.error(e);}}
+  if(code==='et'){try{renderET();}catch(e){console.error(e);}}
+  if(code==='sk'){try{renderSK();}catch(e){console.error(e);}}
 };
-// Hook switchTab so financing tab always re-shows the active airline panel
 (function(){
   var _orig=window.switchTab;
-  if(typeof _orig==="function"){
+  if(typeof _orig==='function'){
     window.switchTab=function(name){
       _orig(name);
-      if(name==="financing"){
-        var active=document.querySelector("#panel-financing .atab.active");
-        var code=active?(active.getAttribute("onclick")||"").replace(/.*'([^']+)'.*/,"$1"):"vs";
-        window.switchAirline(code||"vs");
+      if(name==='financing'){
+        var active=document.querySelector('#fin-content .atab.active');
+        var code=active?(active.getAttribute('onclick')||'').replace(/.*'([^']+)'.*/,'$1'):'vs';
+        window.switchAirline(code||'vs');
       }
     };
   }
 })();
 </script>
-<!-- American Airlines Panel -->
+</div><!-- end panel-financing -->
 
-<div class="panel" id="panel-aa">
-  <div class="kpis">
-    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$366,366.15</div><div class="delta">All invoices — C1 + C9</div></div>
-    <div class="kpi"><div class="label">Concourse C1</div><div class="value">$258,992.26</div><div class="delta">29 invoices</div></div>
-    <div class="kpi"><div class="label">Concourse C9</div><div class="value">$107,373.89</div><div class="delta">24 invoices</div></div>
-    <div class="kpi"><div class="label">Avg / Invoice</div><div class="value">$6,912.57</div><div class="delta">53 total invoices</div></div>
-  </div>
-  <div class="section-title">Revenue by Invoice Period</div>
-  <div class="card"><h3>Weekly Revenue — C1 vs C9 (USD)</h3><div class="chart-wrap"><canvas id="aa-chart"></canvas></div></div>
-  <div class="section-title">Invoice Breakdown</div>
-  <div class="filters">
-    <label>Month:</label><select id="aa-fM" onchange="renderAA()"><option value="">All</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option><option value="2026-05">May 2026</option></select>
-    <label>Concourse:</label><select id="aa-fC" onchange="renderAA()"><option value="">All</option><option>C1</option><option>C9</option></select>
-    <span class="info" id="aa-info"></span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>Date</th><th>Invoice</th><th>Concourse</th><th>Description</th><th class="r">Revenue</th></tr></thead>
-    <tbody id="aa-tbody"></tbody>
-    <tfoot><tr><td colspan="4">Total</td><td class="r" id="aa-ft"></td></tr></tfoot>
-  </table></div>
-</div>
-
-<!-- Ethiopian Airlines Panel -->
-<div class="panel" id="panel-et">
-  <div class="kpis">
-    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$145,800.96</div><div class="delta">All service dates — ATL-ADD</div></div>
-    <div class="kpi"><div class="label">Services</div><div class="value">23</div><div class="delta">Individual flight services</div></div>
-    <div class="kpi"><div class="label">Avg / Service</div><div class="value">$6,339.17</div><div class="delta">Food + service revenue</div></div>
-    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → ADD</div><div class="delta">Addis Ababa</div></div>
-  </div>
-  <div class="section-title">Revenue by Service Date</div>
-  <div class="card"><h3>Daily Revenue — ET ATL-ADD (USD)</h3><div class="chart-wrap"><canvas id="et-chart"></canvas></div></div>
-  <div class="section-title">Service Breakdown</div>
-  <div class="filters">
-    <label>Month:</label><select id="et-fM" onchange="renderET()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option></select>
-    <span class="info" id="et-info"></span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>Service Date</th><th>Flight</th><th>Route</th><th class="r">Revenue</th></tr></thead>
-    <tbody id="et-tbody"></tbody>
-    <tfoot><tr><td colspan="3">Total</td><td class="r" id="et-ft"></td></tr></tfoot>
-  </table></div>
-</div>
-
-<!-- SAS Panel -->
-<div class="panel" id="panel-sk">
-  <div class="kpis">
-    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$479,716.31</div><div class="delta">All dates — ATL-CPH</div></div>
-    <div class="kpi"><div class="label">Flights Serviced</div><div class="value">80</div><div class="delta">Individual departures</div></div>
-    <div class="kpi"><div class="label">Avg / Flight</div><div class="value">$5,996.45</div><div class="delta">Food + service revenue</div></div>
-    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → CPH</div><div class="delta">Copenhagen</div></div>
-  </div>
-  <div class="section-title">Revenue by Flight Date</div>
-  <div class="card"><h3>Daily Revenue — SK ATL-CPH (USD)</h3><div class="chart-wrap"><canvas id="sk-chart"></canvas></div></div>
-  <div class="section-title">Flight Breakdown</div>
-  <div class="filters">
-    <label>Month:</label><select id="sk-fM" onchange="renderSK()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option></select>
-    <span class="info" id="sk-info"></span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>Date</th><th>SK Ticket</th><th>Route</th><th class="r">Revenue</th></tr></thead>
-    <tbody id="sk-tbody"></tbody>
-    <tfoot><tr><td colspan="3">Total</td><td class="r" id="sk-ft"></td></tr></tfoot>
-  </table></div>
-</div>
-
-<script>
-var vsRaw=[["2026-05-01","104","ATL-LHR",8549.55,["Bobbie Jackson III","Gabriel Silva Mane"]],
-  ["2026-05-01","110","ATL-MAN",6097.81,["Maurice Smith","Christian Lawson"]],
-  ["2026-05-02","104","ATL-LHR",7696.54,["Abubakarr Sessay","Christian Lawson"]],
-  ["2026-05-02","110","ATL-MAN",5747.35,["Bobbie Jackson III","Maurice Smith"]],
-  ["2026-05-03","104","ATL-LHR",8390.95,["Bobbie Jackson III","Claudette St. Juste"]],
-  ["2026-05-03","110","ATL-MAN",6279.28,["Gabriel Silva Mane"]],
-  ["2026-05-04","104","ATL-LHR",8300.94,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-04","110","ATL-MAN",6396.47,["Bobbie Jackson III","Issa Camara"]],
-  ["2026-05-05","104","ATL-LHR",7652.39,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-05","110","ATL-MAN",6132.13,["Christian Lawson"]],
-  ["2026-05-06","104","ATL-LHR",7356.35,["Christian Lawson","Tecari Brown"]],
-  ["2026-05-06","110","ATL-MAN",5658.77,["Claudette St. Juste","Abdou Diakhate"]],
-  ["2026-05-07","104","ATL-LHR",7721.96,["Christian Lawson","Abdou Diakhate"]],
-  ["2026-05-07","110","ATL-MAN",5991.99,["Bobbie Jackson III","Abdou Diakhate"]],
-  ["2026-05-08","104","ATL-LHR",8131.25,["Gabriel Silva Mane","Maurice Smith"]],
-  ["2026-05-08","110","ATL-MAN",6033.51,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-09","104","ATL-LHR",8219.44,["Maurice Smith","Gabriel Silva Mane"]],
-  ["2026-05-09","110","ATL-MAN",6430.59,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-10","104","ATL-LHR",8233.1,["Gabriel Silva Mane","Rachel Lester"]],
-  ["2026-05-10","110","ATL-MAN",6047.14,["Claudette St. Juste","Maurice Smith"]]];
-function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
-function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
-var vsAllData=vsRaw.map(function(r){return{date:r[0],ob:r[1],route:r[2],cost:r[3],leads:r[4]};});
-var vsMonths=[...new Set(vsAllData.map(function(r){return r.date.substring(0,7);}))].sort();
-(function(){var s=document.createElement("style");s.textContent=".month-pill{background:#131826;border:1px solid rgba(255,255,255,0.08);color:#94a3b8;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;font-family:inherit;}.month-pill:hover{border-color:rgba(255,255,255,0.2);color:#e8eef5;}.month-pill.active{background:rgba(196,30,58,0.15);border-color:rgba(196,30,58,0.5);color:#fca5a5;}";document.head.appendChild(s);})();var vsMonthMissions={"2026-05":56};
-var vsChart=null;
-function renderVSForMonth(monthKey){
-  var filtered=vsAllData.filter(function(r){return r.date.startsWith(monthKey);});
-  var gt=filtered.reduce(function(s,r){return s+r.cost;},0);
-  var v104=filtered.filter(function(r){return r.ob==="104";});
-  var v110=filtered.filter(function(r){return r.ob==="110";});
-  var v104t=v104.reduce(function(s,r){return s+r.cost;},0);
-  var v110t=v110.reduce(function(s,r){return s+r.cost;},0);
-  var yr=monthKey.substring(0,4);
-  var mLabel=new Date(monthKey+"-01T12:00:00").toLocaleDateString("en-US",{month:"long",year:"numeric"});
-  var el;
-  el=document.getElementById("fin-total-val");if(el)el.textContent=fmt(gt);
-  el=document.getElementById("fin-total-delta");if(el)el.textContent=mLabel+" — V104 + V110";
-  el=document.getElementById("fin-v104-val");if(el)el.textContent=fmt(v104t);
-  el=document.getElementById("fin-v104-delta");if(el)el.textContent=v104.length+" departures";
-  el=document.getElementById("fin-v110-val");if(el)el.textContent=fmt(v110t);
-  el=document.getElementById("fin-v110-delta");if(el)el.textContent=v110.length+" departures";
-  el=document.getElementById("fin-avg-mission-val");var mCount=vsMonthMissions[monthKey]||filtered.length;if(el)el.textContent=filtered.length?fmt(gt/mCount):"--";
-  el=document.getElementById("fin-avg-mission-delta");if(el)el.textContent=mCount+" matched missions";
-  var maxDate=filtered.length?filtered.reduce(function(a,b){return a.date>b.date?a:b;}).date:null;
-  el=document.getElementById("fin-data-stamp");if(el)el.textContent=maxDate?"Data as of "+fd(maxDate):"";
-  el=document.getElementById("fin-avg-flight-val");if(el)el.textContent=filtered.length?fmt(gt/filtered.length):"--";
-  el=document.getElementById("fin-avg-flight-delta");if(el)el.textContent=filtered.length+" flights — "+mLabel;
-  el=document.getElementById("vs-section-title");if(el)el.textContent="Daily Food Cost — "+mLabel;
-  el=document.getElementById("vs-total");if(el)el.textContent=fmt(gt);
-  var tbody=document.getElementById("vs-tbody");
-  if(tbody){var h="",tc=0;filtered.forEach(function(r){var bc=r.ob==="110"?"v110":"";tc+=r.cost;var lh=r.leads.map(function(l){return "<span class='chip'>"+l+"</span>";}).join("");h+="<tr><td>"+fd(r.date)+"</td><td><span class='badge "+bc+"'>V"+r.ob+"</span></td><td><span style='background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;'>Virgin Atlantic</span></td><td class='dim'>"+r.route+"</td><td><div class='leads'>"+lh+"</div></td><td class='r green'>"+fmt(r.cost)+"</td></tr>";});tbody.innerHTML=h;var ft=document.getElementById("vs-ft");if(ft)ft.textContent=fmt(tc);}
-  var dates=[...new Set(filtered.map(function(r){return r.date;}))].sort();
-  if(vsChart){vsChart.data.labels=dates.map(function(d){return fd(d).replace(", "+yr,"");});vsChart.data.datasets[0].data=dates.map(function(d){return(filtered.find(function(r){return r.date===d&&r.ob==="104";})||{cost:0}).cost;});vsChart.data.datasets[1].data=dates.map(function(d){return(filtered.find(function(r){return r.date===d&&r.ob==="110";})||{cost:0}).cost;});vsChart.update();}
-}
-(function(){var dates=[...new Set(vsAllData.map(function(r){return r.date;}))].sort();vsChart=new Chart(document.getElementById("vs-chart"),{type:"bar",data:{labels:dates.map(function(d){return fd(d).replace(", 2026","");}),datasets:[{label:"V104 ATL-LHR",data:dates.map(function(d){return(vsAllData.find(function(r){return r.date===d&&r.ob==="104";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.7)",borderRadius:4},{label:"V110 ATL-MAN",data:dates.map(function(d){return(vsAllData.find(function(r){return r.date===d&&r.ob==="110";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.35)",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});})();
-
-(function(){var container=document.getElementById("vs-month-filter");if(!container)return;container.querySelectorAll('.month-pill').forEach(function(b){b.remove();});vsMonths.forEach(function(m){var d=new Date(m+"-01T12:00:00");var label=d.toLocaleDateString("en-US",{month:"long",year:"numeric"});var btn=document.createElement("button");btn.className="month-pill";btn.dataset.month=m;btn.textContent=label;btn.onclick=function(){document.querySelectorAll(".month-pill").forEach(function(b){b.classList.remove("active");});btn.classList.add("active");renderVSForMonth(m);};container.appendChild(btn);});var pills=container.querySelectorAll(".month-pill");if(pills.length)pills[pills.length-1].classList.add("active");})();
-renderVSForMonth(vsMonths[vsMonths.length-1]);
-</script>
-</div>
-</div>
-</body></html>
+</body>
+</html>
