@@ -174,47 +174,69 @@ def enrich(rows):
 
 # ── REWRITE HTML ─────────────────────────────────────────────────────────────
 def row_to_json(r):
+    # Keys MUST match compact format used by dashboard JS (tl, al, mt, etc.)
+    t_started   = r.get('_t_started')
+    t_completed = r.get('_t_completed')
+    mo_idx = None
+    if t_started:
+        mo_idx = t_started.year * 12 + t_started.month
+    transit_kind = None
+    gap = r.get('_transit_gap_min')
+    if gap is None:
+        transit_kind = "first"
+    elif gap <= 240:
+        transit_kind = "intra"
+    else:
+        transit_kind = "shift_break"
     return {
-        "teamLead":        r.get('Team Lead', ''),
-        "airline":         r.get('Airline', ''),
-        "missionType":     r.get('Mission Type', ''),
-        "worksite":        r.get('Worksite', ''),
-        "asset":           r.get('Asset', ''),
-        "engagement":      safe(r.get('_engagement_pct')),
-        "productivity":    safe(r.get('_productivity_pct')),
-        "inboundFlight":   r.get('Inbound Flight', ''),
-        "outboundFlight":  r.get('Outbound Flight', ''),
-        "assetType":       r.get('Asset Type', ''),
-        "location":        r.get('Location', ''),
-        "event":           r.get('Event', ''),
-        "flightArrival":   r.get('Flight Arrival', ''),
-        "missionAssigned": r.get('Mission Assigned', ''),
-        "missionAccepted": r.get('Mission Accepted', ''),
-        "teamArrival":     r.get('Team Arrival', ''),
-        "missionStarted":  r.get('Mission Started', ''),
-        "missionCompleted":r.get('Mission Completed', ''),
-        "flightDeparture": r.get('Flight Departure', ''),
-        "onTime":          safe(r.get('_on_time')),
-        "responseMin":     safe(r.get('_response_min')),
-        "durationMin":     safe(r.get('_duration_min')),
-        "transitGapMin":   safe(r.get('_transit_gap_min')),
-        "month":           r.get('_month') or '',
-        "date":            r.get('_date') or '',
-        "hour":            safe(r.get('_hour')),
+        "tl":    r.get('Team Lead', ''),
+        "al":    r.get('Airline', ''),
+        "mt":    r.get('Mission Type', ''),
+        "ws":    r.get('Worksite', ''),
+        "ast":   r.get('Asset', ''),
+        "atype": r.get('Asset Type', ''),
+        "loc":   r.get('Location', ''),
+        "eng":   safe(r.get('_engagement_pct')),
+        "prod":  safe(r.get('_productivity_pct')),
+        "inb":   r.get('Inbound Flight', ''),
+        "outb":  r.get('Outbound Flight', ''),
+        "fa":    r.get('Flight Arrival', ''),
+        "delay": None,
+        "sched_fa": r.get('Scheduled Flight Arrival', '') or '',
+        "ma":    r.get('Mission Assigned', ''),
+        "tarr":  r.get('Team Arrival', ''),
+        "ms":    r.get('Mission Started', ''),
+        "mc":    r.get('Mission Completed', ''),
+        "fd":    r.get('Flight Departure', ''),
+        "dur":   safe(r.get('_duration_min')),
+        "ot":    safe(r.get('_on_time')),
+        "resp":  safe(r.get('_response_min')),
+        "hr":    safe(r.get('_hour')),
+        "mo":    r.get('_month') or '',
+        "mo_idx": mo_idx,
+        "proper": True,
+        "transit": safe(gap),
+        "transit_kind": transit_kind,
     }
 
 def rewrite_dashboard(enriched_recs):
     html     = DASHBOARD_HTML.read_text(encoding='utf-8')
-    json_str = json.dumps([row_to_json(r) for r in enriched_recs], indent=2)
+    json_str = json.dumps([row_to_json(r) for r in enriched_recs])
     snapshot = datetime.now().strftime('%Y-%m-%d %H:%M')
 
-    html = re.sub(r'const RAW_MISSIONS\s*=\s*\[.*?\];',
-                  f'const RAW_MISSIONS = {json_str};',
-                  html, flags=re.DOTALL)
-    html = re.sub(r'const SNAPSHOT_TIME\s*=\s*"[^"]*"',
-                  f'const SNAPSHOT_TIME = "{snapshot}"', html)
+    # Line-by-line replacement — regex fails on huge single-line JSON
+    lines = html.split('\n')
+    new_lines = []
+    for line in lines:
+        if line.strip().startswith('const RAW_MISSIONS'):
+            new_lines.append(f'const RAW_MISSIONS = {json_str};')
+        elif 'const SNAPSHOT_TIME' in line:
+            new_lines.append(re.sub(r'const SNAPSHOT_TIME\s*=\s*"[^"]*"',
+                                    f'const SNAPSHOT_TIME = "{snapshot}"', line))
+        else:
+            new_lines.append(line)
 
-    DASHBOARD_HTML.write_text(html, encoding='utf-8')
+    DASHBOARD_HTML.write_text('\n'.join(new_lines), encoding='utf-8')
     print(f"  Dashboard rewritten: {len(enriched_recs)} missions  snapshot={snapshot}")
 
 # ── MAIN ──────────────────────────────────────────────────────────────────────
