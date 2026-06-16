@@ -1467,7 +1467,7 @@ document.addEventListener("DOMContentLoaded", init);
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">'+
         '<div><div style="font-size:15px;font-weight:700;color:#f1f5f9;">'+AIRLINES[code]+' · Uploaded Data</div>'+
              '<div style="font-size:11px;color:#64748b;margin-top:2px;">📄 '+d.fileName+' · '+d.uploadedAt+'</div></div>'+
-        '<button onclick="auClear(''+code+'')" style="padding:6px 14px;background:#1e293b;border:1px solid #334155;color:#64748b;border-radius:6px;cursor:pointer;font-size:11px;">↺ Re-upload</button>'+
+        '<button onclick="auClear(\''+code+'\'')" style="padding:6px 14px;background:#1e293b;border:1px solid #334155;color:#64748b;border-radius:6px;cursor:pointer;font-size:11px;">&#8635; Re-upload</button>'+
       '</div>'+kpis+tbl;
 
     document.getElementById('loaded-'+code).style.display='';
@@ -1595,7 +1595,7 @@ document.addEventListener("DOMContentLoaded", init);
             '<div style="font-size:16px;font-weight:700;color:#f1f5f9;">Column Mapping — '+AIRLINES[code]+'</div>'+
             '<div style="font-size:11px;color:#64748b;margin-top:3px;">📄 '+fname+' &nbsp;·&nbsp; '+rows.length+' rows &nbsp;·&nbsp; '+headers.length+' columns</div>'+
           '</div>'+
-          '<button onclick="document.getElementById('au-modal').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;line-height:1;">×</button>'+
+          '<button onclick="document.getElementById(\'au-modal\').style.display=\'none\'" style="background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;line-height:1;">×</button>'+
         '</div>'+
         '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#475569;margin-bottom:8px;">Data Preview (first 5 rows)</div>'+
         '<div style="overflow-x:auto;border-radius:6px;border:1px solid #1e293b;margin-bottom:20px;">'+previewTbl+'</div>'+
