@@ -1388,7 +1388,7 @@ function init() {
         const r = await fetch(location.pathname + "?_=" + Date.now(), { cache: "no-cache" });
         if (!r.ok) return;
         const txt = await r.text();
-        const m = txt.match(/const SNAPSHOT_TIME = "2026-06-16 16:34"]+)"/);
+        const m = txt.match(/const SNAPSHOT_TIME = "([^"]+)"/);
         if (m && m[1] !== SNAPSHOT_TIME) {
           location.reload();
         }

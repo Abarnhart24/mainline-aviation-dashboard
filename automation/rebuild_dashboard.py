@@ -139,7 +139,7 @@ def enrich(rows):
 
         # Date/time grouping
         if t_started:
-            r['_month'] = t_started.strftime('%Y-%m')
+            r['_month'] = t_started.strftime('%b %Y')   # e.g. "Jun 2026"
             r['_hour']  = t_started.hour
             r['_date']  = t_started.strftime('%Y-%m-%d')
         else:
@@ -230,7 +230,8 @@ def rewrite_dashboard(enriched_recs):
     for line in lines:
         if line.strip().startswith('const RAW_MISSIONS'):
             new_lines.append(f'const RAW_MISSIONS = {json_str};')
-        elif 'const SNAPSHOT_TIME' in line:
+        elif line.strip().startswith('const SNAPSHOT_TIME'):
+            # Only replace the declaration line, not references inside strings/regexes
             new_lines.append(re.sub(r'const SNAPSHOT_TIME\s*=\s*"[^"]*"',
                                     f'const SNAPSHOT_TIME = "{snapshot}"', line))
         else:
