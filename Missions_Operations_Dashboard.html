@@ -1867,71 +1867,13 @@ window.switchAirline=function(code){
 </script>
 <!-- American Airlines Panel -->
 
-<div class="panel" id="panel-aa">
-  <div class="kpis">
-    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$366,366.15</div><div class="delta">All invoices — C1 + C9</div></div>
-    <div class="kpi"><div class="label">Concourse C1</div><div class="value">$258,992.26</div><div class="delta">29 invoices</div></div>
-    <div class="kpi"><div class="label">Concourse C9</div><div class="value">$107,373.89</div><div class="delta">24 invoices</div></div>
-    <div class="kpi"><div class="label">Avg / Invoice</div><div class="value">$6,912.57</div><div class="delta">53 total invoices</div></div>
-  </div>
-  <div class="section-title">Revenue by Invoice Period</div>
-  <div class="card"><h3>Weekly Revenue — C1 vs C9 (USD)</h3><div class="chart-wrap"><canvas id="aa-chart"></canvas></div></div>
-  <div class="section-title">Invoice Breakdown</div>
-  <div class="filters">
-    <label>Month:</label><select id="aa-fM" onchange="renderAA()"><option value="">All</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option><option value="2026-05">May 2026</option></select>
-    <label>Concourse:</label><select id="aa-fC" onchange="renderAA()"><option value="">All</option><option>C1</option><option>C9</option></select>
-    <span class="info" id="aa-info"></span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>Date</th><th>Invoice</th><th>Concourse</th><th>Description</th><th class="r">Revenue</th></tr></thead>
-    <tbody id="aa-tbody"></tbody>
-    <tfoot><tr><td colspan="4">Total</td><td class="r" id="aa-ft"></td></tr></tfoot>
-  </table></div>
-</div>
+
 
 <!-- Ethiopian Airlines Panel -->
-<div class="panel" id="panel-et">
-  <div class="kpis">
-    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$145,800.96</div><div class="delta">All service dates — ATL-ADD</div></div>
-    <div class="kpi"><div class="label">Services</div><div class="value">23</div><div class="delta">Individual flight services</div></div>
-    <div class="kpi"><div class="label">Avg / Service</div><div class="value">$6,339.17</div><div class="delta">Food + service revenue</div></div>
-    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → ADD</div><div class="delta">Addis Ababa</div></div>
-  </div>
-  <div class="section-title">Revenue by Service Date</div>
-  <div class="card"><h3>Daily Revenue — ET ATL-ADD (USD)</h3><div class="chart-wrap"><canvas id="et-chart"></canvas></div></div>
-  <div class="section-title">Service Breakdown</div>
-  <div class="filters">
-    <label>Month:</label><select id="et-fM" onchange="renderET()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option></select>
-    <span class="info" id="et-info"></span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>Service Date</th><th>Flight</th><th>Route</th><th class="r">Revenue</th></tr></thead>
-    <tbody id="et-tbody"></tbody>
-    <tfoot><tr><td colspan="3">Total</td><td class="r" id="et-ft"></td></tr></tfoot>
-  </table></div>
-</div>
+
 
 <!-- SAS Panel -->
-<div class="panel" id="panel-sk">
-  <div class="kpis">
-    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$479,716.31</div><div class="delta">All dates — ATL-CPH</div></div>
-    <div class="kpi"><div class="label">Flights Serviced</div><div class="value">80</div><div class="delta">Individual departures</div></div>
-    <div class="kpi"><div class="label">Avg / Flight</div><div class="value">$5,996.45</div><div class="delta">Food + service revenue</div></div>
-    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → CPH</div><div class="delta">Copenhagen</div></div>
-  </div>
-  <div class="section-title">Revenue by Flight Date</div>
-  <div class="card"><h3>Daily Revenue — SK ATL-CPH (USD)</h3><div class="chart-wrap"><canvas id="sk-chart"></canvas></div></div>
-  <div class="section-title">Flight Breakdown</div>
-  <div class="filters">
-    <label>Month:</label><select id="sk-fM" onchange="renderSK()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option></select>
-    <span class="info" id="sk-info"></span>
-  </div>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>Date</th><th>SK Ticket</th><th>Route</th><th class="r">Revenue</th></tr></thead>
-    <tbody id="sk-tbody"></tbody>
-    <tfoot><tr><td colspan="3">Total</td><td class="r" id="sk-ft"></td></tr></tfoot>
-  </table></div>
-</div>
+
 
 <script>
 var vsRaw=[["2026-05-01","104","ATL-LHR",8549.55,["Bobbie Jackson III","Gabriel Silva Mane"]],
@@ -2159,6 +2101,10 @@ window.switchAirline=function(code){
   document.querySelectorAll(".atab").forEach(function(t){
     if(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1)t.classList.add("active");
   });
+  if(window.charts&&window.charts[code+"-chart"]){window.charts[code+"-chart"].destroy();delete window.charts[code+"-chart"];}
+  if(code==="aa"&&typeof renderAA==="function") renderAA();
+  if(code==="et"&&typeof renderET==="function") renderET();
+  if(code==="sk"&&typeof renderSK==="function") renderSK();
 };
 // Hook switchTab so financing tab always re-shows the active airline panel
 (function(){
@@ -2178,29 +2124,69 @@ window.switchAirline=function(code){
 <!-- American Airlines Panel -->
 
 <div class="panel" id="panel-aa">
-  <div class="empty-state">
-    <div class="icon">✈</div>
-    <div class="msg">No data uploaded for American Airlines</div>
-    <div class="sub">Data expected Q3 2026 · upload an AA supplier invoice to populate this section</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$366,366.15</div><div class="delta">All invoices — C1 + C9</div></div>
+    <div class="kpi"><div class="label">Concourse C1</div><div class="value">$258,992.26</div><div class="delta">29 invoices</div></div>
+    <div class="kpi"><div class="label">Concourse C9</div><div class="value">$107,373.89</div><div class="delta">24 invoices</div></div>
+    <div class="kpi"><div class="label">Avg / Invoice</div><div class="value">$6,912.57</div><div class="delta">53 total invoices</div></div>
   </div>
+  <div class="section-title">Revenue by Invoice Period</div>
+  <div class="card"><h3>Weekly Revenue — C1 vs C9 (USD)</h3><div class="chart-wrap"><canvas id="aa-chart"></canvas></div></div>
+  <div class="section-title">Invoice Breakdown</div>
+  <div class="filters">
+    <label>Month:</label><select id="aa-fM" onchange="renderAA()"><option value="">All</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option><option value="2026-05">May 2026</option></select>
+    <label>Concourse:</label><select id="aa-fC" onchange="renderAA()"><option value="">All</option><option>C1</option><option>C9</option></select>
+    <span class="info" id="aa-info"></span>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Date</th><th>Invoice</th><th>Concourse</th><th>Description</th><th class="r">Revenue</th></tr></thead>
+    <tbody id="aa-tbody"></tbody>
+    <tfoot><tr><td colspan="4">Total</td><td class="r" id="aa-ft"></td></tr></tfoot>
+  </table></div>
 </div>
 
 <!-- Ethiopian Airlines Panel -->
 <div class="panel" id="panel-et">
-  <div class="empty-state">
-    <div class="icon">✈</div>
-    <div class="msg">No data uploaded for Ethiopian Airlines</div>
-    <div class="sub">Data expected Q3 2026 · upload an ET supplier invoice to populate this section</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$145,800.96</div><div class="delta">All service dates — ATL-ADD</div></div>
+    <div class="kpi"><div class="label">Services</div><div class="value">23</div><div class="delta">Individual flight services</div></div>
+    <div class="kpi"><div class="label">Avg / Service</div><div class="value">$6,339.17</div><div class="delta">Food + service revenue</div></div>
+    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → ADD</div><div class="delta">Addis Ababa</div></div>
   </div>
+  <div class="section-title">Revenue by Service Date</div>
+  <div class="card"><h3>Daily Revenue — ET ATL-ADD (USD)</h3><div class="chart-wrap"><canvas id="et-chart"></canvas></div></div>
+  <div class="section-title">Service Breakdown</div>
+  <div class="filters">
+    <label>Month:</label><select id="et-fM" onchange="renderET()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option></select>
+    <span class="info" id="et-info"></span>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Service Date</th><th>Flight</th><th>Route</th><th class="r">Revenue</th></tr></thead>
+    <tbody id="et-tbody"></tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="r" id="et-ft"></td></tr></tfoot>
+  </table></div>
 </div>
 
 <!-- SAS Panel -->
 <div class="panel" id="panel-sk">
-  <div class="empty-state">
-    <div class="icon">✈</div>
-    <div class="msg">No data uploaded for SAS Scandinavian Airlines</div>
-    <div class="sub">Data expected Q3 2026 · upload an SK supplier invoice to populate this section</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$479,716.31</div><div class="delta">All dates — ATL-CPH</div></div>
+    <div class="kpi"><div class="label">Flights Serviced</div><div class="value">80</div><div class="delta">Individual departures</div></div>
+    <div class="kpi"><div class="label">Avg / Flight</div><div class="value">$5,996.45</div><div class="delta">Food + service revenue</div></div>
+    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → CPH</div><div class="delta">Copenhagen</div></div>
   </div>
+  <div class="section-title">Revenue by Flight Date</div>
+  <div class="card"><h3>Daily Revenue — SK ATL-CPH (USD)</h3><div class="chart-wrap"><canvas id="sk-chart"></canvas></div></div>
+  <div class="section-title">Flight Breakdown</div>
+  <div class="filters">
+    <label>Month:</label><select id="sk-fM" onchange="renderSK()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option></select>
+    <span class="info" id="sk-info"></span>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Date</th><th>SK Ticket</th><th>Route</th><th class="r">Revenue</th></tr></thead>
+    <tbody id="sk-tbody"></tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="r" id="sk-ft"></td></tr></tfoot>
+  </table></div>
 </div>
 
 <script>
