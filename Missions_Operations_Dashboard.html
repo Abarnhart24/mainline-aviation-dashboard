@@ -1061,174 +1061,98 @@ function renderTimeline(rows) {
   const more = document.getElementById("timelineMore");
   if (!list) return;
 
-  // Parse all rows
+  // Only require Mission Started + Flight Departure — captures far more missions
   const parsed = rows.map(r => ({
     r,
-    t0: parseSpringshotTs(r.fa),
-    t1: parseSpringshotTs(r.ma),
-    t2: parseSpringshotTs(r.tarr),
-    t3: parseSpringshotTs(r.ms),
-    t4: parseSpringshotTs(r.mc),
-    t5: parseSpringshotTs(r.fd),
-    tSched: parseSpringshotTs(r.sched_fa),
-    delay: r.delay,
-  })).filter(x => x.t0 && x.t1 && x.t2 && x.t3 && x.t4 && x.t5 && x.t5 > x.t0);
+    t3: parseSpringshotTs(r.ms),   // Mission Started
+    t4: parseSpringshotTs(r.mc),   // Mission Completed (optional)
+    t5: parseSpringshotTs(r.fd),   // Flight Departure
+  })).filter(x => x.t3 && x.t5 && x.t5 > x.t3);
 
-  return renderTimelinePerMission(parsed, list, more);
-}
-
-function renderTimelinePerMission(parsed, list, more) {
-  const TL = parsed.slice().sort((a, b) => b.t3 - a.t3);
-  const LIMIT = 25;
-  const display = TL.slice(0, LIMIT);
-
-  if (!display.length) {
-    list.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--text-3);font-family:var(--mono);font-size:12px;">No missions match the current filters with full timeline data.</div>';
-    more.textContent = "";
-    return;
-  }
-
-  const html = display.map(({r, t0, t1, t2, t3, t4, t5, tSched, delay}) => {
-    const tStart = (tSched && tSched < t0) ? tSched : t0;
-    const total = (t5 - tStart) / 60000;
-    const pct = (t) => Math.max(0, Math.min(100, ((t - tStart) / (t5 - tStart)) * 100));
-
-    const segs = [];
-    if (tSched && tSched < t0) {
-      segs.push({ cls: "delayed", from: pct(tSched), to: pct(t0),
-        label: "Flight late by " + Math.round((t0-tSched)/60000) + "m",
-        dur: (t0-tSched)/60000, fromTime: r.sched_fa, toTime: r.fa });
-    }
-    segs.push(
-      { cls: "pre",    from: pct(t0), to: pct(t1), label: "Pre-acceptance", dur: (t1-t0)/60000, fromTime: r.fa,   toTime: r.ma },
-      { cls: "drive",  from: pct(t1), to: pct(t2), label: "Response/Drive", dur: (t2-t1)/60000, fromTime: r.ma,   toTime: r.tarr },
-      { cls: "setup",  from: pct(t2), to: pct(t3), label: "Setup",          dur: (t3-t2)/60000, fromTime: r.tarr, toTime: r.ms },
-      { cls: "active", from: pct(t3), to: pct(t4), label: "Active mission", dur: (t4-t3)/60000, fromTime: r.ms,   toTime: r.mc },
-      { cls: "buffer", from: pct(t4), to: pct(t5), label: "Buffer to dep",  dur: (t5-t4)/60000, fromTime: r.mc,   toTime: r.fd },
-    );
-    const renderSegs = segs.filter(s => s.to > s.from);
-    const segmentHtml = renderSegs.map(s => {
-      const w = s.to - s.from;
-      const tip = s.label + ": " + fmtDur(s.dur) + "\n" + fmtClock(s.fromTime) + " \u2192 " + fmtClock(s.toTime);
-      return '<div class="seg ' + s.cls + '" style="left:' + s.from.toFixed(2) + '%;width:' + w.toFixed(2) + '%" title="' + tip.replace(/"/g,"&quot;") + '"></div>';
-    }).join("");
-
-    const respClass = r.resp != null && r.resp > 100 ? "color:var(--neon-amber);" : "";
-    const onTimeBadge = r.ot === false ? '<span style="color:var(--neon-red)">\u26a0 late</span>' :
-                        r.ot === true  ? '<span style="color:var(--neon-green)">on time</span>' : "";
-    const delayBadge = (delay != null && delay !== 0)
-      ? (delay > 0
-          ? '<span style="color:var(--neon-amber)">+' + delay + 'm late arr</span>'
-          : '<span style="color:var(--neon-green)">' + delay + 'm early arr</span>')
-      : (delay === 0 ? '<span style="color:var(--text-3)">on schedule</span>' : "");
-
-    const _timeOf = (s) => { const m = s ? s.match(/(\d+:\d+)/) : null; return m ? m[1] : ""; };
-    const _labels = [
-      { cls: "fa", ev: "FLT ARR",  pos: pct(t0), tm: _timeOf(r.fa) },
-      { cls: "ma", ev: "ACCEPTED", pos: pct(t1), tm: _timeOf(r.ma) },
-      { cls: "mc", ev: "COMPLETE", pos: pct(t4), tm: _timeOf(r.mc) },
-      { cls: "fd", ev: "FLT DEP",  pos: pct(t5), tm: _timeOf(r.fd) },
-    ];
-    const _labelsHtml = _labels.map(L =>
-      '<div class="lbl ' + L.cls + '" style="left:' + L.pos.toFixed(2) + '%"><span class="ev">' + L.ev + '</span><span class="tm">' + L.tm + '</span></div>'
-    ).join("");
-
-    return '<div class="tl-row">' +
-        '<div class="meta">' +
-          '<div class="hdr">' + r.tl + '</div>' +
-          '<div class="sub">' + r.al + ' ' + (r.inb||"-") + '\u2192' + (r.outb||"-") + ' \u00b7 ' + r.atype + ' ' + r.ast + ' \u00b7 ' + r.loc + '</div>' +
-          '<div class="sub" style="' + respClass + '">resp ' + fmtDur(r.resp) + ' \u00b7 prod ' + (r.prod != null ? r.prod + "%" : "N/A") + ' \u00b7 ' + onTimeBadge + (delayBadge ? ' \u00b7 ' + delayBadge : '') + '</div>' +
-        '</div>' +
-        '<div class="tl-bar-wrap">' +
-          '<div class="tl-bar">' + segmentHtml + '</div>' +
-          '<div class="tl-times">' + _labelsHtml + '</div>' +
-        '</div>' +
-        '<div class="totals">' +
-          '<div class="big">' + fmtDur(total) + '</div>' +
-          '<div class="small">' + fmtClock(r.fa) + '</div>' +
-          '<div class="small">\u2192 ' + fmtClock(r.fd) + '</div>' +
-        '</div>' +
-      '</div>';
-  }).join("");
-
-  list.innerHTML = html;
-  more.textContent = TL.length > LIMIT
-    ? "Showing " + LIMIT + " of " + TL.length + " missions with full timeline data. Filter further to narrow down."
-    : "Showing all " + TL.length + " missions with full timeline data.";
+  renderTimelinePerMission(parsed, list, more);
 }
 
 function renderTimelinePerMission(TL, list, more) {
   const LIMIT = 25;
-    TL = TL.slice().sort((a, b) => b.t3 - a.t3);
+  TL = TL.slice().sort((a, b) => b.t5 - a.t5);  // most recent departure first
   if (window.__tlRawLen !== TL.length) { window.__tlPage = 0; }
   window.__tlRawLen = TL.length;
   window.__tlRawData = TL; window.__tlList = list; window.__tlMore = more;
   const page = window.__tlPage || 0;
   const display = TL.slice(page * LIMIT, (page + 1) * LIMIT);
   if (!display.length) {
-    list.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--text-3);font-family:var(--mono);font-size:12px;">No missions match the current filters with full timeline data.</div>';
+    list.innerHTML = '<div style="padding:24px 0;text-align:center;color:var(--text-3);font-family:var(--mono);font-size:12px;">No missions with start/departure data for this filter.</div>';
     more.textContent = "";
     return;
   }
 
-  const html = display.map(({r, t0, t1, t2, t3, t4, t5, tSched, delay}) => {
-    const tStart = (tSched && tSched < t0) ? tSched : t0;
-    const total = (t5 - tStart) / 60000;
-    const pct = (t) => Math.max(0, Math.min(100, ((t - tStart) / (t5 - tStart)) * 100));
+  const _timeOf = (s) => { const m = s ? s.match(/(\d+:\d+)/) : null; return m ? m[1] : ""; };
 
+  const html = display.map(({r, t3, t4, t5}) => {
+    const winMs = t5 - t3;
+    const totalMin = winMs / 60000;
+    // pct clamps to [0,100] within the ms\u2192fd window
+    const pct = (t) => Math.max(0, Math.min(100, ((t - t3) / winMs) * 100));
+
+    // Build segments
     const segs = [];
-    if (tSched && tSched < t0) {
-      segs.push({ cls: "delayed", from: pct(tSched), to: pct(t0),
-        label: "Flight late by " + Math.round((t0-tSched)/60000) + "m",
-        dur: (t0-tSched)/60000, fromTime: r.sched_fa, toTime: r.fa });
+    if (t4) {
+      if (t4 <= t5) {
+        // On time: active bar + buffer to departure
+        segs.push({ cls: "active", from: 0,        to: pct(t4),
+          label: "Active mission", dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
+        segs.push({ cls: "buffer", from: pct(t4),  to: 100,
+          label: "Buffer to departure", dur: (t5-t4)/60000, fromTime: r.mc, toTime: r.fd });
+      } else {
+        // Late: full bar red, overran departure
+        segs.push({ cls: "active", from: 0, to: 100,
+          label: "Mission overran departure by " + Math.round((t4-t5)/60000) + "m",
+          dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
+      }
+    } else {
+      // No completion recorded \u2014 show as in-progress
+      segs.push({ cls: "pre", from: 0, to: 100,
+        label: "Mission window", dur: totalMin, fromTime: r.ms, toTime: r.fd });
     }
-    segs.push(
-      { cls: "pre",    from: pct(t0), to: pct(t1), label: "Pre-acceptance", dur: (t1-t0)/60000, fromTime: r.fa,   toTime: r.ma },
-      { cls: "drive",  from: pct(t1), to: pct(t2), label: "Response/Drive", dur: (t2-t1)/60000, fromTime: r.ma,   toTime: r.tarr },
-      { cls: "setup",  from: pct(t2), to: pct(t3), label: "Setup",          dur: (t3-t2)/60000, fromTime: r.tarr, toTime: r.ms },
-      { cls: "active", from: pct(t3), to: pct(t4), label: "Active mission", dur: (t4-t3)/60000, fromTime: r.ms,   toTime: r.mc },
-      { cls: "buffer", from: pct(t4), to: pct(t5), label: "Buffer to dep",  dur: (t5-t4)/60000, fromTime: r.mc,   toTime: r.fd },
-    );
-    const renderSegs = segs.filter(s => s.to > s.from);
 
-    const segmentHtml = renderSegs.map(s => {
+    const segHtml = segs.map(s => {
       const w = s.to - s.from;
+      if (w <= 0) return '';
       const tip = s.label + ": " + fmtDur(s.dur) + "\n" + fmtClock(s.fromTime) + " \u2192 " + fmtClock(s.toTime);
       return '<div class="seg ' + s.cls + '" style="left:' + s.from.toFixed(2) + '%;width:' + w.toFixed(2) + '%" title="' + tip.replace(/"/g,'&quot;') + '"></div>';
     }).join("");
 
-    const respClass = r.resp != null && r.resp > 100 ? "color:var(--neon-amber);" : "";
-    const onTimeBadge = r.ot === false ? '<span style="color:var(--neon-red)">\u26a0 late</span>' :
-                        r.ot === true  ? '<span style="color:var(--neon-green)">on time</span>' : "";
-    const delayBadge = (delay != null && delay !== 0)
-      ? (delay > 0 ? '<span style="color:var(--neon-amber)">+' + delay + 'm late arr</span>'
-                   : '<span style="color:var(--neon-green)">' + delay + 'm early arr</span>')
-      : (delay === 0 ? '<span style="color:var(--text-3)">on schedule</span>' : "");
-
-    const _timeOf = (s) => { const m = s ? s.match(/(\d+:\d+)/) : null; return m ? m[1] : ""; };
-    const _labels = [
-      { cls: "fa", ev: "FLT ARR",  pos: pct(t0), tm: _timeOf(r.fa) },
-      { cls: "ma", ev: "ACCEPTED", pos: pct(t1), tm: _timeOf(r.ma) },
-      { cls: "mc", ev: "COMPLETE", pos: pct(t4), tm: _timeOf(r.mc) },
-      { cls: "fd", ev: "FLT DEP",  pos: pct(t5), tm: _timeOf(r.fd) },
-    ];
-    const _labelsHtml = _labels.map(L =>
+    // Tick labels
+    const labels = [{ cls: "ms", ev: "STARTED", pos: 0, tm: _timeOf(r.ms) }];
+    if (t4) {
+      const cPos = Math.min(pct(t4), 98);
+      const late = t4 > t5;
+      labels.push({ cls: "mc" + (late ? " fd" : ""), ev: late ? "COMPLETE \u26a0" : "COMPLETE", pos: cPos, tm: _timeOf(r.mc) });
+    }
+    labels.push({ cls: "fd", ev: "FLT DEP", pos: 100, tm: _timeOf(r.fd) });
+    const labelsHtml = labels.map(L =>
       '<div class="lbl ' + L.cls + '" style="left:' + L.pos.toFixed(2) + '%"><span class="ev">' + L.ev + '</span><span class="tm">' + L.tm + '</span></div>'
     ).join("");
+
+    const onTimeBadge = r.ot === false ? '<span style="color:var(--neon-red)">\u26a0 late</span>' :
+                        r.ot === true  ? '<span style="color:var(--neon-green)">\u2713 on time</span>' : '';
+    const durStr    = t4 ? fmtDur((t4-t3)/60000) : "\u2014";
+    const bufferStr = t4 && t4 <= t5 ? fmtDur((t5-t4)/60000) :
+                      t4             ? "\u2212" + fmtDur((t4-t5)/60000) + " over" : "\u2014";
 
     return '<div class="tl-row">' +
         '<div class="meta">' +
           '<div class="hdr">' + r.tl + '</div>' +
-          '<div class="sub">' + r.al + ' ' + (r.inb||"-") + '\u2192' + (r.outb||"-") + ' \u00b7 ' + r.atype + ' ' + r.ast + ' \u00b7 ' + r.loc + '</div>' +
-          '<div class="sub" style="' + respClass + '">resp ' + fmtDur(r.resp) + ' \u00b7 prod ' + (r.prod != null ? r.prod + "%" : "N/A") + ' \u00b7 ' + onTimeBadge + (delayBadge ? ' \u00b7 ' + delayBadge : '') + '</div>' +
+          '<div class="sub">' + r.al + ' ' + (r.inb||"\u2014") + '\u2192' + (r.outb||"\u2014") + ' \u00b7 ' + r.ast + '</div>' +
+          '<div class="sub">' + onTimeBadge + ' \u00b7 dur ' + durStr + ' \u00b7 buf ' + bufferStr + '</div>' +
         '</div>' +
         '<div class="tl-bar-wrap">' +
-          '<div class="tl-bar">' + segmentHtml + '</div>' +
-          '<div class="tl-times">' + _labelsHtml + '</div>' +
+          '<div class="tl-bar">' + segHtml + '</div>' +
+          '<div class="tl-times">' + labelsHtml + '</div>' +
         '</div>' +
         '<div class="totals">' +
-          '<div class="big">' + fmtDur((t5-tStart)/60000) + '</div>' +
-          '<div class="small">' + fmtClock(r.fa) + '</div>' +
+          '<div class="big">' + fmtDur(totalMin) + '</div>' +
+          '<div class="small">' + fmtClock(r.ms) + '</div>' +
           '<div class="small">\u2192 ' + fmtClock(r.fd) + '</div>' +
         '</div>' +
       '</div>';
@@ -1237,7 +1161,7 @@ function renderTimelinePerMission(TL, list, more) {
   list.innerHTML = html;
   const totalPages = Math.ceil(TL.length / LIMIT);
   if (TL.length <= LIMIT) {
-    more.textContent = "Showing all " + TL.length + " missions with full timeline data.";
+    more.textContent = "Showing all " + TL.length + " missions with start/departure data.";
   } else {
     more.innerHTML = '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;">'
       + '<button class="tl-prev-btn"' + (page === 0 ? ' disabled' : '') + ' style="padding:4px 14px;cursor:pointer;border-radius:4px;">&#8592; Prev</button>'
