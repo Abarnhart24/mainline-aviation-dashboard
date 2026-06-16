@@ -392,12 +392,14 @@ body.wall .wall-banner .pulse {
   border-radius: 2px;
 }
 .tl-bar .seg:hover { filter: brightness(1.35); transform: translateY(-1px); }
-.tl-bar .seg.pre     { background: #4b5563; }
-.tl-bar .seg.drive   { background: var(--neon-cyan); }
-.tl-bar .seg.setup   { background: var(--neon-purple); }
-.tl-bar .seg.active  { background: var(--neon-green); }
-.tl-bar .seg.buffer  { background: #374151; }
-.tl-bar .seg.delayed { background: var(--neon-amber); opacity: 0.7; }
+.tl-bar .seg.pre      { background: #4b5563; }
+.tl-bar .seg.drive    { background: var(--neon-cyan); }
+.tl-bar .seg.setup    { background: var(--neon-purple); }
+.tl-bar .seg.active   { background: var(--neon-green); }
+.tl-bar .seg.buffer   { background: var(--neon-purple); opacity: 0.7; }
+.tl-bar .seg.late-seg { background: var(--neon-red); }
+.tl-bar .seg.delayed  { background: var(--neon-amber); opacity: 0.7; }
+.tl-row--late { border-left: 3px solid var(--neon-red) !important; background: rgba(248,113,113,0.06) !important; }
 
 /* Timestamp labels under each timeline bar */
 .tl-times {
@@ -1061,9 +1063,10 @@ function renderTimeline(rows) {
   const more = document.getElementById("timelineMore");
   if (!list) return;
 
-  // Only require Mission Started + Flight Departure — captures far more missions
+  // Require Mission Started + Flight Departure; Team Arrival is optional
   const parsed = rows.map(r => ({
     r,
+    t2: parseSpringshotTs(r.tarr), // Team Arrival (optional — starts the bar if present)
     t3: parseSpringshotTs(r.ms),   // Mission Started
     t4: parseSpringshotTs(r.mc),   // Mission Completed (optional)
     t5: parseSpringshotTs(r.fd),   // Flight Departure
@@ -1074,7 +1077,7 @@ function renderTimeline(rows) {
 
 function renderTimelinePerMission(TL, list, more) {
   const LIMIT = 25;
-  TL = TL.slice().sort((a, b) => b.t5 - a.t5);  // most recent departure first
+  TL = TL.slice().sort((a, b) => b.t3 - a.t3);  // most recent Mission Started first — matches missions table order
   if (window.__tlRawLen !== TL.length) { window.__tlPage = 0; }
   window.__tlRawLen = TL.length;
   window.__tlRawData = TL; window.__tlList = list; window.__tlMore = more;
@@ -1088,31 +1091,37 @@ function renderTimelinePerMission(TL, list, more) {
 
   const _timeOf = (s) => { const m = s ? s.match(/(\d+:\d+)/) : null; return m ? m[1] : ""; };
 
-  const html = display.map(({r, t3, t4, t5}) => {
-    const winMs = t5 - t3;
+  const html = display.map(({r, t2, t3, t4, t5}) => {
+    // Bar window: Team Arrival \u2192 Flight Departure (falls back to Started if no arrival)
+    const tStart = (t2 && t2 <= t3) ? t2 : t3;
+    const winMs  = t5 - tStart;
     const totalMin = winMs / 60000;
-    // pct clamps to [0,100] within the ms\u2192fd window
-    const pct = (t) => Math.max(0, Math.min(100, ((t - t3) / winMs) * 100));
+    const pct = (t) => Math.max(0, Math.min(100, ((t - tStart) / winMs) * 100));
+    const late = t4 && t4 > t5;
 
     // Build segments
     const segs = [];
-    if (t4) {
-      if (t4 <= t5) {
-        // On time: active bar + buffer to departure
-        segs.push({ cls: "active", from: 0,        to: pct(t4),
-          label: "Active mission", dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
-        segs.push({ cls: "buffer", from: pct(t4),  to: 100,
-          label: "Buffer to departure", dur: (t5-t4)/60000, fromTime: r.mc, toTime: r.fd });
-      } else {
-        // Late: full bar red, overran departure
-        segs.push({ cls: "active", from: 0, to: 100,
-          label: "Mission overran departure by " + Math.round((t4-t5)/60000) + "m",
-          dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
-      }
+    // 1. Blue: Arrival \u2192 Started (setup/transit time)
+    if (t2 && t2 < t3) {
+      segs.push({ cls: "drive", from: pct(t2), to: pct(t3),
+        label: "Arrival to started", dur: (t3-t2)/60000, fromTime: r.tarr, toTime: r.ms });
+    }
+    if (late) {
+      // Red: Started \u2192 Dep (mission overran; show as one red block)
+      segs.push({ cls: "late-seg", from: pct(t3), to: 100,
+        label: "Overran departure by " + Math.round((t4-t5)/60000) + "m",
+        dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
+    } else if (t4) {
+      // 2. Green: Started \u2192 Completed
+      segs.push({ cls: "active", from: pct(t3), to: pct(t4),
+        label: "Active mission", dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
+      // 3. Purple: Completed \u2192 Flight Departure
+      segs.push({ cls: "buffer", from: pct(t4), to: 100,
+        label: "Buffer to departure", dur: (t5-t4)/60000, fromTime: r.mc, toTime: r.fd });
     } else {
-      // No completion recorded \u2014 show as in-progress
-      segs.push({ cls: "pre", from: 0, to: 100,
-        label: "Mission window", dur: totalMin, fromTime: r.ms, toTime: r.fd });
+      // No completion yet \u2014 gray placeholder
+      segs.push({ cls: "pre", from: pct(t3), to: 100,
+        label: "Mission window", dur: (t5-t3)/60000, fromTime: r.ms, toTime: r.fd });
     }
 
     const segHtml = segs.map(s => {
@@ -1123,13 +1132,13 @@ function renderTimelinePerMission(TL, list, more) {
     }).join("");
 
     // Tick labels
-    const labels = [{ cls: "ms", ev: "STARTED", pos: 0, tm: _timeOf(r.ms) }];
+    const labels = [];
+    if (t2 && t2 < t3) labels.push({ cls: "tarr", ev: "ARRIVED",  pos: pct(t2), tm: _timeOf(r.tarr) });
+    labels.push(              { cls: "ms",   ev: "STARTED",  pos: pct(t3), tm: _timeOf(r.ms)   });
     if (t4) {
-      const cPos = Math.min(pct(t4), 98);
-      const late = t4 > t5;
-      labels.push({ cls: "mc" + (late ? " fd" : ""), ev: late ? "COMPLETE \u26a0" : "COMPLETE", pos: cPos, tm: _timeOf(r.mc) });
+      labels.push(            { cls: "mc",   ev: late ? "COMPLETE \u26a0" : "COMPLETE", pos: Math.min(pct(t4), 98), tm: _timeOf(r.mc) });
     }
-    labels.push({ cls: "fd", ev: "FLT DEP", pos: 100, tm: _timeOf(r.fd) });
+    labels.push(              { cls: "fd",   ev: "FLT DEP",  pos: 100,     tm: _timeOf(r.fd)   });
     const labelsHtml = labels.map(L =>
       '<div class="lbl ' + L.cls + '" style="left:' + L.pos.toFixed(2) + '%"><span class="ev">' + L.ev + '</span><span class="tm">' + L.tm + '</span></div>'
     ).join("");
@@ -1137,10 +1146,11 @@ function renderTimelinePerMission(TL, list, more) {
     const onTimeBadge = r.ot === false ? '<span style="color:var(--neon-red)">\u26a0 late</span>' :
                         r.ot === true  ? '<span style="color:var(--neon-green)">\u2713 on time</span>' : '';
     const durStr    = t4 ? fmtDur((t4-t3)/60000) : "\u2014";
-    const bufferStr = t4 && t4 <= t5 ? fmtDur((t5-t4)/60000) :
-                      t4             ? "\u2212" + fmtDur((t4-t5)/60000) + " over" : "\u2014";
+    const bufferStr = t4 && !late ? fmtDur((t5-t4)/60000) :
+                      late        ? "\u2212" + fmtDur((t4-t5)/60000) + " over" : "\u2014";
+    const rowCls = late ? 'tl-row tl-row--late' : 'tl-row';
 
-    return '<div class="tl-row">' +
+    return '<div class="' + rowCls + '">' +
         '<div class="meta">' +
           '<div class="hdr">' + r.tl + '</div>' +
           '<div class="sub">' + r.al + ' ' + (r.inb||"\u2014") + '\u2192' + (r.outb||"\u2014") + ' \u00b7 ' + r.ast + '</div>' +
@@ -1152,7 +1162,7 @@ function renderTimelinePerMission(TL, list, more) {
         '</div>' +
         '<div class="totals">' +
           '<div class="big">' + fmtDur(totalMin) + '</div>' +
-          '<div class="small">' + fmtClock(r.ms) + '</div>' +
+          '<div class="small">' + fmtClock(tStart === t2 ? r.tarr : r.ms) + '</div>' +
           '<div class="small">\u2192 ' + fmtClock(r.fd) + '</div>' +
         '</div>' +
       '</div>';
