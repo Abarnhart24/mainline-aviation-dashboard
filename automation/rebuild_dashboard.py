@@ -122,6 +122,7 @@ def enrich(rows):
         t_started    = parse_dt(r.get('Mission Started'))
         t_completed  = parse_dt(r.get('Mission Completed'))
         t_flight_arr = parse_dt(r.get('Flight Arrival'))
+        t_flight_dep = parse_dt(r.get('Flight Departure'))
 
         # Response time: Mission Accepted → Team Arrival
         resp = minutes_between(t_accepted, t_arrival)
@@ -131,9 +132,9 @@ def enrich(rows):
         dur = minutes_between(t_started, t_completed)
         r['_duration_min'] = dur if (dur is not None and dur >= 0) else None
 
-        # On-time: team arrived at or before flight arrival
-        if t_flight_arr and t_arrival:
-            r['_on_time'] = t_arrival <= t_flight_arr
+        # On-time: Mission Completed at or before Flight Departure
+        if t_flight_dep and t_completed:
+            r['_on_time'] = t_completed <= t_flight_dep
         else:
             r['_on_time'] = None
 
@@ -282,19 +283,3 @@ if __name__ == "__main__":
     off_time = sum(1 for r in enriched if r.get('_on_time') is False)
     with_resp = [r['_response_min'] for r in enriched if r.get('_response_min') is not None]
     with_gap  = [r['_transit_gap_min'] for r in enriched if r.get('_transit_gap_min') is not None]
-    pcts      = [r['_productivity_pct'] for r in enriched if r.get('_productivity_pct') is not None]
-
-    print()
-    print("=" * 40)
-    print(f"Total missions:    {total}")
-    if on_time + off_time > 0:
-        print(f"On-time rate:      {on_time/(on_time+off_time)*100:.1f}%  ({on_time}/{on_time+off_time})")
-    if with_resp:
-        print(f"Avg response:      {sum(with_resp)/len(with_resp):.1f} min")
-    if with_gap:
-        print(f"Avg transit gap:   {sum(with_gap)/len(with_gap):.1f} min")
-    if pcts:
-        print(f"Avg productivity:  {sum(pcts)/len(pcts):.1f}%")
-    print("=" * 40)
-    print()
-    print("Done. Now commit + push from VS Code to publish.")
