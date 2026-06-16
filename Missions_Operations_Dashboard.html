@@ -1763,8 +1763,6 @@ var SK_DATA=[{"date": "2025-12-01", "flight": "SK-7713478", "route": "ATL-CPH", 
 function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
 function fds(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});}
-var charts={};
-
 function buildChart(id,labels,datasets,color){
   if(charts[id])charts[id].destroy();
   charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b",maxTicksLimit:14},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});
