@@ -2101,10 +2101,10 @@ window.switchAirline=function(code){
   document.querySelectorAll(".atab").forEach(function(t){
     if(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1)t.classList.add("active");
   });
-  if(window.charts&&window.charts[code+"-chart"]){window.charts[code+"-chart"].destroy();delete window.charts[code+"-chart"];}
-  if(code==="aa"&&typeof renderAA==="function") renderAA();
-  if(code==="et"&&typeof renderET==="function") renderET();
-  if(code==="sk"&&typeof renderSK==="function") renderSK();
+  try{if(window.charts&&window.charts[code+"-chart"]){window.charts[code+"-chart"].destroy();delete window.charts[code+"-chart"];}}catch(e){}
+  if(code==="aa"){try{renderAA();}catch(e){console.error("renderAA failed:",e);}}
+  if(code==="et"){try{renderET();}catch(e){console.error("renderET failed:",e);}}
+  if(code==="sk"){try{renderSK();}catch(e){console.error("renderSK failed:",e);}}
 };
 // Hook switchTab so financing tab always re-shows the active airline panel
 (function(){
