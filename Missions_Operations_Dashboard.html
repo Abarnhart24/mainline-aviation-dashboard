@@ -1829,7 +1829,6 @@ function renderSK(){
   ]);
 }
 
-document.addEventListener("DOMContentLoaded", function() { renderAA(); renderET(); renderSK(); });
 </script>
 <script id="vs-override">
 window.switchAirline=function(code){
@@ -1842,6 +1841,14 @@ window.switchAirline=function(code){
   document.querySelectorAll(".atab").forEach(function(t){
     if(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1)t.classList.add("active");
   });
+  // Destroy existing chart and re-render so Chart.js gets real canvas dimensions
+  if(window.charts && window.charts[code+"-chart"]){
+    window.charts[code+"-chart"].destroy();
+    delete window.charts[code+"-chart"];
+  }
+  if(code==="aa"&&typeof renderAA==="function") renderAA();
+  if(code==="et"&&typeof renderET==="function") renderET();
+  if(code==="sk"&&typeof renderSK==="function") renderSK();
 };
 // Hook switchTab so financing tab always re-shows the active airline panel
 (function(){
