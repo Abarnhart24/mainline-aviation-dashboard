@@ -1,356 +1,277 @@
 """
-Refresh the Goldberg's Group Missions Operations dashboard.
+Mainline Aviation – Sullivan Rd Missions Dashboard Rebuild Script
+-----------------------------------------------------------------
+Usage (from repo root in VS Code terminal):
+    python automation/rebuild_dashboard.py
 
-Behavior changed (May 2026): instead of replacing all dashboard data with
-each export, we maintain an append-only master ledger. Each new CSV adds
-ONLY non-duplicate rows. Duplicates are detected via a stable composite
-key (Worksite + Asset + Outbound Flight + Mission Started).
+  Or with an explicit incoming CSV:
+    python automation/rebuild_dashboard.py "C:\\path\\to\\MissionsSummary.csv"
 
-Reads:
-    - The newest MissionsSummary*.csv in TEST folder (excluding master,
-      backups, archives, _for_Monday). This is treated as "incoming."
-    - MissionsSummary_master.csv in TEST folder (the cumulative dataset).
-      Created on first run if absent.
+How it works:
+  1. Reads the incoming Springshot CSV export (from Sullivan Dashboard folder by default)
+  2. Merges new rows into MissionsSummary_master.csv (append-only, deduped)
+  3. Enriches data (response times, transit gaps, on-time, etc.)
+  4. Rewrites RAW_MISSIONS in Missions_Operations_Dashboard.html
+  5. Updates SNAPSHOT_TIME in the HTML
 
-Writes:
-    - MissionsSummary_master.csv (updated with newly-discovered rows)
-    - Missions_Operations_Dashboard.html (rebuilt from master)
-    - automation/backups/dashboard_backup_<timestamp>.html
-    - automation/backups/master_backup_<timestamp>.csv
-
-Usage:  python rebuild_dashboard.py [path-to-incoming-csv]
-        If no path given, picks newest MissionsSummary*.csv in TEST.
+After running: commit + push from VS Code to publish to GitHub Pages.
 """
-import csv
-import json
-import re
-import shutil
-import sys
-from collections import defaultdict
+
+import csv, json, re, math, sys
 from datetime import datetime
 from pathlib import Path
+from collections import defaultdict
 
-TEST_DIR = Path(r"C:\Users\Tony Quach\OneDrive - Goldbergs Group\Desktop\TEST")
-MASTER_PATH = TEST_DIR / "MissionsSummary_master.csv"
-DASHBOARD_PATH = TEST_DIR / "Missions_Operations_Dashboard.html"
-BACKUP_DIR = TEST_DIR / "automation" / "backups"
-INTRA_SHIFT_MAX = 240  # minutes — gap above this counts as a different shift
+# ── PATHS ────────────────────────────────────────────────────────────────────
+REPO_DIR       = Path(__file__).resolve().parent.parent  # mainline-aviation-dashboard/
+MASTER_CSV     = REPO_DIR / "MissionsSummary_master.csv"
+DASHBOARD_HTML = REPO_DIR / "Missions_Operations_Dashboard.html"
 
-# Original CSV column order (must match Springshot exports)
-CSV_COLUMNS = [
-    "Team Lead", "Airline", "Mission Type", "Worksite", "Asset",
-    "Engagement", "Productivity", "Inbound Flight", "Outbound Flight",
-    "Asset Type", "Location", "Event",
-    "Flight Arrival", "Mission Assigned", "Mission Accepted",
-    "Team Arrival", "Mission Started", "Mission Completed", "Flight Departure",
-    "Security Search", "Details", "Mission Notes",
-    "Arrival Delay",  # minutes — actual minus scheduled (positive = late)
-]
+# Default incoming CSV location — drop new Springshot exports here
+DEFAULT_INCOMING = REPO_DIR / "MissionsSummary.csv"
 
-# ---------- arrival delay helpers ----------
-def _try_int(s):
-    if not s or s in ("-", "N/A", "", None): return None
-    try:
-        return int(float(s))
-    except (TypeError, ValueError):
+# ── CONSTANTS ─────────────────────────────────────────────────────────────────
+INTRA_SHIFT_MAX = 240  # minutes — gaps > this are shift breaks, not transit gaps
+
+# ── HELPERS ──────────────────────────────────────────────────────────────────
+def parse_dt(s):
+    """Parse Springshot timestamp like 'Jun 16, 02:27, EDT' or common formats."""
+    if not s or str(s).strip() in ('', 'nan', 'None', 'N/A'):
         return None
+    s = str(s).strip()
+    s = re.sub(r',\s*[A-Z]{2,4}$', '', s).strip()   # strip ", EDT" / ", EST"
+    for fmt in (
+        "%b %d, %H:%M",        # Jun 16, 02:27
+        "%b %d, %I:%M %p",     # Jun 16, 2:27 AM
+        "%m/%d/%Y %I:%M %p",   # 06/16/2026 2:27 AM
+        "%m/%d/%Y %H:%M",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M",
+    ):
+        try:
+            dt = datetime.strptime(s, fmt)
+            if dt.year == 1900:
+                dt = dt.replace(year=datetime.now().year)
+            return dt
+        except:
+            pass
+    return None
 
-def _compute_scheduled(started_field, delay_str, year):
-    """Return the scheduled flight arrival as a Springshot-style display string.
-    actual = scheduled + delay_minutes  →  scheduled = actual - delay_minutes.
-    """
-    delay = _try_int(delay_str)
-    if delay is None or not started_field or started_field in ("-", ""):
-        return ""
-    actual = parse_ts(started_field, year)
-    if not actual:
-        return ""
-    from datetime import timedelta
-    sched = actual - timedelta(minutes=delay)
-    # Match the same display format as actual ("May 04, 21:52, EDT")
-    return sched.strftime("%b %d, %H:%M, EDT")
+def minutes_between(a, b):
+    if a and b:
+        return round((b - a).total_seconds() / 60, 1)
+    return None
 
-# ---------- name normalization ----------
-NAME_REPLACEMENTS = {
-    "Bobbie Jackson lll": "Bobbie Jackson III",
-}
-def clean_team_lead(s):
-    if not s: return s
-    s = re.sub(r"\s+", " ", s.strip())
-    return NAME_REPLACEMENTS.get(s, s)
+def normalize_name(n):
+    """Fix common name issues from Springshot (lowercase L vs uppercase I, etc.)."""
+    n = str(n).strip()
+    n = re.sub(r'\blll\b', 'III', n)
+    n = re.sub(r'\bll\b',  'II',  n)
+    return n
 
-# ---------- key helpers ----------
-def row_key(row):
-    """Stable composite key identifying a unique mission.
-
-    Worksite + Asset + Outbound Flight + Mission Started reliably identifies
-    a mission: an aircraft can't depart from one airport on two different
-    flight numbers at the same minute.
-    """
+def dedup_key(row):
     return (
-        (row.get("Worksite") or "").strip(),
-        (row.get("Asset") or "").strip(),
-        (row.get("Outbound Flight") or "").strip(),
-        (row.get("Mission Started") or "").strip(),
+        str(row.get('Worksite', '')).strip(),
+        str(row.get('Asset', '')).strip(),
+        str(row.get('Outbound Flight', '')).strip(),
+        str(row.get('Mission Started', '')).strip(),
     )
 
-def find_incoming_csv():
-    """Pick newest MissionsSummary*.csv that isn't master/archive/backup/Monday."""
-    excluded = ("master", "archive", "backup", "for_Monday")
-    candidates = [
-        p for p in TEST_DIR.glob("MissionsSummary*.csv")
-        if not any(token in p.name.lower() for token in excluded)
-    ]
-    if not candidates:
-        raise FileNotFoundError(
-            f"No incoming MissionsSummary*.csv found in {TEST_DIR}. "
-            "Drop a Springshot export into the folder before running."
-        )
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+def read_csv(path):
+    with open(path, newline='', encoding='utf-8-sig') as f:
+        return [dict(r) for r in csv.DictReader(f)]
 
-# ---------- CSV merge ----------
-def load_master():
-    if not MASTER_PATH.exists():
-        return [], set()
-    with open(MASTER_PATH, encoding="utf-8-sig") as f:
-        rows = list(csv.DictReader(f))
-    keys = {row_key(r) for r in rows}
-    return rows, keys
-
-def merge_incoming(incoming_path: Path):
-    """Append non-duplicate rows from incoming CSV into master.
-
-    Returns (added, skipped, total_after) tuple.
-    """
-    master_rows, master_keys = load_master()
-    print(f"[merge] master has {len(master_rows)} rows before merge")
-
-    with open(incoming_path, encoding="utf-8-sig") as f:
-        incoming_rows = list(csv.DictReader(f))
-    print(f"[merge] incoming {incoming_path.name} has {len(incoming_rows)} rows")
-
-    # Backup master before changing it
-    if master_rows:
-        BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-        stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-        shutil.copy2(MASTER_PATH, BACKUP_DIR / f"master_backup_{stamp}.csv")
-
-    # Index master by key for O(1) lookup during cell-level merge
-    master_idx = {row_key(r): r for r in master_rows}
-
-    added = 0
-    skipped = 0
-    backfilled = 0
-    for row in incoming_rows:
-        # Normalize team-lead name BEFORE building the dedupe key so historical
-        # variants merge correctly going forward
-        if "Team Lead" in row:
-            row["Team Lead"] = clean_team_lead(row.get("Team Lead", ""))
-        k = row_key(row)
-        if k in master_idx:
-            # Cell-level merge: fill in any empty master cells from the incoming
-            # version. Non-destructive — never overwrites existing master values.
-            existing = master_idx[k]
-            for col, val in row.items():
-                if val not in (None, "") and not (existing.get(col) or "").strip():
-                    existing[col] = val
-                    backfilled += 1
-            skipped += 1
-            continue
-        master_rows.append(row)
-        master_idx[k] = row
-        master_keys.add(k)
-        added += 1
-
-    if backfilled:
-        print(f"[merge] backfilled {backfilled} empty cells in existing rows")
-
-    # Write master back. Use the canonical column order; fall back to whatever
-    # columns exist in the incoming file if a column is missing in CSV_COLUMNS.
-    fieldnames = CSV_COLUMNS[:]
-    extra = []
-    if incoming_rows:
-        for c in incoming_rows[0].keys():
-            if c and c not in fieldnames:
-                extra.append(c)
-    fieldnames += extra
-
-    with open(MASTER_PATH, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
-        writer.writeheader()
-        for row in master_rows:
-            writer.writerow({k: row.get(k, "") for k in fieldnames})
-
-    print(f"[merge] added {added} new rows, skipped {skipped} duplicates")
-    print(f"[merge] master now has {len(master_rows)} rows total")
-    return added, skipped, len(master_rows)
-
-# ---------- enrichment (same as before) ----------
-def pct(s):
-    if not s or s in ("-", "N/A", ""):
-        return None
-    m = re.match(r"(-?\d+(?:\.\d+)?)%", s)
-    return float(m.group(1)) if m else None
-
-def parse_ts(s, year):
-    if not s or s in ("-", ""):
-        return None
-    m = re.match(r"(\w+ \d+), (\d+:\d+)", s)
-    if not m:
-        return None
+def parse_pct(v):
     try:
-        return datetime.strptime(f"{year} {m.group(1)} {m.group(2)}", "%Y %b %d %H:%M")
-    except Exception:
+        s = str(v).strip().replace('%', '').replace(',', '')
+        if s in ('N/A', '', 'None', 'nan'):
+            return None
+        return float(s)
+    except:
         return None
 
-def enrich(rows, year=None):
-    """Compute Proper, Response, Transit, On-Time, Duration, Month, Hour."""
-    if year is None:
-        year = datetime.now().year
-    recs = []
-    for r in rows:
-        eng = pct(r.get("Engagement", ""))
-        accepted = parse_ts(r.get("Mission Accepted", ""), year)
-        team_arr = parse_ts(r.get("Team Arrival", ""), year)
-        started = parse_ts(r.get("Mission Started", ""), year)
-        completed = parse_ts(r.get("Mission Completed", ""), year)
-        flight_dep = parse_ts(r.get("Flight Departure", ""), year)
+def safe(v):
+    if v is None or (isinstance(v, float) and math.isnan(v)):
+        return None
+    return v
 
-        dur = None
-        if started and completed:
-            d = (completed - started).total_seconds() / 60
-            if 0 < d < 600:
-                dur = round(d, 1)
-        on_time = None
-        if completed and flight_dep:
-            on_time = bool(completed <= flight_dep)
-        resp = None
-        if accepted and team_arr:
-            rd = (team_arr - accepted).total_seconds() / 60
-            if rd >= 0:
-                resp = round(rd, 1)
+# ── MERGE ────────────────────────────────────────────────────────────────────
+def merge_incoming(master_rows, incoming_rows):
+    """Append non-duplicate incoming rows to master. Returns combined list."""
+    existing_keys = set(dedup_key(r) for r in master_rows)
+    added = 0
+    for row in incoming_rows:
+        k = dedup_key(row)
+        if k not in existing_keys:
+            master_rows.append(row)
+            existing_keys.add(k)
+            added += 1
+    print(f"  Merged: +{added} new rows  (total: {len(master_rows)})")
+    return master_rows
 
-        recs.append({
-            "tl": r.get("Team Lead", "").strip(),
-            "al": r.get("Airline", ""),
-            "mt": r.get("Mission Type", ""),
-            "ws": r.get("Worksite", ""),
-            "ast": r.get("Asset", ""),
-            "atype": r.get("Asset Type", ""),
-            "loc": r.get("Location", ""),
-            "eng": eng,
-            "prod": pct(r.get("Productivity", "")),
-            "inb": r.get("Inbound Flight", ""),
-            "outb": r.get("Outbound Flight", ""),
-            "fa": r.get("Flight Arrival", ""),
-            "delay": _try_int(r.get("Arrival Delay", "")),
-            "sched_fa": _compute_scheduled(started_field=r.get("Flight Arrival", ""), delay_str=r.get("Arrival Delay", ""), year=year),
-            "ma": r.get("Mission Accepted", ""),
-            "tarr": r.get("Team Arrival", ""),
-            "ms": r.get("Mission Started", ""),
-            "mc": r.get("Mission Completed", ""),
-            "fd": r.get("Flight Departure", ""),
-            "dur": dur,
-            "ot": on_time,
-            "resp": resp,
-            "hr": started.hour if started else None,
-            "mo": started.strftime("%b %Y") if started else None,
-            "mo_idx": (started.year * 12 + started.month) if started else None,
-            "proper": (eng is not None and eng > 0),
-            "transit": None,
-            "transit_kind": None,
-            "_ms": started,
-            "_mc": completed,
-            "_tarr": team_arr,
-        })
+# ── ENRICH ───────────────────────────────────────────────────────────────────
+def enrich(rows):
+    """Add computed fields to each row."""
+    enriched = []
+    for row in rows:
+        r = dict(row)
+        r['Team Lead'] = normalize_name(r.get('Team Lead', ''))
 
-    by_lead = defaultdict(list)
-    for i, r in enumerate(recs):
-        by_lead[r["tl"]].append((i, r))
-    for tl, lst in by_lead.items():
-        proper = sorted(
-            [(i, r) for (i, r) in lst if r["proper"] and r["_ms"] and r["_mc"] and r["_tarr"]],
-            key=lambda x: x[1]["_ms"],
-        )
-        for k, (i, r) in enumerate(proper):
-            if k == 0:
-                recs[i]["transit_kind"] = "first"
+        t_accepted   = parse_dt(r.get('Mission Accepted'))
+        t_arrival    = parse_dt(r.get('Team Arrival'))
+        t_started    = parse_dt(r.get('Mission Started'))
+        t_completed  = parse_dt(r.get('Mission Completed'))
+        t_flight_arr = parse_dt(r.get('Flight Arrival'))
+
+        # Response time: Mission Accepted → Team Arrival
+        resp = minutes_between(t_accepted, t_arrival)
+        r['_response_min'] = resp if (resp is not None and resp >= 0) else None
+
+        # Mission duration
+        dur = minutes_between(t_started, t_completed)
+        r['_duration_min'] = dur if (dur is not None and dur >= 0) else None
+
+        # On-time: team arrived at or before flight arrival
+        if t_flight_arr and t_arrival:
+            r['_on_time'] = t_arrival <= t_flight_arr
+        else:
+            r['_on_time'] = None
+
+        # Date/time grouping
+        if t_started:
+            r['_month'] = t_started.strftime('%Y-%m')
+            r['_hour']  = t_started.hour
+            r['_date']  = t_started.strftime('%Y-%m-%d')
+        else:
+            r['_month'] = r['_hour'] = r['_date'] = None
+
+        r['_engagement_pct']   = parse_pct(r.get('Engagement'))
+        r['_productivity_pct'] = parse_pct(r.get('Productivity'))
+
+        # Keep parsed timestamps for transit gap calc
+        r['_t_completed'] = t_completed
+        r['_t_arrival']   = t_arrival
+        r['_t_started']   = t_started
+
+        enriched.append(r)
+
+    # Intra-shift transit gaps (per team lead per day)
+    by_key = defaultdict(list)
+    for r in enriched:
+        if r.get('Team Lead') and r.get('_date'):
+            by_key[(r['Team Lead'], r['_date'])].append(r)
+
+    for missions in by_key.values():
+        missions.sort(key=lambda x: x['_t_started'] or datetime.min)
+        for i, m in enumerate(missions):
+            if i == 0:
+                m['_transit_gap_min'] = None
             else:
-                prev = proper[k - 1][1]
-                gap = (r["_tarr"] - prev["_mc"]).total_seconds() / 60
-                recs[i]["transit"] = round(gap, 1)
-                if gap < 0:
-                    recs[i]["transit_kind"] = "overlap"
-                elif gap <= INTRA_SHIFT_MAX:
-                    recs[i]["transit_kind"] = "intra"
-                else:
-                    recs[i]["transit_kind"] = "shift_break"
-        for i, r in lst:
-            if not r["proper"]:
-                recs[i]["transit_kind"] = "skipped"
+                gap = minutes_between(missions[i-1]['_t_completed'], m['_t_arrival'])
+                m['_transit_gap_min'] = gap if (gap is not None and 0 <= gap <= INTRA_SHIFT_MAX) else None
 
-    for r in recs:
-        r.pop("_ms", None)
-        r.pop("_mc", None)
-        r.pop("_tarr", None)
-    return recs
+    return enriched
 
-# ---------- dashboard write ----------
+# ── REWRITE HTML ─────────────────────────────────────────────────────────────
+def row_to_json(r):
+    return {
+        "teamLead":        r.get('Team Lead', ''),
+        "airline":         r.get('Airline', ''),
+        "missionType":     r.get('Mission Type', ''),
+        "worksite":        r.get('Worksite', ''),
+        "asset":           r.get('Asset', ''),
+        "engagement":      safe(r.get('_engagement_pct')),
+        "productivity":    safe(r.get('_productivity_pct')),
+        "inboundFlight":   r.get('Inbound Flight', ''),
+        "outboundFlight":  r.get('Outbound Flight', ''),
+        "assetType":       r.get('Asset Type', ''),
+        "location":        r.get('Location', ''),
+        "event":           r.get('Event', ''),
+        "flightArrival":   r.get('Flight Arrival', ''),
+        "missionAssigned": r.get('Mission Assigned', ''),
+        "missionAccepted": r.get('Mission Accepted', ''),
+        "teamArrival":     r.get('Team Arrival', ''),
+        "missionStarted":  r.get('Mission Started', ''),
+        "missionCompleted":r.get('Mission Completed', ''),
+        "flightDeparture": r.get('Flight Departure', ''),
+        "onTime":          safe(r.get('_on_time')),
+        "responseMin":     safe(r.get('_response_min')),
+        "durationMin":     safe(r.get('_duration_min')),
+        "transitGapMin":   safe(r.get('_transit_gap_min')),
+        "month":           r.get('_month') or '',
+        "date":            r.get('_date') or '',
+        "hour":            safe(r.get('_hour')),
+    }
+
 def rewrite_dashboard(enriched_recs):
-    if not DASHBOARD_PATH.exists():
-        raise FileNotFoundError(
-            f"Dashboard template not found at {DASHBOARD_PATH}. "
-            "Run the dashboard build the first time before automating."
-        )
-    html = DASHBOARD_PATH.read_text(encoding="utf-8")
+    html     = DASHBOARD_HTML.read_text(encoding='utf-8')
+    json_str = json.dumps([row_to_json(r) for r in enriched_recs], indent=2)
+    snapshot = datetime.now().strftime('%Y-%m-%d %H:%M')
 
-    BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    shutil.copy2(DASHBOARD_PATH, BACKUP_DIR / f"dashboard_backup_{stamp}.html")
+    html = re.sub(r'const RAW_MISSIONS\s*=\s*\[.*?\];',
+                  f'const RAW_MISSIONS = {json_str};',
+                  html, flags=re.DOTALL)
+    html = re.sub(r'const SNAPSHOT_TIME\s*=\s*"[^"]*"',
+                  f'const SNAPSHOT_TIME = "{snapshot}"', html)
 
-    new_data = "const RAW_MISSIONS = " + json.dumps(enriched_recs, separators=(",", ":")) + ";"
-    new_html, count = re.subn(
-        r"const RAW_MISSIONS = \[.*?\];", new_data, html, count=1, flags=re.DOTALL
-    )
-    if count != 1:
-        raise RuntimeError(
-            "Could not locate RAW_MISSIONS block in dashboard HTML — "
-            "the template may have been edited by hand."
-        )
+    DASHBOARD_HTML.write_text(html, encoding='utf-8')
+    print(f"  Dashboard rewritten: {len(enriched_recs)} missions  snapshot={snapshot}")
 
-    snapshot = datetime.now().strftime("%b %d, %Y at %I:%M %p EDT")
-    new_html = re.sub(
-        r'const SNAPSHOT_TIME = "[^"]*";',
-        f'const SNAPSHOT_TIME = "{snapshot}";',
-        new_html,
-    )
+# ── MAIN ──────────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    incoming_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_INCOMING
 
-    DASHBOARD_PATH.write_text(new_html, encoding="utf-8")
-    print(f"[dashboard] wrote refreshed dashboard ({len(new_html)/1024:.1f} KB)")
-    print(f"[dashboard] snapshot timestamp: {snapshot}")
+    if not incoming_path.exists():
+        print(f"ERROR: Incoming CSV not found: {incoming_path}")
+        print(f"       Drop a MissionsSummary.csv into: {REPO_DIR}")
+        sys.exit(1)
 
-# ---------- entry point ----------
-def main():
-    if len(sys.argv) > 1:
-        incoming = Path(sys.argv[1])
-    else:
-        incoming = find_incoming_csv()
+    print(f"Incoming CSV:  {incoming_path}")
+    print(f"Master CSV:    {MASTER_CSV}")
+    print(f"Dashboard:     {DASHBOARD_HTML}")
+    print()
 
-    print(f"[run] incoming CSV: {incoming}")
+    print("Reading files...")
+    incoming = read_csv(incoming_path)
+    master   = read_csv(MASTER_CSV) if MASTER_CSV.exists() else []
+    print(f"  Incoming: {len(incoming)} rows   Master: {len(master)} rows")
 
-    # 1) Merge incoming into master (deduped append)
-    added, skipped, total = merge_incoming(incoming)
+    print("Merging...")
+    merged = merge_incoming(master, incoming)
 
-    # 2) Read master, enrich, rebuild dashboard
-    with open(MASTER_PATH, encoding="utf-8-sig") as f:
-        master_rows = list(csv.DictReader(f))
-    enriched = enrich(master_rows)
-    print(f"[run] enriched {len(enriched)} master records")
+    print("Enriching...")
+    enriched = enrich(merged)
+
+    print("Rewriting dashboard HTML...")
     rewrite_dashboard(enriched)
 
-    print(f"\n[run] SUMMARY:")
-    print(f"      added {added}, skipped {skipped}, master total {total}")
-    print(f"      dashboard: {DASHBOARD_PATH}")
+    print("Saving master CSV...")
+    fieldnames = list(incoming[0].keys()) if incoming else list(master[0].keys())
+    with open(MASTER_CSV, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction='ignore')
+        writer.writeheader()
+        writer.writerows(merged)
+    print(f"  Saved: {len(merged)} rows")
 
-if __name__ == "__main__":
-    main()
+    # Print summary
+    total    = len(enriched)
+    on_time  = sum(1 for r in enriched if r.get('_on_time') is True)
+    off_time = sum(1 for r in enriched if r.get('_on_time') is False)
+    with_resp = [r['_response_min'] for r in enriched if r.get('_response_min') is not None]
+    with_gap  = [r['_transit_gap_min'] for r in enriched if r.get('_transit_gap_min') is not None]
+    pcts      = [r['_productivity_pct'] for r in enriched if r.get('_productivity_pct') is not None]
+
+    print()
+    print("=" * 40)
+    print(f"Total missions:    {total}")
+    if on_time + off_time > 0:
+        print(f"On-time rate:      {on_time/(on_time+off_time)*100:.1f}%  ({on_time}/{on_time+off_time})")
+    if with_resp:
+        print(f"Avg response:      {sum(with_resp)/len(with_resp):.1f} min")
+    if with_gap:
+        print(f"Avg transit gap:   {sum(with_gap)/len(with_gap):.1f} min")
+    if pcts:
+        print(f"Avg productivity:  {sum(pcts)/len(pcts):.1f}%")
+    print("=" * 40)
+    print()
+    print("Done. Now commit + push from VS Code to publish.")
