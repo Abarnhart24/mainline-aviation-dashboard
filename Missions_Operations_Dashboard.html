@@ -397,9 +397,8 @@ body.wall .wall-banner .pulse {
 .tl-bar .seg.setup    { background: var(--neon-purple); }
 .tl-bar .seg.active   { background: var(--neon-green); }
 .tl-bar .seg.buffer   { background: var(--neon-purple); opacity: 0.7; }
-.tl-bar .seg.late-seg { background: var(--neon-red); }
 .tl-bar .seg.delayed  { background: var(--neon-amber); opacity: 0.7; }
-.tl-row--late { border-left: 3px solid var(--neon-red) !important; background: rgba(248,113,113,0.06) !important; }
+.tl-row--late { outline: 1.5px solid var(--neon-red); border-radius: 6px; }
 
 /* Timestamp labels under each timeline bar */
 .tl-times {
@@ -1106,18 +1105,16 @@ function renderTimelinePerMission(TL, list, more) {
       segs.push({ cls: "drive", from: pct(t2), to: pct(t3),
         label: "Arrival to started", dur: (t3-t2)/60000, fromTime: r.tarr, toTime: r.ms });
     }
-    if (late) {
-      // Red: Started \u2192 Dep (mission overran; show as one red block)
-      segs.push({ cls: "late-seg", from: pct(t3), to: 100,
-        label: "Overran departure by " + Math.round((t4-t5)/60000) + "m",
+    if (t4) {
+      // 2. Green: Started \u2192 Completed (capped at 100% even if late)
+      segs.push({ cls: "active", from: pct(t3), to: Math.min(pct(t4), 100),
+        label: "Active mission" + (late ? " (overran by " + Math.round((t4-t5)/60000) + "m)" : ""),
         dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
-    } else if (t4) {
-      // 2. Green: Started \u2192 Completed
-      segs.push({ cls: "active", from: pct(t3), to: pct(t4),
-        label: "Active mission", dur: (t4-t3)/60000, fromTime: r.ms, toTime: r.mc });
-      // 3. Purple: Completed \u2192 Flight Departure
-      segs.push({ cls: "buffer", from: pct(t4), to: 100,
-        label: "Buffer to departure", dur: (t5-t4)/60000, fromTime: r.mc, toTime: r.fd });
+      // 3. Purple: Completed \u2192 Flight Departure (only if on time)
+      if (!late) {
+        segs.push({ cls: "buffer", from: pct(t4), to: 100,
+          label: "Buffer to departure", dur: (t5-t4)/60000, fromTime: r.mc, toTime: r.fd });
+      }
     } else {
       // No completion yet \u2014 gray placeholder
       segs.push({ cls: "pre", from: pct(t3), to: 100,
