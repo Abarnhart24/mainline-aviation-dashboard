@@ -1829,9 +1829,7 @@ function renderSK(){
   ]);
 }
 
-renderAA();
-renderET();
-renderSK();
+document.addEventListener("DOMContentLoaded", function() { renderAA(); renderET(); renderSK(); });
 </script>
 <script id="vs-override">
 window.switchAirline=function(code){
