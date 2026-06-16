@@ -8,14 +8,14 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0a0e1a;color:#e8eef5;padding:24px;}
-.page-title{font-size:20px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
+.page-title{font-size:20px;font-weight:700;margin-bottom:4px;}
 .page-sub{font-size:13px;color:#64748b;margin-bottom:24px;}
 .airline-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
-.atab{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;transition:all 0.15s;background:#131826;}
+.atab{display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;background:#131826;transition:all 0.15s;}
 .atab:hover{border-color:rgba(255,255,255,0.15);}
 .atab.active{border-color:rgba(255,255,255,0.25);background:#1e2a3a;}
 .atab .dot{width:10px;height:10px;border-radius:50%;}
-.atab .aname{font-size:13px;font-weight:600;color:#e8eef5;}
+.atab .aname{font-size:13px;font-weight:600;}
 .atab .atotal{font-size:12px;color:#64748b;}
 .atab .abadge{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px;color:#fff;}
 .panel{display:none;}
@@ -23,7 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:24px;}
 .kpi{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:16px 20px;}
 .kpi .label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px;}
-.kpi .value{font-size:22px;font-weight:700;color:#e8eef5;margin-bottom:4px;}
+.kpi .value{font-size:22px;font-weight:700;margin-bottom:4px;}
 .kpi .delta{font-size:12px;color:#64748b;}
 .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#475569;margin:24px 0 12px;}
 .card{background:#131826;border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:20px;margin-bottom:16px;}
@@ -33,162 +33,219 @@ h3{font-size:14px;font-weight:600;color:#94a3b8;margin-bottom:16px;}
 .filters label{font-size:12px;color:#64748b;font-weight:500;}
 .filters select{background:#0f1623;border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e8eef5;padding:5px 10px;font-size:12px;outline:none;}
 .info{font-size:12px;color:#64748b;margin-left:auto;}
-.tbl-wrap{border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;}
+.tbl-wrap{border-radius:10px;border:1px solid rgba(255,255,255,0.07);overflow:hidden;max-height:480px;overflow-y:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;background:#131826;}
+thead th{position:sticky;top:0;padding:10px 14px;font-weight:600;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;background:#131826;z-index:1;}
 thead th.r{text-align:right;}
 tbody tr{border-bottom:1px solid rgba(255,255,255,0.05);}
 tbody tr:hover{background:rgba(255,255,255,0.025);}
 tbody td{padding:10px 14px;vertical-align:middle;}
-tbody td.r{text-align:right;}tbody td.dim{color:#64748b;font-size:12px;}
+tbody td.r{text-align:right;}
+tbody td.dim{color:#64748b;font-size:12px;}
 tfoot td{padding:10px 14px;font-weight:700;background:rgba(255,255,255,0.04);border-top:2px solid rgba(255,255,255,0.1);}
 tfoot td.r{text-align:right;color:#60a5fa;}
-.badge{display:inline-block;font-family:monospace;background:rgba(96,165,250,0.15);color:#60a5fa;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
-.badge.v110{background:rgba(52,211,153,0.15);color:#34d399;}
 .green{color:#34d399;font-weight:600;}
-.leads{display:flex;flex-wrap:wrap;gap:5px;}
-.chip{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:3px 10px;font-size:12px;color:#cbd5e1;}
-.empty-state{text-align:center;padding:60px 20px;}
-.empty-state .icon{font-size:32px;margin-bottom:12px;opacity:0.3;}
-.empty-state .msg{font-size:15px;font-weight:600;color:#475569;margin-bottom:6px;}
-.empty-state .sub{font-size:13px;color:#334155;}
+.pill{display:inline-block;font-family:monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;}
 </style>
 </head>
 <body>
 <div class="page-title">Airline Food Cost Financing</div>
 <div class="page-sub">Sullivan Rd Missions Dashboard &mdash; ATL Hub</div>
-
 <div class="airline-tabs">
-  <div class="atab active" onclick="switchAirline('vs')">
+
+  <div class="atab active" onclick="switchAirline('vs',event)">
     <div class="dot" style="background:#C41E3A;"></div>
-    <div><div class="aname">Virgin Atlantic</div><div class="atotal" id="vs-total">Loading...</div></div>
+    <div><div class="aname">Virgin Atlantic</div><div class="atotal">$1,919,794.94</div></div>
     <span class="abadge" style="background:#C41E3A;">VS</span>
   </div>
-  <div class="atab" onclick="switchAirline('aa')">
+  <div class="atab" onclick="switchAirline('aa',event)">
     <div class="dot" style="background:#0078D7;"></div>
-    <div><div class="aname">American Airlines</div><div class="atotal">No data yet</div></div>
+    <div><div class="aname">American Airlines</div><div class="atotal">$366,366.15</div></div>
     <span class="abadge" style="background:#0078D7;">AA</span>
   </div>
-  <div class="atab" onclick="switchAirline('et')">
+  <div class="atab" onclick="switchAirline('et',event)">
     <div class="dot" style="background:#007A4D;"></div>
-    <div><div class="aname">Ethiopian Airlines</div><div class="atotal">No data yet</div></div>
+    <div><div class="aname">Ethiopian Airlines</div><div class="atotal">$145,800.96</div></div>
     <span class="abadge" style="background:#007A4D;">ET</span>
   </div>
-  <div class="atab" onclick="switchAirline('sk')">
+  <div class="atab" onclick="switchAirline('sk',event)">
     <div class="dot" style="background:#003F87;"></div>
-    <div><div class="aname">SAS Scandinavian</div><div class="atotal">No data yet</div></div>
+    <div><div class="aname">SAS Scandinavian</div><div class="atotal">$479,716.31</div></div>
     <span class="abadge" style="background:#003F87;">SK</span>
   </div>
 </div>
 
-<!-- Virgin Atlantic Panel -->
 <div class="panel active" id="panel-vs">
-  <div class="kpis" id="vs-kpis"></div>
-  <div class="section-title">Daily Food Cost &mdash; May 2026</div>
-  <div class="card"><h3>Food Cost by Flight (USD)</h3><div class="chart-wrap"><canvas id="vs-chart"></canvas></div></div>
-  <div class="section-title">Cost Breakdown &mdash; All 20 Flights</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$1,919,794.94</div><div class="delta">All dates — V104 + V110</div></div>
+    <div class="kpi"><div class="label">V104 — ATL-LHR</div><div class="value">$1,103,232.13</div><div class="delta">151 departures</div></div>
+    <div class="kpi"><div class="label">V110 — ATL-MAN</div><div class="value">$816,562.81</div><div class="delta">132 departures</div></div>
+    <div class="kpi"><div class="label">Avg / Flight</div><div class="value">$6,783.73</div><div class="delta">283 total flights</div></div>
+  </div>
+  <div class="section-title">Revenue by Flight</div>
+  <div class="card"><h3>Daily Revenue — V104 vs V110 (USD)</h3><div class="chart-wrap"><canvas id="vs-chart"></canvas></div></div>
+  <div class="section-title">Flight Breakdown</div>
   <div class="filters">
-    <label>Month:</label>
-    <select id="vs-fM" onchange="renderVS()">
-      <option value="">All</option>
-      <option value="2026-05" selected>May 2026</option>
-    </select>
+    <label>Month:</label><select id="vs-fM" onchange="renderVS()"><option value="">All</option><option value="2025-09">Sep 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option><option value="2026-05">May 2026</option></select>
+    <label>Flight:</label><select id="vs-fF" onchange="renderVS()"><option value="">All</option><option>V104</option><option>V110</option></select>
     <span class="info" id="vs-info"></span>
   </div>
   <div class="tbl-wrap"><table>
-    <thead><tr><th>Date</th><th>Flight</th><th>Airline</th><th>Route</th><th>Team Lead(s)</th><th class="r">Food Cost</th></tr></thead>
+    <thead><tr><th>Date</th><th>Flight</th><th>Route</th><th class="r">Revenue</th></tr></thead>
     <tbody id="vs-tbody"></tbody>
-    <tfoot><tr><td colspan="5">Total</td><td class="r" id="vs-ft"></td></tr></tfoot>
+    <tfoot><tr><td colspan="3">Total</td><td class="r" id="vs-ft"></td></tr></tfoot>
   </table></div>
 </div>
 
-<!-- American Airlines Panel -->
 <div class="panel" id="panel-aa">
-  <div class="empty-state">
-    <div class="icon">&#9992;</div>
-    <div class="msg">No data uploaded for American Airlines</div>
-    <div class="sub">Upload an AA supplier invoice Excel sheet to populate this section</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$366,366.15</div><div class="delta">All invoices — C1 + C9</div></div>
+    <div class="kpi"><div class="label">Concourse C1</div><div class="value">$258,992.26</div><div class="delta">29 invoices</div></div>
+    <div class="kpi"><div class="label">Concourse C9</div><div class="value">$107,373.89</div><div class="delta">24 invoices</div></div>
+    <div class="kpi"><div class="label">Avg / Invoice</div><div class="value">$6,912.57</div><div class="delta">53 total invoices</div></div>
   </div>
+  <div class="section-title">Revenue by Invoice Period</div>
+  <div class="card"><h3>Weekly Revenue — C1 vs C9 (USD)</h3><div class="chart-wrap"><canvas id="aa-chart"></canvas></div></div>
+  <div class="section-title">Invoice Breakdown</div>
+  <div class="filters">
+    <label>Month:</label><select id="aa-fM" onchange="renderAA()"><option value="">All</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option><option value="2026-05">May 2026</option></select>
+    <label>Concourse:</label><select id="aa-fC" onchange="renderAA()"><option value="">All</option><option>C1</option><option>C9</option></select>
+    <span class="info" id="aa-info"></span>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Date</th><th>Invoice</th><th>Concourse</th><th>Description</th><th class="r">Revenue</th></tr></thead>
+    <tbody id="aa-tbody"></tbody>
+    <tfoot><tr><td colspan="4">Total</td><td class="r" id="aa-ft"></td></tr></tfoot>
+  </table></div>
 </div>
 
-<!-- Ethiopian Airlines Panel -->
 <div class="panel" id="panel-et">
-  <div class="empty-state">
-    <div class="icon">&#9992;</div>
-    <div class="msg">No data uploaded for Ethiopian Airlines</div>
-    <div class="sub">Upload an ET supplier invoice Excel sheet to populate this section</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$145,800.96</div><div class="delta">All service dates — ATL-ADD</div></div>
+    <div class="kpi"><div class="label">Services</div><div class="value">23</div><div class="delta">Individual flight services</div></div>
+    <div class="kpi"><div class="label">Avg / Service</div><div class="value">$6,339.17</div><div class="delta">Food + service revenue</div></div>
+    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → ADD</div><div class="delta">Addis Ababa</div></div>
   </div>
+  <div class="section-title">Revenue by Service Date</div>
+  <div class="card"><h3>Daily Revenue — ET ATL-ADD (USD)</h3><div class="chart-wrap"><canvas id="et-chart"></canvas></div></div>
+  <div class="section-title">Service Breakdown</div>
+  <div class="filters">
+    <label>Month:</label><select id="et-fM" onchange="renderET()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option></select>
+    <span class="info" id="et-info"></span>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Service Date</th><th>Flight</th><th>Route</th><th class="r">Revenue</th></tr></thead>
+    <tbody id="et-tbody"></tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="r" id="et-ft"></td></tr></tfoot>
+  </table></div>
 </div>
 
-<!-- SAS Panel -->
 <div class="panel" id="panel-sk">
-  <div class="empty-state">
-    <div class="icon">&#9992;</div>
-    <div class="msg">No data uploaded for SAS Scandinavian Airlines</div>
-    <div class="sub">Upload an SK supplier invoice Excel sheet to populate this section</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Total Revenue</div><div class="value">$479,716.31</div><div class="delta">All dates — ATL-CPH</div></div>
+    <div class="kpi"><div class="label">Flights Serviced</div><div class="value">80</div><div class="delta">Individual departures</div></div>
+    <div class="kpi"><div class="label">Avg / Flight</div><div class="value">$5,996.45</div><div class="delta">Food + service revenue</div></div>
+    <div class="kpi"><div class="label">Route</div><div class="value" style="font-size:16px;">ATL → CPH</div><div class="delta">Copenhagen</div></div>
   </div>
+  <div class="section-title">Revenue by Flight Date</div>
+  <div class="card"><h3>Daily Revenue — SK ATL-CPH (USD)</h3><div class="chart-wrap"><canvas id="sk-chart"></canvas></div></div>
+  <div class="section-title">Flight Breakdown</div>
+  <div class="filters">
+    <label>Month:</label><select id="sk-fM" onchange="renderSK()"><option value="">All</option><option value="2025-12">Dec 2025</option><option value="2026-01">Jan 2026</option><option value="2026-02">Feb 2026</option><option value="2026-03">Mar 2026</option><option value="2026-04">Apr 2026</option></select>
+    <span class="info" id="sk-info"></span>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Date</th><th>SK Ticket</th><th>Route</th><th class="r">Revenue</th></tr></thead>
+    <tbody id="sk-tbody"></tbody>
+    <tfoot><tr><td colspan="3">Total</td><td class="r" id="sk-ft"></td></tr></tfoot>
+  </table></div>
 </div>
 
 <script>
-var vsRaw=[["2026-05-01","104","ATL-LHR",8549.55,["Bobbie Jackson III","Gabriel Silva Mane"]],
-  ["2026-05-01","110","ATL-MAN",6097.81,["Maurice Smith","Christian Lawson"]],
-  ["2026-05-02","104","ATL-LHR",7696.54,["Abubakarr Sessay","Christian Lawson"]],
-  ["2026-05-02","110","ATL-MAN",5747.35,["Bobbie Jackson III","Maurice Smith"]],
-  ["2026-05-03","104","ATL-LHR",8390.95,["Bobbie Jackson III","Claudette St. Juste"]],
-  ["2026-05-03","110","ATL-MAN",6279.28,["Gabriel Silva Mane"]],
-  ["2026-05-04","104","ATL-LHR",8300.94,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-04","110","ATL-MAN",6396.47,["Bobbie Jackson III","Issa Camara"]],
-  ["2026-05-05","104","ATL-LHR",7652.39,["Claudette St. Juste","Abubakarr Sessay"]],
-  ["2026-05-05","110","ATL-MAN",6132.13,["Christian Lawson"]],
-  ["2026-05-06","104","ATL-LHR",7356.35,["Christian Lawson","Tecari Brown"]],
-  ["2026-05-06","110","ATL-MAN",5658.77,["Claudette St. Juste","Abdou Diakhate"]],
-  ["2026-05-07","104","ATL-LHR",7721.96,["Christian Lawson","Abdou Diakhate"]],
-  ["2026-05-07","110","ATL-MAN",5991.99,["Bobbie Jackson III","Abdou Diakhate"]],
-  ["2026-05-08","104","ATL-LHR",8131.25,["Gabriel Silva Mane","Maurice Smith"]],
-  ["2026-05-08","110","ATL-MAN",6033.51,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-09","104","ATL-LHR",8219.44,["Maurice Smith","Gabriel Silva Mane"]],
-  ["2026-05-09","110","ATL-MAN",6430.59,["Christian Lawson","Bobbie Jackson III"]],
-  ["2026-05-10","104","ATL-LHR",8233.1,["Gabriel Silva Mane","Rachel Lester"]],
-  ["2026-05-10","110","ATL-MAN",6047.14,["Claudette St. Juste","Maurice Smith"]]];
+var VS_DATA=[{"date": "2025-09-29", "flight": "V104", "route": "ATL-LHR", "cost": 4166.1}, {"date": "2026-01-01", "flight": "V104", "route": "ATL-LHR", "cost": 7862.29}, {"date": "2026-01-01", "flight": "V110", "route": "ATL-MAN", "cost": 5436.87}, {"date": "2026-01-02", "flight": "V104", "route": "ATL-LHR", "cost": 7849.02}, {"date": "2026-01-02", "flight": "V110", "route": "ATL-MAN", "cost": 6073.54}, {"date": "2026-01-03", "flight": "V104", "route": "ATL-LHR", "cost": 8060.09}, {"date": "2026-01-03", "flight": "V110", "route": "ATL-MAN", "cost": 6288.38}, {"date": "2026-01-04", "flight": "V104", "route": "ATL-LHR", "cost": 7986.14}, {"date": "2026-01-04", "flight": "V110", "route": "ATL-MAN", "cost": 5922.37}, {"date": "2026-01-05", "flight": "V104", "route": "ATL-LHR", "cost": 8193.55}, {"date": "2026-01-06", "flight": "V104", "route": "ATL-LHR", "cost": 8129.31}, {"date": "2026-01-06", "flight": "V110", "route": "ATL-MAN", "cost": 6542.52}, {"date": "2026-01-07", "flight": "V104", "route": "ATL-LHR", "cost": 8050.34}, {"date": "2026-01-07", "flight": "V110", "route": "ATL-MAN", "cost": 6426.77}, {"date": "2026-01-08", "flight": "V104", "route": "ATL-LHR", "cost": 7291.4}, {"date": "2026-01-08", "flight": "V110", "route": "ATL-MAN", "cost": 6655.6}, {"date": "2026-01-09", "flight": "V104", "route": "ATL-LHR", "cost": 6881.43}, {"date": "2026-01-09", "flight": "V110", "route": "ATL-MAN", "cost": 6123.34}, {"date": "2026-01-10", "flight": "V104", "route": "ATL-LHR", "cost": 7786.25}, {"date": "2026-01-10", "flight": "V110", "route": "ATL-MAN", "cost": 5566.92}, {"date": "2026-01-11", "flight": "V104", "route": "ATL-LHR", "cost": 6378.6}, {"date": "2026-01-11", "flight": "V110", "route": "ATL-MAN", "cost": 6210.17}, {"date": "2026-01-12", "flight": "V104", "route": "ATL-LHR", "cost": 6493.91}, {"date": "2026-01-13", "flight": "V104", "route": "ATL-LHR", "cost": 6379.31}, {"date": "2026-01-13", "flight": "V110", "route": "ATL-MAN", "cost": 5910.8}, {"date": "2026-01-14", "flight": "V104", "route": "ATL-LHR", "cost": 6518.07}, {"date": "2026-01-14", "flight": "V110", "route": "ATL-MAN", "cost": 6126.71}, {"date": "2026-01-15", "flight": "V104", "route": "ATL-LHR", "cost": 8079.78}, {"date": "2026-01-15", "flight": "V110", "route": "ATL-MAN", "cost": 6938.31}, {"date": "2026-01-16", "flight": "V104", "route": "ATL-LHR", "cost": 7739.41}, {"date": "2026-01-16", "flight": "V110", "route": "ATL-MAN", "cost": 6385.94}, {"date": "2026-01-17", "flight": "V104", "route": "ATL-LHR", "cost": 6669.91}, {"date": "2026-01-17", "flight": "V110", "route": "ATL-MAN", "cost": 5980.15}, {"date": "2026-01-18", "flight": "V104", "route": "ATL-LHR", "cost": 6681.72}, {"date": "2026-01-18", "flight": "V110", "route": "ATL-MAN", "cost": 5790.6}, {"date": "2026-01-19", "flight": "V104", "route": "ATL-LHR", "cost": 5877.5}, {"date": "2026-01-19", "flight": "V110", "route": "ATL-MAN", "cost": 4406.88}, {"date": "2026-01-20", "flight": "V104", "route": "ATL-LHR", "cost": 5843.09}, {"date": "2026-01-20", "flight": "V110", "route": "ATL-MAN", "cost": 4865.71}, {"date": "2026-01-21", "flight": "V104", "route": "ATL-LHR", "cost": 5525.98}, {"date": "2026-01-21", "flight": "V110", "route": "ATL-MAN", "cost": 4999.68}, {"date": "2026-01-22", "flight": "V104", "route": "ATL-LHR", "cost": 6411.62}, {"date": "2026-01-22", "flight": "V110", "route": "ATL-MAN", "cost": 6329.56}, {"date": "2026-01-23", "flight": "V104", "route": "ATL-LHR", "cost": 6735.79}, {"date": "2026-01-23", "flight": "V110", "route": "ATL-MAN", "cost": 6349.64}, {"date": "2026-01-24", "flight": "V104", "route": "ATL-LHR", "cost": 5047.05}, {"date": "2026-01-24", "flight": "V110", "route": "ATL-MAN", "cost": 2689.11}, {"date": "2026-01-25", "flight": "V104", "route": "ATL-LHR", "cost": 4161.89}, {"date": "2026-01-25", "flight": "V110", "route": "ATL-MAN", "cost": 4922.71}, {"date": "2026-01-26", "flight": "V104", "route": "ATL-LHR", "cost": 5256.16}, {"date": "2026-01-27", "flight": "V104", "route": "ATL-LHR", "cost": 5474.75}, {"date": "2026-01-27", "flight": "V110", "route": "ATL-MAN", "cost": 6131.24}, {"date": "2026-01-28", "flight": "V104", "route": "ATL-LHR", "cost": 5190.89}, {"date": "2026-01-28", "flight": "V110", "route": "ATL-MAN", "cost": 5930.92}, {"date": "2026-01-29", "flight": "V104", "route": "ATL-LHR", "cost": 6269.66}, {"date": "2026-01-29", "flight": "V110", "route": "ATL-MAN", "cost": 6543.35}, {"date": "2026-01-30", "flight": "V104", "route": "ATL-LHR", "cost": 6378.27}, {"date": "2026-01-30", "flight": "V110", "route": "ATL-MAN", "cost": 6081.58}, {"date": "2026-01-31", "flight": "V104", "route": "ATL-LHR", "cost": 5925.14}, {"date": "2026-01-31", "flight": "V110", "route": "ATL-MAN", "cost": 5814.02}, {"date": "2026-02-01", "flight": "V104", "route": "ATL-LHR", "cost": 6132.04}, {"date": "2026-02-02", "flight": "V104", "route": "ATL-LHR", "cost": 5146.41}, {"date": "2026-02-02", "flight": "V110", "route": "ATL-MAN", "cost": 4996.5}, {"date": "2026-02-03", "flight": "V104", "route": "ATL-LHR", "cost": 4850.22}, {"date": "2026-02-03", "flight": "V110", "route": "ATL-MAN", "cost": 4985.13}, {"date": "2026-02-04", "flight": "V104", "route": "ATL-LHR", "cost": 5102.9}, {"date": "2026-02-04", "flight": "V110", "route": "ATL-MAN", "cost": 5393.58}, {"date": "2026-02-05", "flight": "V104", "route": "ATL-LHR", "cost": 5997.34}, {"date": "2026-02-05", "flight": "V110", "route": "ATL-MAN", "cost": 6304.98}, {"date": "2026-02-06", "flight": "V104", "route": "ATL-LHR", "cost": 6043.31}, {"date": "2026-02-06", "flight": "V110", "route": "ATL-MAN", "cost": 6246.46}, {"date": "2026-02-07", "flight": "V104", "route": "ATL-LHR", "cost": 5926.45}, {"date": "2026-02-07", "flight": "V110", "route": "ATL-MAN", "cost": 5764.5}, {"date": "2026-02-08", "flight": "V104", "route": "ATL-LHR", "cost": 5691.83}, {"date": "2026-02-09", "flight": "V104", "route": "ATL-LHR", "cost": 5326.94}, {"date": "2026-02-10", "flight": "V104", "route": "ATL-LHR", "cost": 5402.38}, {"date": "2026-02-10", "flight": "V110", "route": "ATL-MAN", "cost": 5549.19}, {"date": "2026-02-11", "flight": "V104", "route": "ATL-LHR", "cost": 6167.79}, {"date": "2026-02-11", "flight": "V110", "route": "ATL-MAN", "cost": 5477.45}, {"date": "2026-02-12", "flight": "V104", "route": "ATL-LHR", "cost": 6735.99}, {"date": "2026-02-12", "flight": "V110", "route": "ATL-MAN", "cost": 6531.74}, {"date": "2026-02-13", "flight": "V104", "route": "ATL-LHR", "cost": 7841.56}, {"date": "2026-02-13", "flight": "V110", "route": "ATL-MAN", "cost": 6269.14}, {"date": "2026-02-14", "flight": "V104", "route": "ATL-LHR", "cost": 6109.78}, {"date": "2026-02-14", "flight": "V110", "route": "ATL-MAN", "cost": 5636.9}, {"date": "2026-02-15", "flight": "V104", "route": "ATL-LHR", "cost": 6368.29}, {"date": "2026-02-16", "flight": "V104", "route": "ATL-LHR", "cost": 6632.55}, {"date": "2026-02-17", "flight": "V104", "route": "ATL-LHR", "cost": 6509.52}, {"date": "2026-02-17", "flight": "V110", "route": "ATL-MAN", "cost": 6129.8}, {"date": "2026-02-18", "flight": "V104", "route": "ATL-LHR", "cost": 5605.71}, {"date": "2026-02-18", "flight": "V110", "route": "ATL-MAN", "cost": 5589.5}, {"date": "2026-02-19", "flight": "V104", "route": "ATL-LHR", "cost": 6873.59}, {"date": "2026-02-19", "flight": "V110", "route": "ATL-MAN", "cost": 6265.53}, {"date": "2026-02-20", "flight": "V104", "route": "ATL-LHR", "cost": 6626.3}, {"date": "2026-02-20", "flight": "V110", "route": "ATL-MAN", "cost": 5463.19}, {"date": "2026-02-21", "flight": "V104", "route": "ATL-LHR", "cost": 7809.94}, {"date": "2026-02-21", "flight": "V110", "route": "ATL-MAN", "cost": 6628.77}, {"date": "2026-02-22", "flight": "V104", "route": "ATL-LHR", "cost": 8238.98}, {"date": "2026-02-23", "flight": "V104", "route": "ATL-LHR", "cost": 7278.18}, {"date": "2026-02-24", "flight": "V104", "route": "ATL-LHR", "cost": 5884.72}, {"date": "2026-02-24", "flight": "V110", "route": "ATL-MAN", "cost": 6407.02}, {"date": "2026-02-25", "flight": "V104", "route": "ATL-LHR", "cost": 6238.99}, {"date": "2026-02-25", "flight": "V110", "route": "ATL-MAN", "cost": 5880.76}, {"date": "2026-02-26", "flight": "V104", "route": "ATL-LHR", "cost": 6719.78}, {"date": "2026-02-26", "flight": "V110", "route": "ATL-MAN", "cost": 6375.12}, {"date": "2026-02-27", "flight": "V104", "route": "ATL-LHR", "cost": 7746.48}, {"date": "2026-02-27", "flight": "V110", "route": "ATL-MAN", "cost": 6277.88}, {"date": "2026-02-28", "flight": "V104", "route": "ATL-LHR", "cost": 6632.56}, {"date": "2026-02-28", "flight": "V110", "route": "ATL-MAN", "cost": 6231.11}, {"date": "2026-03-01", "flight": "V104", "route": "ATL-LHR", "cost": 7900.7}, {"date": "2026-03-02", "flight": "V104", "route": "ATL-LHR", "cost": 6322.24}, {"date": "2026-03-03", "flight": "V104", "route": "ATL-LHR", "cost": 5904.42}, {"date": "2026-03-03", "flight": "V110", "route": "ATL-MAN", "cost": 6190.71}, {"date": "2026-03-04", "flight": "V104", "route": "ATL-LHR", "cost": 6850.49}, {"date": "2026-03-04", "flight": "V110", "route": "ATL-MAN", "cost": 6081.66}, {"date": "2026-03-05", "flight": "V104", "route": "ATL-LHR", "cost": 8282.92}, {"date": "2026-03-05", "flight": "V110", "route": "ATL-MAN", "cost": 6266.8}, {"date": "2026-03-06", "flight": "V104", "route": "ATL-LHR", "cost": 8076.59}, {"date": "2026-03-06", "flight": "V110", "route": "ATL-MAN", "cost": 6499.66}, {"date": "2026-03-07", "flight": "V104", "route": "ATL-LHR", "cost": 8266.33}, {"date": "2026-03-07", "flight": "V110", "route": "ATL-MAN", "cost": 6675.62}, {"date": "2026-03-08", "flight": "V104", "route": "ATL-LHR", "cost": 8517.69}, {"date": "2026-03-09", "flight": "V104", "route": "ATL-LHR", "cost": 6497.79}, {"date": "2026-03-10", "flight": "V104", "route": "ATL-LHR", "cost": 6715.2}, {"date": "2026-03-11", "flight": "V104", "route": "ATL-LHR", "cost": 8435.82}, {"date": "2026-03-11", "flight": "V110", "route": "ATL-MAN", "cost": 6888.54}, {"date": "2026-03-12", "flight": "V104", "route": "ATL-LHR", "cost": 8284.07}, {"date": "2026-03-12", "flight": "V110", "route": "ATL-MAN", "cost": 6801.72}, {"date": "2026-03-13", "flight": "V104", "route": "ATL-LHR", "cost": 8301.23}, {"date": "2026-03-13", "flight": "V110", "route": "ATL-MAN", "cost": 6664.09}, {"date": "2026-03-14", "flight": "V104", "route": "ATL-LHR", "cost": 8537.23}, {"date": "2026-03-14", "flight": "V110", "route": "ATL-MAN", "cost": 6751.07}, {"date": "2026-03-15", "flight": "V104", "route": "ATL-LHR", "cost": 6805.52}, {"date": "2026-03-16", "flight": "V104", "route": "ATL-LHR", "cost": 7558.75}, {"date": "2026-03-17", "flight": "V104", "route": "ATL-LHR", "cost": 7355.24}, {"date": "2026-03-17", "flight": "V110", "route": "ATL-MAN", "cost": 6255.51}, {"date": "2026-03-18", "flight": "V104", "route": "ATL-LHR", "cost": 7335.95}, {"date": "2026-03-18", "flight": "V110", "route": "ATL-MAN", "cost": 6566.37}, {"date": "2026-03-19", "flight": "V104", "route": "ATL-LHR", "cost": 7440.88}, {"date": "2026-03-19", "flight": "V110", "route": "ATL-MAN", "cost": 6666.69}, {"date": "2026-03-20", "flight": "V104", "route": "ATL-LHR", "cost": 8338.66}, {"date": "2026-03-20", "flight": "V110", "route": "ATL-MAN", "cost": 6040.3}, {"date": "2026-03-21", "flight": "V104", "route": "ATL-LHR", "cost": 8382.63}, {"date": "2026-03-21", "flight": "V110", "route": "ATL-MAN", "cost": 6529.19}, {"date": "2026-03-22", "flight": "V104", "route": "ATL-LHR", "cost": 6908.51}, {"date": "2026-03-23", "flight": "V104", "route": "ATL-LHR", "cost": 6521.31}, {"date": "2026-03-24", "flight": "V104", "route": "ATL-LHR", "cost": 6848.88}, {"date": "2026-03-24", "flight": "V110", "route": "ATL-MAN", "cost": 6403.33}, {"date": "2026-03-25", "flight": "V104", "route": "ATL-LHR", "cost": 7377.3}, {"date": "2026-03-25", "flight": "V110", "route": "ATL-MAN", "cost": 6306.04}, {"date": "2026-03-26", "flight": "V104", "route": "ATL-LHR", "cost": 8086.02}, {"date": "2026-03-26", "flight": "V110", "route": "ATL-MAN", "cost": 6841.97}, {"date": "2026-03-27", "flight": "V104", "route": "ATL-LHR", "cost": 8230.01}, {"date": "2026-03-27", "flight": "V110", "route": "ATL-MAN", "cost": 6526.16}, {"date": "2026-03-28", "flight": "V104", "route": "ATL-LHR", "cost": 7570.42}, {"date": "2026-03-28", "flight": "V110", "route": "ATL-MAN", "cost": 6636.55}, {"date": "2026-03-29", "flight": "V104", "route": "ATL-LHR", "cost": 6983.03}, {"date": "2026-03-29", "flight": "V110", "route": "ATL-MAN", "cost": 6349.15}, {"date": "2026-03-30", "flight": "V104", "route": "ATL-LHR", "cost": 6084.26}, {"date": "2026-03-30", "flight": "V110", "route": "ATL-MAN", "cost": 6030.0}, {"date": "2026-03-31", "flight": "V110", "route": "ATL-MAN", "cost": 5279.81}, {"date": "2026-04-01", "flight": "V104", "route": "ATL-LHR", "cost": 7768.49}, {"date": "2026-04-01", "flight": "V110", "route": "ATL-MAN", "cost": 6474.42}, {"date": "2026-04-02", "flight": "V104", "route": "ATL-LHR", "cost": 8447.22}, {"date": "2026-04-02", "flight": "V110", "route": "ATL-MAN", "cost": 5627.45}, {"date": "2026-04-03", "flight": "V104", "route": "ATL-LHR", "cost": 6814.97}, {"date": "2026-04-03", "flight": "V110", "route": "ATL-MAN", "cost": 6229.39}, {"date": "2026-04-04", "flight": "V104", "route": "ATL-LHR", "cost": 2650.69}, {"date": "2026-04-04", "flight": "V110", "route": "ATL-MAN", "cost": 5057.86}, {"date": "2026-04-05", "flight": "V104", "route": "ATL-LHR", "cost": 7216.34}, {"date": "2026-04-05", "flight": "V110", "route": "ATL-MAN", "cost": 6904.56}, {"date": "2026-04-06", "flight": "V104", "route": "ATL-LHR", "cost": 8222.82}, {"date": "2026-04-06", "flight": "V110", "route": "ATL-MAN", "cost": 6558.71}, {"date": "2026-04-07", "flight": "V104", "route": "ATL-LHR", "cost": 8236.3}, {"date": "2026-04-07", "flight": "V110", "route": "ATL-MAN", "cost": 6480.63}, {"date": "2026-04-08", "flight": "V104", "route": "ATL-LHR", "cost": 8481.27}, {"date": "2026-04-08", "flight": "V110", "route": "ATL-MAN", "cost": 6944.53}, {"date": "2026-04-09", "flight": "V104", "route": "ATL-LHR", "cost": 8513.56}, {"date": "2026-04-09", "flight": "V110", "route": "ATL-MAN", "cost": 6606.77}, {"date": "2026-04-10", "flight": "V104", "route": "ATL-LHR", "cost": 8627.29}, {"date": "2026-04-10", "flight": "V110", "route": "ATL-MAN", "cost": 6417.84}, {"date": "2026-04-11", "flight": "V104", "route": "ATL-LHR", "cost": 8573.65}, {"date": "2026-04-11", "flight": "V110", "route": "ATL-MAN", "cost": 6917.88}, {"date": "2026-04-12", "flight": "V104", "route": "ATL-LHR", "cost": 8539.69}, {"date": "2026-04-12", "flight": "V110", "route": "ATL-MAN", "cost": 4781.78}, {"date": "2026-04-13", "flight": "V104", "route": "ATL-LHR", "cost": 8445.79}, {"date": "2026-04-13", "flight": "V110", "route": "ATL-MAN", "cost": 6501.4}, {"date": "2026-04-14", "flight": "V104", "route": "ATL-LHR", "cost": 8406.09}, {"date": "2026-04-14", "flight": "V110", "route": "ATL-MAN", "cost": 6848.36}, {"date": "2026-04-15", "flight": "V104", "route": "ATL-LHR", "cost": 8604.86}, {"date": "2026-04-15", "flight": "V110", "route": "ATL-MAN", "cost": 6601.62}, {"date": "2026-04-16", "flight": "V104", "route": "ATL-LHR", "cost": 8398.03}, {"date": "2026-04-16", "flight": "V110", "route": "ATL-MAN", "cost": 6856.61}, {"date": "2026-04-17", "flight": "V104", "route": "ATL-LHR", "cost": 8612.29}, {"date": "2026-04-17", "flight": "V110", "route": "ATL-MAN", "cost": 6828.41}, {"date": "2026-04-18", "flight": "V104", "route": "ATL-LHR", "cost": 8563.82}, {"date": "2026-04-18", "flight": "V110", "route": "ATL-MAN", "cost": 6802.24}, {"date": "2026-04-19", "flight": "V104", "route": "ATL-LHR", "cost": 8325.42}, {"date": "2026-04-19", "flight": "V110", "route": "ATL-MAN", "cost": 6607.32}, {"date": "2026-04-20", "flight": "V104", "route": "ATL-LHR", "cost": 8054.01}, {"date": "2026-04-20", "flight": "V110", "route": "ATL-MAN", "cost": 6361.91}, {"date": "2026-04-21", "flight": "V104", "route": "ATL-LHR", "cost": 7895.09}, {"date": "2026-04-21", "flight": "V110", "route": "ATL-MAN", "cost": 6044.47}, {"date": "2026-04-22", "flight": "V104", "route": "ATL-LHR", "cost": 7873.2}, {"date": "2026-04-22", "flight": "V110", "route": "ATL-MAN", "cost": 6647.06}, {"date": "2026-04-23", "flight": "V104", "route": "ATL-LHR", "cost": 8300.69}, {"date": "2026-04-23", "flight": "V110", "route": "ATL-MAN", "cost": 6390.61}, {"date": "2026-04-24", "flight": "V104", "route": "ATL-LHR", "cost": 8255.38}, {"date": "2026-04-24", "flight": "V110", "route": "ATL-MAN", "cost": 6197.77}, {"date": "2026-04-25", "flight": "V104", "route": "ATL-LHR", "cost": 7411.1}, {"date": "2026-04-25", "flight": "V110", "route": "ATL-MAN", "cost": 6144.2}, {"date": "2026-04-26", "flight": "V104", "route": "ATL-LHR", "cost": 7471.34}, {"date": "2026-04-26", "flight": "V110", "route": "ATL-MAN", "cost": 6052.81}, {"date": "2026-04-27", "flight": "V104", "route": "ATL-LHR", "cost": 6996.83}, {"date": "2026-04-27", "flight": "V110", "route": "ATL-MAN", "cost": 6000.28}, {"date": "2026-04-28", "flight": "V104", "route": "ATL-LHR", "cost": 7729.77}, {"date": "2026-04-28", "flight": "V110", "route": "ATL-MAN", "cost": 5790.2}, {"date": "2026-04-29", "flight": "V104", "route": "ATL-LHR", "cost": 7442.28}, {"date": "2026-04-29", "flight": "V110", "route": "ATL-MAN", "cost": 5969.66}, {"date": "2026-04-30", "flight": "V104", "route": "ATL-LHR", "cost": 8678.31}, {"date": "2026-04-30", "flight": "V110", "route": "ATL-MAN", "cost": 6422.38}, {"date": "2026-05-01", "flight": "V104", "route": "ATL-LHR", "cost": 8549.55}, {"date": "2026-05-01", "flight": "V110", "route": "ATL-MAN", "cost": 6097.81}, {"date": "2026-05-02", "flight": "V104", "route": "ATL-LHR", "cost": 7696.54}, {"date": "2026-05-02", "flight": "V110", "route": "ATL-MAN", "cost": 5747.35}, {"date": "2026-05-03", "flight": "V104", "route": "ATL-LHR", "cost": 8390.95}, {"date": "2026-05-03", "flight": "V110", "route": "ATL-MAN", "cost": 6279.28}, {"date": "2026-05-04", "flight": "V104", "route": "ATL-LHR", "cost": 8300.94}, {"date": "2026-05-04", "flight": "V110", "route": "ATL-MAN", "cost": 6396.47}, {"date": "2026-05-05", "flight": "V104", "route": "ATL-LHR", "cost": 7652.39}, {"date": "2026-05-05", "flight": "V110", "route": "ATL-MAN", "cost": 6132.13}, {"date": "2026-05-06", "flight": "V104", "route": "ATL-LHR", "cost": 7356.35}, {"date": "2026-05-06", "flight": "V110", "route": "ATL-MAN", "cost": 5658.77}, {"date": "2026-05-07", "flight": "V104", "route": "ATL-LHR", "cost": 7721.96}, {"date": "2026-05-07", "flight": "V110", "route": "ATL-MAN", "cost": 5991.99}, {"date": "2026-05-08", "flight": "V104", "route": "ATL-LHR", "cost": 8131.25}, {"date": "2026-05-08", "flight": "V110", "route": "ATL-MAN", "cost": 6033.51}, {"date": "2026-05-09", "flight": "V104", "route": "ATL-LHR", "cost": 8219.44}, {"date": "2026-05-09", "flight": "V110", "route": "ATL-MAN", "cost": 6430.59}, {"date": "2026-05-10", "flight": "V104", "route": "ATL-LHR", "cost": 8233.1}, {"date": "2026-05-10", "flight": "V110", "route": "ATL-MAN", "cost": 6137.0}, {"date": "2026-05-11", "flight": "V104", "route": "ATL-LHR", "cost": 7910.55}, {"date": "2026-05-11", "flight": "V110", "route": "ATL-MAN", "cost": 6222.25}, {"date": "2026-05-12", "flight": "V104", "route": "ATL-LHR", "cost": 8049.46}, {"date": "2026-05-12", "flight": "V110", "route": "ATL-MAN", "cost": 6229.66}, {"date": "2026-05-13", "flight": "V104", "route": "ATL-LHR", "cost": 7671.2}, {"date": "2026-05-13", "flight": "V110", "route": "ATL-MAN", "cost": 6260.34}, {"date": "2026-05-14", "flight": "V104", "route": "ATL-LHR", "cost": 8217.2}, {"date": "2026-05-14", "flight": "V110", "route": "ATL-MAN", "cost": 6651.01}, {"date": "2026-05-15", "flight": "V104", "route": "ATL-LHR", "cost": 8414.65}, {"date": "2026-05-15", "flight": "V110", "route": "ATL-MAN", "cost": 6311.25}, {"date": "2026-05-16", "flight": "V104", "route": "ATL-LHR", "cost": 7881.03}, {"date": "2026-05-16", "flight": "V110", "route": "ATL-MAN", "cost": 6097.63}, {"date": "2026-05-17", "flight": "V104", "route": "ATL-LHR", "cost": 8178.81}, {"date": "2026-05-17", "flight": "V110", "route": "ATL-MAN", "cost": 6198.76}, {"date": "2026-05-18", "flight": "V104", "route": "ATL-LHR", "cost": 8207.95}, {"date": "2026-05-18", "flight": "V110", "route": "ATL-MAN", "cost": 6492.5}, {"date": "2026-05-19", "flight": "V104", "route": "ATL-LHR", "cost": 8454.27}, {"date": "2026-05-19", "flight": "V110", "route": "ATL-MAN", "cost": 6602.12}, {"date": "2026-05-20", "flight": "V104", "route": "ATL-LHR", "cost": 8384.08}, {"date": "2026-05-20", "flight": "V110", "route": "ATL-MAN", "cost": 6726.6}, {"date": "2026-05-21", "flight": "V104", "route": "ATL-LHR", "cost": 8468.21}, {"date": "2026-05-21", "flight": "V110", "route": "ATL-MAN", "cost": 6773.29}, {"date": "2026-05-22", "flight": "V104", "route": "ATL-LHR", "cost": 8461.59}, {"date": "2026-05-22", "flight": "V110", "route": "ATL-MAN", "cost": 6718.09}, {"date": "2026-05-23", "flight": "V104", "route": "ATL-LHR", "cost": 8504.66}, {"date": "2026-05-23", "flight": "V110", "route": "ATL-MAN", "cost": 6821.77}, {"date": "2026-05-24", "flight": "V104", "route": "ATL-LHR", "cost": 7798.25}, {"date": "2026-05-24", "flight": "V110", "route": "ATL-MAN", "cost": 5887.64}, {"date": "2026-05-25", "flight": "V104", "route": "ATL-LHR", "cost": 7781.95}, {"date": "2026-05-25", "flight": "V110", "route": "ATL-MAN", "cost": 6072.41}, {"date": "2026-05-26", "flight": "V104", "route": "ATL-LHR", "cost": 8127.72}, {"date": "2026-05-26", "flight": "V110", "route": "ATL-MAN", "cost": 6643.79}, {"date": "2026-05-27", "flight": "V104", "route": "ATL-LHR", "cost": 8414.25}, {"date": "2026-05-27", "flight": "V110", "route": "ATL-MAN", "cost": 6473.96}, {"date": "2026-05-28", "flight": "V104", "route": "ATL-LHR", "cost": 8217.27}, {"date": "2026-05-28", "flight": "V110", "route": "ATL-MAN", "cost": 5932.93}, {"date": "2026-05-29", "flight": "V104", "route": "ATL-LHR", "cost": 8068.07}, {"date": "2026-05-29", "flight": "V110", "route": "ATL-MAN", "cost": 5861.42}, {"date": "2026-05-30", "flight": "V104", "route": "ATL-LHR", "cost": 8177.15}, {"date": "2026-05-30", "flight": "V110", "route": "ATL-MAN", "cost": 6937.13}, {"date": "2026-05-31", "flight": "V104", "route": "ATL-LHR", "cost": 8379.71}, {"date": "2026-05-31", "flight": "V110", "route": "ATL-MAN", "cost": 8575.65}];
+var AA_DATA=[{"date": "2026-01-01", "invoice": "AAATL020526-C1A-DEC", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.05.26 invoice - A-DEC", "cost": 778.47}, {"date": "2026-01-01", "invoice": "AAATL021226-C1A-DEC", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.12.26 invoice - A-DEC", "cost": 3874.9}, {"date": "2026-01-04", "invoice": "AAATL010826-C1B-JAN", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.08.26 invoice B-JAN", "cost": 8812.04}, {"date": "2026-01-04", "invoice": "AAATL010826-C9B-JAN", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.08.26 invoice B-JAN", "cost": 2715.5}, {"date": "2026-01-11", "invoice": "AAATL011526-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.15.26 invoice", "cost": 10225.35}, {"date": "2026-01-11", "invoice": "AAATL011526-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.15.26 invoice", "cost": 6868.61}, {"date": "2026-01-18", "invoice": "AAATL012226-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.22.26 invoice", "cost": 9901.81}, {"date": "2026-01-18", "invoice": "AAATL012226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.22.26 invoice", "cost": 6868.61}, {"date": "2026-01-25", "invoice": "AAATL012926-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 01.29.26 invoice", "cost": 10491.04}, {"date": "2026-01-25", "invoice": "AAATL012926-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 01.29.26 invoice", "cost": 5430.99}, {"date": "2026-01-31", "invoice": "AAATL020526-C1B-JAN", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.05.26 invoice - B-JAN", "cost": 8646.9}, {"date": "2026-01-31", "invoice": "AAATL021226-C1B-JAN", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.12.26 invoice - B-JAN", "cost": 2494.72}, {"date": "2026-01-31", "invoice": "AAATL020526-C9A-JAN", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.05.26 invoice A-JAN", "cost": 4312.85}, {"date": "2026-02-01", "invoice": "AAATL020526-C1C-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.05.26 invoice - C-FEB", "cost": 1789.0}, {"date": "2026-02-01", "invoice": "AAATL020526-C9B-FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.05.26 invoice B-FEB", "cost": 958.41}, {"date": "2026-02-01", "invoice": "AAATL022626-C9A-JAN", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.26.26 invoice A-JAN", "cost": 159.74}, {"date": "2026-02-08", "invoice": "AAATL021226-C1C-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.12.26 invoice - C-FEB", "cost": 9185.69}, {"date": "2026-02-08", "invoice": "AAATL021226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.12.26 invoice", "cost": 6868.61}, {"date": "2026-02-15", "invoice": "AAATL021926-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.19.26 invoice", "cost": 12028.25}, {"date": "2026-02-15", "invoice": "AAATL021926-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.19.26 invoice", "cost": 6069.93}, {"date": "2026-02-22", "invoice": "AAATL022626-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 02.26.26 invoice", "cost": 14530.66}, {"date": "2026-02-22", "invoice": "AAATL022626-C9B-FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 02.26.26 invoice B-FEB", "cost": 5750.46}, {"date": "2026-02-28", "invoice": "AAATL030526-C1A-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.05.26 invoice A-FEB", "cost": 12518.22}, {"date": "2026-02-28", "invoice": "AAATL030526-C9A-FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.05.26 invoice A-FEB", "cost": 4792.05}, {"date": "2026-03-01", "invoice": "AAATL030526-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.05.26 invoice B-MAR", "cost": 1497.44}, {"date": "2026-03-01", "invoice": "AAATL030526-C9B-MAR", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.05.26 invoice B-MAR", "cost": 958.41}, {"date": "2026-03-01", "invoice": "AAATL031226-C1A-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.12.26 invoice A-FEB", "cost": 2310.89}, {"date": "2026-03-01", "invoice": "AAATL031926-C1A-JAN_FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.19.26 invoice A-JAN_FEB", "cost": 347.8}, {"date": "2026-03-01", "invoice": "AAATL032626-C1A-FEB", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.26.26 invoice A-FEB", "cost": 1402.6}, {"date": "2026-03-01", "invoice": "AAATL031926-C9A-JAN_FEB", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.19.26 invoice A-JAN_FEB", "cost": 85.54}, {"date": "2026-03-08", "invoice": "AAATL031226-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.12.26 invoice B-MAR", "cost": 15220.61}, {"date": "2026-03-08", "invoice": "AAATL031226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.12.26 invoice", "cost": 5590.73}, {"date": "2026-03-15", "invoice": "AAATL031926-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.19.26 invoice B-MAR", "cost": 15583.72}, {"date": "2026-03-15", "invoice": "AAATL031926-C9B-MAR", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.15.26 invoice B-MAR", "cost": 5291.16}, {"date": "2026-03-22", "invoice": "AAATL032626-C1B-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 03.26.26 invoice B-MAR", "cost": 16447.14}, {"date": "2026-03-22", "invoice": "AAATL032626-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 03.26.26 invoice", "cost": 5120.1}, {"date": "2026-03-29", "invoice": "AAATL040226-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.02.26 invoice", "cost": 16230.78}, {"date": "2026-03-29", "invoice": "AAATL040226-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.02.26 invoice", "cost": 5280.1}, {"date": "2026-03-31", "invoice": "AAATL040926-C1A-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.09.26 invoice A-MAR", "cost": 4412.13}, {"date": "2026-03-31", "invoice": "AAATL040926-C9A-MAR", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.09.26 invoice A-MAR", "cost": 1440.03}, {"date": "2026-03-31", "invoice": "AAATL041626-C1A-MAR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.16.26 invoice A-MAR", "cost": 2994.77}, {"date": "2026-04-05", "invoice": "AAATL040926-C1B-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.09.26 invoice B-APR", "cost": 12006.17}, {"date": "2026-04-05", "invoice": "AAATL040926-C9B-APR", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.09.26 invoice B-APR", "cost": 4000.08}, {"date": "2026-04-12", "invoice": "AAATL041626-C1B-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.16.26 invoice B-APR", "cost": 17361.91}, {"date": "2026-04-12", "invoice": "AAATL041626-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.16.26 invoice", "cost": 6975.23}, {"date": "2026-04-19", "invoice": "AAATL042326-C1", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.23.26 invoice", "cost": 15496.02}, {"date": "2026-04-19", "invoice": "AAATL042326-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.23.26 invoice", "cost": 7390.9}, {"date": "2026-04-26", "invoice": "AAATL043026-C1B-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 04.30.26 invoice B-APR", "cost": 16066.06}, {"date": "2026-04-26", "invoice": "AAATL043026-C9", "concourse": "C9", "desc": "AA ATL-C9 F&S 04.30.26 invoice", "cost": 7390.9}, {"date": "2026-04-30", "invoice": "AAATL050726-C1A-APR", "concourse": "C1", "desc": "AA ATL-C1 F&S 05.07.26 invoice A-APR", "cost": 9202.35}, {"date": "2026-04-30", "invoice": "AAATL050726-C9A-APR", "concourse": "C9", "desc": "AA ATL-C9 F&S 05.07.26 invoice A-APR", "cost": 4031.4}, {"date": "2026-05-03", "invoice": "AAATL050726-C1B-MAY", "concourse": "C1", "desc": "AA ATL-C1 F&S 05.07.26 invoice B-MAY", "cost": 7134.82}, {"date": "2026-05-03", "invoice": "AAATL050726-C9B-MAY", "concourse": "C9", "desc": "AA ATL-C9 F&S 05.07.26 invoice B-MAY", "cost": 3023.55}];
+var ET_DATA=[{"date": "2025-12-17", "flight": "ET509", "route": "ATL-ADD", "cost": 7526.95}, {"date": "2025-12-19", "flight": "ET509", "route": "ATL-ADD", "cost": 7658.2}, {"date": "2025-12-21", "flight": "ET509", "route": "ATL-ADD", "cost": 7023.05}, {"date": "2025-12-22", "flight": "ET509", "route": "ATL-ADD", "cost": 8726.33}, {"date": "2025-12-24", "flight": "ET509", "route": "ATL-ADD", "cost": 7414.51}, {"date": "2025-12-26", "flight": "ET509", "route": "ATL-ADD", "cost": 7392.45}, {"date": "2025-12-28", "flight": "ET509", "route": "ATL-ADD", "cost": 7518.26}, {"date": "2025-12-29", "flight": "ET509", "route": "ATL-ADD", "cost": 14023.68}, {"date": "2025-12-31", "flight": "ET509", "route": "ATL-ADD", "cost": 6823.57}, {"date": "2026-01-02", "flight": "ET509", "route": "ATL-ADD", "cost": 3935.13}, {"date": "2026-01-04", "flight": "ET509", "route": "ATL-ADD", "cost": 5810.31}, {"date": "2026-01-05", "flight": "ET509", "route": "ATL-ADD", "cost": 5693.54}, {"date": "2026-01-07", "flight": "ET509", "route": "ATL-ADD", "cost": 3722.9}, {"date": "2026-01-09", "flight": "ET509", "route": "ATL-ADD", "cost": 3346.77}, {"date": "2026-01-11", "flight": "ET509", "route": "ATL-ADD", "cost": 6280.89}, {"date": "2026-01-12", "flight": "ET509", "route": "ATL-ADD", "cost": 6752.07}, {"date": "2026-01-16", "flight": "ET509", "route": "ATL-ADD", "cost": 6162.45}, {"date": "2026-01-19", "flight": "ET509", "route": "ATL-ADD", "cost": 4919.55}, {"date": "2026-01-21", "flight": "ET509", "route": "ATL-ADD", "cost": 4787.6}, {"date": "2026-01-23", "flight": "ET509", "route": "ATL-ADD", "cost": 3683.32}, {"date": "2026-01-26", "flight": "ET509", "route": "ATL-ADD", "cost": 3483.87}, {"date": "2026-01-28", "flight": "ET509", "route": "ATL-ADD", "cost": 7216.75}, {"date": "2026-02-02", "flight": "ET509", "route": "ATL-ADD", "cost": 5898.81}];
+var SK_DATA=[{"date": "2025-12-01", "flight": "SK-7713478", "route": "ATL-CPH", "cost": 6600.5}, {"date": "2025-12-04", "flight": "SK-7714672", "route": "ATL-CPH", "cost": 6465.06}, {"date": "2025-12-05", "flight": "SK-7715102", "route": "ATL-CPH", "cost": 6337.6}, {"date": "2025-12-06", "flight": "SK-7715476", "route": "ATL-CPH", "cost": 6507.3}, {"date": "2025-12-07", "flight": "SK-7715890", "route": "ATL-CPH", "cost": 5829.94}, {"date": "2025-12-08", "flight": "SK-7716283", "route": "ATL-CPH", "cost": 6332.99}, {"date": "2025-12-11", "flight": "SK-7717401", "route": "ATL-CPH", "cost": 6536.88}, {"date": "2025-12-12", "flight": "SK-7717791", "route": "ATL-CPH", "cost": 6278.44}, {"date": "2025-12-13", "flight": "SK-7718161", "route": "ATL-CPH", "cost": 6570.39}, {"date": "2025-12-14", "flight": "SK-7718554", "route": "ATL-CPH", "cost": 6528.23}, {"date": "2025-12-15", "flight": "SK-7719457", "route": "ATL-CPH", "cost": 6630.69}, {"date": "2025-12-19", "flight": "SK-7720655", "route": "ATL-CPH", "cost": 6656.81}, {"date": "2025-12-21", "flight": "SK-7721403", "route": "ATL-CPH", "cost": 6689.03}, {"date": "2025-12-26", "flight": "SK-7722883", "route": "ATL-CPH", "cost": 6720.64}, {"date": "2025-12-28", "flight": "SK-7723607", "route": "ATL-CPH", "cost": 6132.14}, {"date": "2026-01-02", "flight": "SK-7725141", "route": "ATL-CPH", "cost": 6686.38}, {"date": "2026-01-03", "flight": "SK-7725550", "route": "ATL-CPH", "cost": 6662.74}, {"date": "2026-01-04", "flight": "SK-7725955", "route": "ATL-CPH", "cost": 6599.58}, {"date": "2026-01-09", "flight": "SK-7727396", "route": "ATL-CPH", "cost": 6431.6}, {"date": "2026-01-10", "flight": "SK-7727397", "route": "ATL-CPH", "cost": 6326.58}, {"date": "2026-01-12", "flight": "SK-7728276", "route": "ATL-CPH", "cost": 4915.48}, {"date": "2026-01-15", "flight": "SK-7730126", "route": "ATL-CPH", "cost": 6214.02}, {"date": "2026-01-16", "flight": "SK-7730511", "route": "ATL-CPH", "cost": 6603.7}, {"date": "2026-01-17", "flight": "SK-7730892", "route": "ATL-CPH", "cost": 5969.89}, {"date": "2026-01-19", "flight": "SK-7730893", "route": "ATL-CPH", "cost": 3677.44}, {"date": "2026-01-22", "flight": "SK-7732766", "route": "ATL-CPH", "cost": 5765.93}, {"date": "2026-01-23", "flight": "SK-7732764", "route": "ATL-CPH", "cost": 5165.26}, {"date": "2026-01-26", "flight": "SK-7733586", "route": "ATL-CPH", "cost": 4582.55}, {"date": "2026-01-29", "flight": "SK-7735643", "route": "ATL-CPH", "cost": 6023.81}, {"date": "2026-01-30", "flight": "SK-7736058", "route": "ATL-CPH", "cost": 5208.58}, {"date": "2026-01-31", "flight": "SK-7736059", "route": "ATL-CPH", "cost": 5302.95}, {"date": "2026-02-02", "flight": "SK-7737370", "route": "ATL-CPH", "cost": 3669.54}, {"date": "2026-02-05", "flight": "SK-7738631", "route": "ATL-CPH", "cost": 5301.55}, {"date": "2026-02-06", "flight": "SK-7738632", "route": "ATL-CPH", "cost": 5148.96}, {"date": "2026-02-07", "flight": "SK-7738633", "route": "ATL-CPH", "cost": 5121.37}, {"date": "2026-02-09", "flight": "SK-7740422", "route": "ATL-CPH", "cost": 4856.55}, {"date": "2026-02-12", "flight": "SK-7741720", "route": "ATL-CPH", "cost": 6395.32}, {"date": "2026-02-13", "flight": "SK-7742153", "route": "ATL-CPH", "cost": 6500.02}, {"date": "2026-02-14", "flight": "SK-7742600", "route": "ATL-CPH", "cost": 6343.86}, {"date": "2026-02-16", "flight": "SK-7743490", "route": "ATL-CPH", "cost": 5950.4}, {"date": "2026-02-19", "flight": "SK-7744745", "route": "ATL-CPH", "cost": 5332.12}, {"date": "2026-02-20", "flight": "SK-7745147", "route": "ATL-CPH", "cost": 5764.93}, {"date": "2026-02-21", "flight": "SK-7745560", "route": "ATL-CPH", "cost": 6328.88}, {"date": "2026-02-23", "flight": "SK-7746416", "route": "ATL-CPH", "cost": 6094.09}, {"date": "2026-02-26", "flight": "SK-7747664", "route": "ATL-CPH", "cost": 6365.93}, {"date": "2026-02-27", "flight": "SK-7748115", "route": "ATL-CPH", "cost": 6389.56}, {"date": "2026-02-28", "flight": "SK-7748590", "route": "ATL-CPH", "cost": 6350.16}, {"date": "2026-03-02", "flight": "SK-7749524", "route": "ATL-CPH", "cost": 5578.57}, {"date": "2026-03-05", "flight": "SK-7750794", "route": "ATL-CPH", "cost": 6289.49}, {"date": "2026-03-07", "flight": "SK-7751228", "route": "ATL-CPH", "cost": 5937.04}, {"date": "2026-03-08", "flight": "SK-7752147", "route": "ATL-CPH", "cost": 5996.52}, {"date": "2026-03-09", "flight": "SK-7752616", "route": "ATL-CPH", "cost": 5516.6}, {"date": "2026-03-12", "flight": "SK-7753071", "route": "ATL-CPH", "cost": 6261.15}, {"date": "2026-03-14", "flight": "SK-7754273", "route": "ATL-CPH", "cost": 6310.96}, {"date": "2026-03-15", "flight": "SK-7755195", "route": "ATL-CPH", "cost": 6202.3}, {"date": "2026-03-16", "flight": "SK-7755196", "route": "ATL-CPH", "cost": 6080.5}, {"date": "2026-03-19", "flight": "SK-7756150", "route": "ATL-CPH", "cost": 6063.38}, {"date": "2026-03-20", "flight": "SK-7757369", "route": "ATL-CPH", "cost": 6374.16}, {"date": "2026-03-22", "flight": "SK-7757824", "route": "ATL-CPH", "cost": 5654.45}, {"date": "2026-03-23", "flight": "SK-7758266", "route": "ATL-CPH", "cost": 6192.42}, {"date": "2026-03-26", "flight": "SK-7759158", "route": "ATL-CPH", "cost": 6133.77}, {"date": "2026-03-28", "flight": "SK-7760888", "route": "ATL-CPH", "cost": 5283.15}, {"date": "2026-03-29", "flight": "SK-7760437", "route": "ATL-CPH", "cost": 4050.07}, {"date": "2026-03-31", "flight": "SK-7761329", "route": "ATL-CPH", "cost": 5744.29}, {"date": "2026-04-04", "flight": "SK-7762943", "route": "ATL-CPH", "cost": 6203.47}, {"date": "2026-04-05", "flight": "SK-7763804", "route": "ATL-CPH", "cost": 6098.9}, {"date": "2026-04-07", "flight": "SK-7765313", "route": "ATL-CPH", "cost": 6178.02}, {"date": "2026-04-09", "flight": "SK-7766166", "route": "ATL-CPH", "cost": 6096.59}, {"date": "2026-04-11", "flight": "SK-7766167", "route": "ATL-CPH", "cost": 6214.52}, {"date": "2026-04-12", "flight": "SK-7767135", "route": "ATL-CPH", "cost": 5226.81}, {"date": "2026-04-14", "flight": "SK-7768550", "route": "ATL-CPH", "cost": 6458.12}, {"date": "2026-04-16", "flight": "SK-7769386", "route": "ATL-CPH", "cost": 6363.31}, {"date": "2026-04-18", "flight": "SK-7769385", "route": "ATL-CPH", "cost": 6318.66}, {"date": "2026-04-19", "flight": "SK-7770334", "route": "ATL-CPH", "cost": 6247.59}, {"date": "2026-04-21", "flight": "SK-7770779", "route": "ATL-CPH", "cost": 6246.05}, {"date": "2026-04-23", "flight": "SK-7772560", "route": "ATL-CPH", "cost": 6247.2}, {"date": "2026-04-25", "flight": "SK-7772561", "route": "ATL-CPH", "cost": 6272.8}, {"date": "2026-04-26", "flight": "SK-7773034", "route": "ATL-CPH", "cost": 6337.34}, {"date": "2026-04-28", "flight": "SK-7774003", "route": "ATL-CPH", "cost": 6387.82}, {"date": "2026-04-30", "flight": "SK-7775721", "route": "ATL-CPH", "cost": 6283.92}];
+
 function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fd(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});}
-var vsData=vsRaw.map(function(r){return{date:r[0],ob:r[1],route:r[2],cost:r[3],leads:r[4]};});
-var gt=vsData.reduce(function(s,r){return s+r.cost;},0);
-var v104t=vsData.filter(function(r){return r.ob==="104";}).reduce(function(s,r){return s+r.cost;},0);
-var v110t=vsData.filter(function(r){return r.ob==="110";}).reduce(function(s,r){return s+r.cost;},0);
-document.getElementById("vs-total").textContent=fmt(gt);
-document.getElementById("vs-kpis").innerHTML=
-  "<div class='kpi'><div class='label'>Total Food Cost</div><div class='value'>"+fmt(gt)+"</div><div class='delta'>May 1-10 &mdash; V104 + V110</div></div>"+
-  "<div class='kpi'><div class='label'>V104 &mdash; ATL to LHR</div><div class='value'>"+fmt(v104t)+"</div><div class='delta'>10 departures</div></div>"+
-  "<div class='kpi'><div class='label'>V110 &mdash; ATL to MAN</div><div class='value'>"+fmt(v110t)+"</div><div class='delta'>10 departures</div></div>"+
-  "<div class='kpi'><div class='label'>Avg Cost / Mission</div><div class='value'>"+fmt(gt/56)+"</div><div class='delta'>56 matched missions · May 2026</div></div>"+
-var dates=[...new Set(vsData.map(function(r){return r.date;}))].sort();
+function fds(s){return new Date(s+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"});}
+var charts={};
 
-var vsChart=null;
-(function(){
-  var cd=dates;
-  vsChart=new Chart(document.getElementById("vs-chart"),{type:"bar",data:{labels:cd.map(function(d){return fd(d).replace(", 2026","");}),datasets:[{label:"V104 ATL-LHR",data:cd.map(function(d){return(vsData.find(function(r){return r.date===d&&r.ob==="104";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.7)",borderRadius:4},{label:"V110 ATL-MAN",data:cd.map(function(d){return(vsData.find(function(r){return r.date===d&&r.ob==="110";})||{cost:0}).cost;}),backgroundColor:"rgba(196,30,58,0.35)",borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});
-})();
+function buildChart(id,labels,datasets,color){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{type:"bar",data:{labels:labels,datasets:datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:"#94a3b8"}},tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}},scales:{x:{ticks:{color:"#64748b",maxTicksLimit:14},grid:{color:"rgba(255,255,255,0.05)"}},y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}}}});
+}
+
 function renderVS(){
   var fmo=document.getElementById("vs-fM").value;
-  var rows=vsData.filter(function(r){return(!fmo||r.date.startsWith(fmo));});
-  var h2="",tc=0;
-  rows.forEach(function(r){
-    var bc=r.ob==="110"?"v110":"";tc+=r.cost;
-    var lh=r.leads.map(function(l){return "<span class='chip'>"+l+"</span>";}).join("");
-    h2+="<tr><td>"+fd(r.date)+"</td><td><span class='badge "+bc+"'>V"+r.ob+"</span></td><td><span style='background:rgba(196,30,58,0.12);color:#fca5a5;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;'>Virgin Atlantic</span></td><td class='dim'>"+r.route+"</td><td><div class='leads'>"+lh+"</div></td><td class='r green'>"+fmt(r.cost)+"</td></tr>";
-  });
-  document.getElementById("vs-tbody").innerHTML=h2;
+  var ffl=document.getElementById("vs-fF").value;
+  var rows=VS_DATA.filter(r=>(!fmo||r.date.startsWith(fmo))&&(!ffl||r.flight===ffl));
+  var h="",tc=0;
+  rows.forEach(r=>{tc+=r.cost;var bc=r.flight==="V110"?"rgba(196,30,58,0.15)":"rgba(196,30,58,0.25)";h+=`<tr><td>${fd(r.date)}</td><td><span style="background:${bc};color:#fca5a5;font-family:monospace;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">${r.flight}</span></td><td class="dim">${r.route}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
+  document.getElementById("vs-tbody").innerHTML=h;
   document.getElementById("vs-info").textContent=rows.length+" rows";
   document.getElementById("vs-ft").textContent=fmt(tc);
+  var fv=VS_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
+  var dates=[...new Set(fv.map(r=>r.date))].sort();
+  buildChart("vs-chart",dates.map(fds),[
+    {label:"V104 ATL-LHR",data:dates.map(d=>fv.filter(r=>r.date===d&&r.flight==="V104").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(196,30,58,0.75)",borderRadius:3},
+    {label:"V110 ATL-MAN",data:dates.map(d=>fv.filter(r=>r.date===d&&r.flight==="V110").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(196,30,58,0.35)",borderRadius:3}
+  ]);
 }
-renderVS();
-function switchAirline(code){
-  document.querySelectorAll(".atab").forEach(function(t){t.classList.remove("active");});
-  document.querySelectorAll(".panel").forEach(function(p){p.classList.remove("active");});
-  event.currentTarget.classList.add("active");
+
+function renderAA(){
+  var fmo=document.getElementById("aa-fM").value;
+  var fco=document.getElementById("aa-fC").value;
+  var rows=AA_DATA.filter(r=>(!fmo||r.date.startsWith(fmo))&&(!fco||r.concourse===fco));
+  var h="",tc=0;
+  rows.forEach(r=>{tc+=r.cost;var bg=r.concourse==="C1"?"rgba(0,120,215,0.2)":"rgba(0,120,215,0.1)";h+=`<tr><td>${fd(r.date)}</td><td class="dim" style="font-family:monospace;font-size:11px;">${r.invoice}</td><td><span style="background:${bg};color:#60a5fa;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">${r.concourse}</span></td><td class="dim">${r.desc}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
+  document.getElementById("aa-tbody").innerHTML=h;
+  document.getElementById("aa-info").textContent=rows.length+" invoices";
+  document.getElementById("aa-ft").textContent=fmt(tc);
+  var fa=AA_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
+  var dates=[...new Set(fa.map(r=>r.date))].sort();
+  buildChart("aa-chart",dates.map(fds),[
+    {label:"Concourse C1",data:dates.map(d=>fa.filter(r=>r.date===d&&r.concourse==="C1").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(0,120,215,0.7)",borderRadius:3},
+    {label:"Concourse C9",data:dates.map(d=>fa.filter(r=>r.date===d&&r.concourse==="C9").reduce((s,r)=>s+r.cost,0)),backgroundColor:"rgba(0,120,215,0.3)",borderRadius:3}
+  ]);
+}
+
+function renderET(){
+  var fmo=document.getElementById("et-fM").value;
+  var rows=ET_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
+  var h="",tc=0;
+  rows.forEach(r=>{tc+=r.cost;h+=`<tr><td>${fd(r.date)}</td><td class="dim">${r.flight}</td><td class="dim">${r.route}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
+  document.getElementById("et-tbody").innerHTML=h;
+  document.getElementById("et-info").textContent=rows.length+" services";
+  document.getElementById("et-ft").textContent=fmt(tc);
+  buildChart("et-chart",rows.map(r=>fds(r.date)),[
+    {label:"ET ATL-ADD",data:rows.map(r=>r.cost),backgroundColor:"rgba(0,122,77,0.7)",borderRadius:3}
+  ]);
+}
+
+function renderSK(){
+  var fmo=document.getElementById("sk-fM").value;
+  var rows=SK_DATA.filter(r=>!fmo||r.date.startsWith(fmo));
+  var h="",tc=0;
+  rows.forEach(r=>{tc+=r.cost;h+=`<tr><td>${fd(r.date)}</td><td class="dim" style="font-family:monospace;font-size:11px;">${r.flight}</td><td class="dim">${r.route}</td><td class="r green">${fmt(r.cost)}</td></tr>`;});
+  document.getElementById("sk-tbody").innerHTML=h;
+  document.getElementById("sk-info").textContent=rows.length+" flights";
+  document.getElementById("sk-ft").textContent=fmt(tc);
+  buildChart("sk-chart",rows.map(r=>fds(r.date)),[
+    {label:"SK ATL-CPH",data:rows.map(r=>r.cost),backgroundColor:"rgba(0,63,135,0.8)",borderRadius:3}
+  ]);
+}
+
+function switchAirline(code,evt){
+  document.querySelectorAll(".atab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+  evt.currentTarget.classList.add("active");
   document.getElementById("panel-"+code).classList.add("active");
+  ({vs:renderVS,aa:renderAA,et:renderET,sk:renderSK})[code]();
 }
+
+renderVS();
 </script>
 </body>
 </html>
