@@ -1363,6 +1363,27 @@ function init() {
 document.addEventListener("DOMContentLoaded", init);
 </script>
 <script>
+function selectAirline(btn, code) {
+  document.querySelectorAll('.al-pill').forEach(function(p){ p.classList.remove('active'); });
+  btn.classList.add('active');
+  // Sync the hidden fAirline dropdown so applyFilters() picks it up
+  var sel = document.getElementById('fAirline');
+  if (sel) {
+    sel.value = code;
+    sel.dispatchEvent(new Event('change'));
+  }
+  // If financing tab is visible, switch its panel too
+  if (typeof window.switchAirline === 'function') {
+    var finPanel = document.getElementById('panel-financing');
+    if (finPanel && finPanel.classList.contains('active')) {
+      var finCode = (code || 'vs').toLowerCase();
+      if (['vs','aa','et','sk'].indexOf(finCode) === -1) finCode = 'vs';
+      window.switchAirline(finCode);
+    }
+  }
+}
+</script>
+<script>
 // Override airline tab switching to properly hide/show VS data
 (function(){
   function patchSwitch(){
@@ -1611,21 +1632,6 @@ document.addEventListener("DOMContentLoaded", init);
     var n=parseFloat((v||'').toString().replace(/[$,\s]/g,''));
     return isNaN(n)?'—':'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
-
-function selectAirline(btn, code) {
-  document.querySelectorAll('.al-pill').forEach(function(p){ p.classList.remove('active'); });
-  btn.classList.add('active');
-  var sel = document.getElementById('fAirline');
-  if (sel) { sel.value = code; sel.dispatchEvent(new Event('change')); }
-  if (typeof window.switchAirline === 'function') {
-    var finPanel = document.getElementById('panel-financing');
-    if (finPanel && finPanel.classList.contains('active')) {
-      var finCode = (code||'vs').toLowerCase();
-      if (['vs','aa','et','sk'].indexOf(finCode) === -1) finCode = 'vs';
-      window.switchAirline(finCode);
-    }
-  }
-}
 </script>
 <script id="fin-data">
 // ── SOURCE DATA ─────────────────────────────────────────────────────────────
