@@ -74,7 +74,7 @@ body {
   border-bottom: 1px solid var(--border);
   padding: 0 28px;
   display: flex; gap: 0;
-  position: sticky; top: 67px; z-index: 49;
+  position: sticky; top: 111px; z-index: 49;
 }
 .tab {
   padding: 12px 22px;
@@ -92,6 +92,28 @@ body {
 .tab.active { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
 .tab .count { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-left: 6px; }
 .tab.active .count { color: var(--neon-cyan); opacity: 0.7; }
+
+/* ── Airline selector bar ─────────────────────────────── */
+.airline-bar {
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  padding: 7px 28px;
+  display: flex; gap: 8px; align-items: center;
+  position: sticky; top: 67px; z-index: 50;
+  overflow-x: auto;
+}
+.al-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 14px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: transparent;
+  color: var(--text-2); font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: inherit;
+  transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.al-pill:hover { border-color: rgba(255,255,255,0.2); color: var(--text-1); }
+.al-pill.active { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.3); color: #e8eef5; font-weight: 600; }
+.al-pill .al-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
 .wrap { padding: 22px 28px 60px; max-width: 1500px; margin: 0 auto; }
 .tab-panel { display: none; }
@@ -565,6 +587,13 @@ body.wall .wall-banner .pulse {
   </div>
 </div>
 
+<div class="airline-bar" id="airlineBar">
+  <button class="al-pill active" data-al="" onclick="selectAirline(this,'')">All</button>
+  <button class="al-pill" data-al="VS" onclick="selectAirline(this,'VS')"><span class="al-dot" style="background:#C41E3A"></span>Virgin Atlantic</button>
+  <button class="al-pill" data-al="AA" onclick="selectAirline(this,'AA')"><span class="al-dot" style="background:#0078D7"></span>American Airlines</button>
+  <button class="al-pill" data-al="ET" onclick="selectAirline(this,'ET')"><span class="al-dot" style="background:#007A4D"></span>Ethiopian Airlines</button>
+  <button class="al-pill" data-al="SK" onclick="selectAirline(this,'SK')"><span class="al-dot" style="background:#003F87"></span>SAS Scandinavian</button>
+</div>
 <nav class="tabs">
   <button class="tab active" data-tab="overview" onclick="var f=document.querySelector('.wrap .filters');if(f)f.style.display='';var w=document.querySelector('.wrap');if(w)w.style.paddingBottom='';">Overview</button>
   <button class="tab" data-tab="leads" onclick="var f=document.querySelector('.wrap .filters');if(f)f.style.display='';var w=document.querySelector('.wrap');if(w)w.style.paddingBottom='';">Team Leads <span class="count" id="leadCount"></span></button>
@@ -1582,27 +1611,144 @@ document.addEventListener("DOMContentLoaded", init);
     var n=parseFloat((v||'').toString().replace(/[$,\s]/g,''));
     return isNaN(n)?'—':'
 
+function selectAirline(btn, code) {
+  document.querySelectorAll('.al-pill').forEach(function(p){ p.classList.remove('active'); });
+  btn.classList.add('active');
+  var sel = document.getElementById('fAirline');
+  if (sel) { sel.value = code; sel.dispatchEvent(new Event('change')); }
+  if (typeof window.switchAirline === 'function') {
+    var finPanel = document.getElementById('panel-financing');
+    if (finPanel && finPanel.classList.contains('active')) {
+      var finCode = (code||'vs').toLowerCase();
+      if (['vs','aa','et','sk'].indexOf(finCode) === -1) finCode = 'vs';
+      window.switchAirline(finCode);
+    }
+  }
+}
 </script>
 <script id="fin-data">
-var VS_DATA=[{"date": "2026-01", "food": 229644.41, "service": 140927.3, "total": 370571.71}, {"date": "2026-02", "food": 186972.31, "service": 114949.32, "total": 301921.63}, {"date": "2026-03", "food": 241979.11, "service": 127316.08, "total": 369295.19}, {"date": "2026-04", "food": 285489.64, "service": 142136.08, "total": 427625.72}, {"date": "2026-05", "food": 302760.27, "service": 149155.53, "total": 451915.8}];
-var AA_DATA=[{"date": "2026-01-01", "food": 4653.37, "service": 0, "total": 4653.37}, {"date": "2026-01-04", "food": 1725.76, "service": 9801.78, "total": 11527.54}, {"date": "2026-01-11", "food": 2240.11, "service": 14853.85, "total": 17093.96}, {"date": "2026-01-18", "food": 2327.43, "service": 14442.99, "total": 16770.42}, {"date": "2026-01-25", "food": 2385.76, "service": 13536.27, "total": 15922.03}, {"date": "2026-01-31", "food": 6246.17, "service": 9208.3, "total": 15454.47}, {"date": "2026-02-01", "food": 528.47, "service": 2378.68, "total": 2907.15}, {"date": "2026-02-08", "food": 2453.21, "service": 13601.09, "total": 16054.3}, {"date": "2026-02-15", "food": 2659.18, "service": 15439.0, "total": 18098.18}, {"date": "2026-02-22", "food": 2884.78, "service": 17396.34, "total": 20281.12}, {"date": "2026-02-28", "food": 2452.76, "service": 14857.51, "total": 17310.27}, {"date": "2026-03-01", "food": 4485.91, "service": 1791.77, "total": 6277.68}, {"date": "2026-03-08", "food": 3881.66, "service": 16929.68, "total": 20811.34}, {"date": "2026-03-15", "food": 4797.89, "service": 16076.99, "total": 20874.88}, {"date": "2026-03-22", "food": 5421.1, "service": 16146.14, "total": 21567.24}, {"date": "2026-03-29", "food": 4673.37, "service": 16837.51, "total": 21510.88}, {"date": "2026-03-31", "food": 4041.49, "service": 4805.44, "total": 8846.93}, {"date": "2026-04-01", "food": 0, "service": -1325.0, "total": -1325.0}, {"date": "2026-04-05", "food": 3914.46, "service": 12091.79, "total": 16006.25}, {"date": "2026-04-12", "food": 6730.62, "service": 17606.52, "total": 24337.14}, {"date": "2026-04-19", "food": 4342.34, "service": 18544.58, "total": 22886.92}, {"date": "2026-04-26", "food": 4651.73, "service": 18805.23, "total": 23456.96}, {"date": "2026-04-30", "food": 2522.48, "service": 10711.27, "total": 13233.75}, {"date": "2026-05-03", "food": 1890.43, "service": 8267.94, "total": 10158.37}];
-var ET_DATA=[{"date": "2026-01-08", "food": 63302.84, "service": 5535.0, "total": 68837.84}, {"date": "2026-01-19", "food": 35275.77, "service": 4920.0, "total": 40195.77}, {"date": "2026-02-04", "food": 26563.54, "service": 4305.0, "total": 30868.54}, {"date": "2026-02-23", "food": 5283.81, "service": 615.0, "total": 5898.81}];
-var SK_DATA=[{"date": "2026-01-07", "food": 85416.64, "service": 11400.0, "total": 96816.64}, {"date": "2026-02-09", "food": 79976.49, "service": 12160.0, "total": 92136.49}, {"date": "2026-03-11", "food": 79753.24, "service": 12160.0, "total": 91913.24}, {"date": "2026-04-08", "food": 86748.82, "service": 12920.0, "total": 99668.82}, {"date": "2026-05-11", "food": 87021.12, "service": 12160.0, "total": 99181.12}];
+// ── SOURCE DATA ─────────────────────────────────────────────────────────────
+// VS: monthly aggregates from Sage Intacct (Jan–May 2026)
+var VS_DATA=[
+  {"date":"2026-01","food":229644.41,"service":140927.30,"total":370571.71},
+  {"date":"2026-02","food":186972.31,"service":114949.32,"total":301921.63},
+  {"date":"2026-03","food":241979.11,"service":127316.08,"total":369295.19},
+  {"date":"2026-04","food":285489.64,"service":142136.08,"total":427625.72},
+  {"date":"2026-05","food":302760.27,"service":149155.53,"total":451915.80}
+];
 
+// AA: per-invoice from Sage Intacct (Jan–May 2026)
+var AA_DATA=[
+  {"date":"2026-01-01","food":4653.37,"service":0,"total":4653.37},
+  {"date":"2026-01-04","food":1725.76,"service":9801.78,"total":11527.54},
+  {"date":"2026-01-11","food":2240.11,"service":14853.85,"total":17093.96},
+  {"date":"2026-01-18","food":2327.43,"service":14442.99,"total":16770.42},
+  {"date":"2026-01-25","food":2385.76,"service":13536.27,"total":15922.03},
+  {"date":"2026-01-31","food":6246.17,"service":9208.30,"total":15454.47},
+  {"date":"2026-02-01","food":528.47,"service":2378.68,"total":2907.15},
+  {"date":"2026-02-08","food":2453.21,"service":13601.09,"total":16054.30},
+  {"date":"2026-02-15","food":2659.18,"service":15439.00,"total":18098.18},
+  {"date":"2026-02-22","food":2884.78,"service":17396.34,"total":20281.12},
+  {"date":"2026-02-28","food":2452.76,"service":14857.51,"total":17310.27},
+  {"date":"2026-03-01","food":4485.91,"service":1791.77,"total":6277.68},
+  {"date":"2026-03-08","food":3881.66,"service":16929.68,"total":20811.34},
+  {"date":"2026-03-15","food":4797.89,"service":16076.99,"total":20874.88},
+  {"date":"2026-03-22","food":5421.10,"service":16146.14,"total":21567.24},
+  {"date":"2026-03-29","food":4673.37,"service":16837.51,"total":21510.88},
+  {"date":"2026-03-31","food":4041.49,"service":4805.44,"total":8846.93},
+  {"date":"2026-04-01","food":0,"service":-1325.00,"total":-1325.00},
+  {"date":"2026-04-05","food":3914.46,"service":12091.79,"total":16006.25},
+  {"date":"2026-04-12","food":6730.62,"service":17606.52,"total":24337.14},
+  {"date":"2026-04-19","food":4342.34,"service":18544.58,"total":22886.92},
+  {"date":"2026-04-26","food":4651.73,"service":18805.23,"total":23456.96},
+  {"date":"2026-04-30","food":2522.48,"service":10711.27,"total":13233.75},
+  {"date":"2026-05-03","food":1890.43,"service":8267.94,"total":10158.37}
+];
+
+// ET: Sage invoices (Jan–Feb) + raw per-flight (May 2026)
+var ET_SAGE=[
+  {"date":"2026-01-08","food":63302.84,"service":5535.00,"total":68837.84},
+  {"date":"2026-01-19","food":35275.77,"service":4920.00,"total":40195.77},
+  {"date":"2026-02-04","food":26563.54,"service":4305.00,"total":30868.54},
+  {"date":"2026-02-23","food":5283.81,"service":615.00,"total":5898.81}
+];
+var ET_FLIGHTS=[
+  {"date":"2026-05-22","flight":"ET519","food":10358.19,"service":1050.00,"total":11408.19},
+  {"date":"2026-05-25","flight":"ET519","food":10093.14,"service":1050.00,"total":11143.14},
+  {"date":"2026-05-27","flight":"ET519","food":9724.11,"service":1050.00,"total":10774.11},
+  {"date":"2026-05-29","flight":"ET519","food":9444.54,"service":1050.00,"total":10494.54}
+];
+
+// SK: monthly from Sage Intacct (Jan–May 2026) + May per-invoice from raw SAS CSV
+var SK_DATA=[
+  {"date":"2026-01-07","food":85416.64,"service":11400.00,"total":96816.64},
+  {"date":"2026-02-09","food":79976.49,"service":12160.00,"total":92136.49},
+  {"date":"2026-03-11","food":79753.24,"service":12160.00,"total":91913.24},
+  {"date":"2026-04-08","food":86748.82,"service":12920.00,"total":99668.82},
+  {"date":"2026-05-11","food":87021.12,"service":12160.00,"total":99181.12}
+];
+var SK_MAY_FLIGHTS=[
+  {"date":"2026-05-02","invoice":"SK-7776698","total":6236.62},
+  {"date":"2026-05-03","invoice":"SK-7776699","total":6393.53},
+  {"date":"2026-05-05","invoice":"SK-7777180","total":6376.98},
+  {"date":"2026-05-07","invoice":"SK-7778992","total":6362.49},
+  {"date":"2026-05-09","invoice":"SK-7778993","total":6364.24},
+  {"date":"2026-05-10","invoice":"SK-7779997","total":6408.50},
+  {"date":"2026-05-12","invoice":"SK-7780921","total":6195.27},
+  {"date":"2026-05-14","invoice":"SK-7782088","total":6525.48},
+  {"date":"2026-05-16","invoice":"SK-7783069","total":6279.06},
+  {"date":"2026-05-17","invoice":"SK-7783538","total":6374.16},
+  {"date":"2026-05-18","invoice":"SK-7784044","total":6388.81},
+  {"date":"2026-05-21","invoice":"SK-7785406","total":6360.10},
+  {"date":"2026-05-22","invoice":"SK-7785886","total":6400.46},
+  {"date":"2026-05-23","invoice":"SK-7786379","total":6326.46},
+  {"date":"2026-05-24","invoice":"SK-7786867","total":6425.90},
+  {"date":"2026-05-25","invoice":"SK-7787833","total":6187.34},
+  {"date":"2026-05-28","invoice":"SK-7788737","total":6789.27},
+  {"date":"2026-05-29","invoice":"SK-7789255","total":6942.58},
+  {"date":"2026-05-30","invoice":"SK-7789257","total":6805.19},
+  {"date":"2026-05-31","invoice":"SK-7789256","total":7001.79}
+];
+
+// ── HELPERS ─────────────────────────────────────────────────────────────────
 function fmt(n){return "$"+n.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fdLabel(s){
+  if(!s) return "";
   if(s.length===7){var d=new Date(s+"-01T12:00:00");return d.toLocaleDateString("en-US",{month:"short",year:"numeric"});}
-  var d=new Date(s+"T12:00:00");return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+  var d=new Date(s+"T12:00:00");return d.toLocaleDateString("en-US",{month:"short",year:"numeric"});
 }
 function fdFull(s){
+  if(!s) return "";
   var d=new Date((s.length===7?s+"-01":s)+"T12:00:00");
-  return s.length===7?d.toLocaleDateString("en-US",{month:"long",year:"numeric"}):d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+  return s.length===7
+    ? d.toLocaleDateString("en-US",{month:"long",year:"numeric"})
+    : d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
+}
+function fdDay(s){
+  if(!s) return "";
+  var d=new Date(s+"T12:00:00");
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"});
 }
 
-function buildSplitChart(id,labels,foodData,svcData){
-  if(charts[id])charts[id].destroy();
+// Aggregate flight/invoice records into monthly buckets
+function toMonthly(flights){
+  var months={};
+  flights.forEach(function(f){
+    var m=f.date.substring(0,7);
+    if(!months[m]) months[m]={date:m,food:0,service:0,total:0,count:0};
+    months[m].food+=(f.food||0);
+    months[m].service+=(f.service||0);
+    months[m].total+=(f.total||0);
+    months[m].count++;
+  });
+  return Object.values(months).sort(function(a,b){return a.date.localeCompare(b.date);});
+}
+
+// ── CHART ───────────────────────────────────────────────────────────────────
+function buildSplitChart(id, labels, foodData, svcData){
+  if(charts[id]) charts[id].destroy();
   var totals=foodData.map(function(f,i){return f+svcData[i];});
-  var avg=totals.reduce(function(s,v){return s+v;},0)/totals.length;
+  var avg=totals.length?totals.reduce(function(s,v){return s+v;},0)/totals.length:0;
   charts[id]=new Chart(document.getElementById(id),{
     type:"bar",
     data:{
@@ -1610,7 +1756,8 @@ function buildSplitChart(id,labels,foodData,svcData){
       datasets:[
         {label:"Food Revenue",data:foodData,backgroundColor:"rgba(52,211,153,0.82)",borderRadius:3,stack:"rev"},
         {label:"Service Revenue",data:svcData,backgroundColor:"rgba(96,165,250,0.82)",borderRadius:3,stack:"rev"},
-        {label:"Avg Total",data:labels.map(function(){return avg;}),type:"line",borderColor:"rgba(251,191,36,0.9)",borderWidth:2,borderDash:[6,4],pointRadius:0,fill:false,tension:0}
+        {label:"Avg Total",data:labels.map(function(){return avg;}),type:"line",
+         borderColor:"rgba(251,191,36,0.9)",borderWidth:2,borderDash:[4,3],pointRadius:0,tension:0}
       ]
     },
     options:{
@@ -1621,46 +1768,115 @@ function buildSplitChart(id,labels,foodData,svcData){
       },
       scales:{
         x:{stacked:true,ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},
-        y:{stacked:true,ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.05)"}}
+        y:{stacked:true,ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.06)"}}
       }
     }
   });
 }
 
-function renderAirline(code,data,periodLabel){
-  var foodTotal=data.reduce(function(s,r){return s+r.food;},0);
-  var svcTotal=data.reduce(function(s,r){return s+r.service;},0);
-  var combined=foodTotal+svcTotal;
-  var n=data.length;
-  var el;
-  el=document.getElementById(code+"-food-val");if(el)el.textContent=fmt(foodTotal);
-  el=document.getElementById(code+"-svc-val");if(el)el.textContent=fmt(svcTotal);
-  el=document.getElementById(code+"-total-val");if(el)el.textContent=fmt(combined);
-  el=document.getElementById(code+"-avg-val");if(el)el.textContent=fmt(combined/n);
-  el=document.getElementById(code+"-avg-delta");if(el)el.textContent="avg per "+periodLabel;
-  el=document.getElementById(code+"-info");if(el)el.textContent=n+" "+periodLabel+"s";
-  var labels=data.map(function(r){return fdLabel(r.date);});
-  var foodArr=data.map(function(r){return r.food;});
-  var svcArr=data.map(function(r){return r.service;});
-  buildSplitChart(code+"-chart",labels,foodArr,svcArr);
-  var tbody=document.getElementById(code+"-tbody");
-  if(tbody){
-    var h="",ft=0,st=0;
-    data.forEach(function(r){
-      ft+=r.food;st+=r.service;
-      h+="<tr><td>"+fdFull(r.date)+"</td><td class=\"r\">"+fmt(r.food)+"</td><td class=\"r\">"+fmt(r.service)+"</td><td class=\"r bold\">"+fmt(r.total)+"</td></tr>";
-    });
-    tbody.innerHTML=h;
-    el=document.getElementById(code+"-food-ft");if(el)el.textContent=fmt(ft);
-    el=document.getElementById(code+"-svc-ft");if(el)el.textContent=fmt(st);
-    el=document.getElementById(code+"-ft");if(el)el.textContent=fmt(ft+st);
-  }
+// ── RENDER HELPERS ───────────────────────────────────────────────────────────
+function finKPIs(code, food, svc, tot, avgLabel, avgVal){
+  var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  s(code+"-food-val",fmt(food));
+  s(code+"-svc-val",fmt(svc));
+  s(code+"-total-val",fmt(tot));
+  s(code+"-avg-val",fmt(avgVal));
+  s(code+"-avg-delta",avgLabel);
 }
 
-function renderVS(){renderAirline("vs",VS_DATA,"month");}
-function renderAA(){renderAirline("aa",AA_DATA,"period");}
-function renderET(){renderAirline("et",ET_DATA,"period");}
-function renderSK(){renderAirline("sk",SK_DATA,"month");}
+function renderMonthlyTable(code, monthly){
+  var tbody=document.getElementById(code+"-monthly-tbody");
+  if(!tbody) return;
+  var html="",ft=0,st=0;
+  monthly.forEach(function(r){
+    var food=r.food||0, svc=r.service||0, tot=(r.total||(food+svc));
+    ft+=food; st+=svc;
+    var fpct=food+svc>0?((food/(food+svc))*100).toFixed(0)+"%":"—";
+    var cnt=r.count>1?'<span style="color:#475569;font-size:11px"> ×'+r.count+'</span>':"";
+    html+="<tr><td>"+fdFull(r.date)+cnt+"</td>"+
+      '<td class="r" style="color:#34d399">'+fmt(food)+"</td>"+
+      '<td class="r" style="color:#60a5fa">'+fmt(svc)+"</td>"+
+      '<td class="r bold">'+fmt(food+svc)+"</td>"+
+      '<td class="r" style="color:#64748b">'+fpct+"</td></tr>";
+  });
+  tbody.innerHTML=html;
+  var el;
+  el=document.getElementById(code+"-food-ft");if(el)el.textContent=fmt(ft);
+  el=document.getElementById(code+"-svc-ft");if(el)el.textContent=fmt(st);
+  el=document.getElementById(code+"-ft");if(el)el.textContent=fmt(ft+st);
+}
+
+function renderFlightTable(code, flights, hasSplit){
+  var tbody=document.getElementById(code+"-flights-tbody");
+  if(!tbody) return;
+  var html="";
+  flights.forEach(function(f){
+    var food=f.food!=null?f.food:null;
+    var svc=f.service!=null?f.service:null;
+    html+="<tr><td>"+fdDay(f.date)+"</td>"+
+      '<td style="font-size:12px;color:#64748b;font-family:var(--mono);">'+(f.flight||f.invoice||"—")+"</td>"+
+      '<td class="r" style="color:#34d399">'+(hasSplit&&food!=null?fmt(food):"—")+"</td>"+
+      '<td class="r" style="color:#60a5fa">'+(hasSplit&&svc!=null?fmt(svc):"—")+"</td>"+
+      '<td class="r bold">'+fmt(f.total||0)+"</td></tr>";
+  });
+  tbody.innerHTML=html;
+}
+
+// ── AIRLINE RENDERERS ────────────────────────────────────────────────────────
+function renderVS(){
+  var m=VS_DATA;
+  var food=m.reduce(function(s,r){return s+r.food;},0);
+  var svc=m.reduce(function(s,r){return s+r.service;},0);
+  finKPIs("vs",food,svc,food+svc,"avg per month",(food+svc)/m.length);
+  buildSplitChart("vs-chart",
+    m.map(function(r){return fdLabel(r.date);}),
+    m.map(function(r){return r.food;}),
+    m.map(function(r){return r.service;}));
+  renderMonthlyTable("vs",m);
+}
+
+function renderAA(){
+  var monthly=toMonthly(AA_DATA);
+  var food=monthly.reduce(function(s,r){return s+r.food;},0);
+  var svc=monthly.reduce(function(s,r){return s+r.service;},0);
+  finKPIs("aa",food,svc,food+svc,"avg per invoice",(food+svc)/AA_DATA.length);
+  buildSplitChart("aa-chart",
+    monthly.map(function(r){return fdLabel(r.date);}),
+    monthly.map(function(r){return r.food;}),
+    monthly.map(function(r){return r.service;}));
+  renderMonthlyTable("aa",monthly);
+  renderFlightTable("aa",AA_DATA,true);
+}
+
+function renderET(){
+  var allData=ET_SAGE.concat(ET_FLIGHTS);
+  var monthly=toMonthly(allData);
+  var food=allData.reduce(function(s,r){return s+r.food;},0);
+  var svc=allData.reduce(function(s,r){return s+r.service;},0);
+  var mayFlights=ET_FLIGHTS.length;
+  var mayTotal=ET_FLIGHTS.reduce(function(s,r){return s+r.total;},0);
+  finKPIs("et",food,svc,food+svc,"avg per May flight",mayTotal/mayFlights);
+  buildSplitChart("et-chart",
+    monthly.map(function(r){return fdLabel(r.date);}),
+    monthly.map(function(r){return r.food;}),
+    monthly.map(function(r){return r.service;}));
+  renderMonthlyTable("et",monthly);
+  renderFlightTable("et",ET_FLIGHTS,true);
+}
+
+function renderSK(){
+  var m=SK_DATA;
+  var food=m.reduce(function(s,r){return s+r.food;},0);
+  var svc=m.reduce(function(s,r){return s+r.service;},0);
+  finKPIs("sk",food,svc,food+svc,"avg per May flight",
+    SK_MAY_FLIGHTS.reduce(function(s,r){return s+r.total;},0)/SK_MAY_FLIGHTS.length);
+  buildSplitChart("sk-chart",
+    m.map(function(r){return fdLabel(r.date);}),
+    m.map(function(r){return r.food;}),
+    m.map(function(r){return r.service;}));
+  renderMonthlyTable("sk",m);
+  renderFlightTable("sk",SK_MAY_FLIGHTS,false);
+}
 </script>
 <div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:#0b0f1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
   <div style="background:#131929;border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:48px 44px;width:380px;max-width:90vw;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);">
@@ -1703,7 +1919,7 @@ async function doLogin(){
 .card { background:#131826; border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:20px; margin-bottom:16px; }
 h3 { font-size:13px; font-weight:600; color:#94a3b8; margin-bottom:14px; }
 .chart-wrap { height:240px; position:relative; }
-.tbl-wrap { border-radius:10px; border:1px solid rgba(255,255,255,0.07); overflow:hidden; }
+.tbl-wrap { border-radius:10px; border:1px solid rgba(255,255,255,0.07); overflow:hidden; margin-bottom:16px; }
 table { width:100%; border-collapse:collapse; font-size:13px; }
 thead th { padding:10px 14px; font-weight:600; color:#64748b; border-bottom:1px solid rgba(255,255,255,0.08); text-align:left; background:#0f1623; }
 thead th.r { text-align:right; }
@@ -1722,93 +1938,132 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 .atab .aname { font-size:13px; font-weight:600; color:#e8eef5; }
 .atab .atotal { font-size:12px; color:#64748b; }
 .atab .abadge { font-size:10px; font-weight:700; padding:1px 6px; border-radius:3px; color:#fff; }
+.fin-note { font-size:12px; color:#475569; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.08); border-radius:8px; padding:12px 16px; margin-bottom:16px; font-style:italic; }
 </style>
 <div id="fin-content">
 <div class="airline-tabs">
   <div class="atab active" onclick="switchAirline('vs')">
     <div class="dot" style="background:#C41E3A;"></div>
-    <div><div class="aname">Virgin Atlantic</div><div class="atotal">$1,921,330.05</div></div>
+    <div><div class="aname">Virgin Atlantic</div><div class="atotal">$1,921,330</div></div>
     <span class="abadge" style="background:#C41E3A;">VS</span>
   </div>
   <div class="atab" onclick="switchAirline('aa')">
     <div class="dot" style="background:#0078D7;"></div>
-    <div><div class="aname">American Airlines</div><div class="atotal">$364,716.15</div></div>
+    <div><div class="aname">American Airlines</div><div class="atotal">$364,716</div></div>
     <span class="abadge" style="background:#0078D7;">AA</span>
   </div>
   <div class="atab" onclick="switchAirline('et')">
     <div class="dot" style="background:#007A4D;"></div>
-    <div><div class="aname">Ethiopian Airlines</div><div class="atotal">$145,800.96</div></div>
+    <div><div class="aname">Ethiopian Airlines</div><div class="atotal">$189,621</div></div>
     <span class="abadge" style="background:#007A4D;">ET</span>
   </div>
   <div class="atab" onclick="switchAirline('sk')">
     <div class="dot" style="background:#003F87;"></div>
-    <div><div class="aname">SAS Scandinavian</div><div class="atotal">$479,716.31</div></div>
+    <div><div class="aname">SAS Scandinavian</div><div class="atotal">$479,716</div></div>
     <span class="abadge" style="background:#003F87;">SK</span>
   </div>
 </div>
 
-<div class="panel" id="panel-vs">
-  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="vs-food-val">$1,246,845.74</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="vs-svc-val">$674,484.31</div><div class="delta" style="color:#60a5fa;">413909</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="vs-total-val">$1,921,330.05</div><div class="delta">food + service</div></div>
-    <div class="kpi"><div class="label">Avg / Month</div><div class="value" id="vs-avg-val">$384,266.01</div><div class="delta" id="vs-avg-delta">avg per month</div></div>
+<!-- ── VS PANEL ─────────────────────────────────────────────────────── -->
+<div class="panel active" id="panel-vs">
+  <div class="kpis">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="vs-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001 / 411011</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="vs-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="vs-total-val">—</div><div class="delta">Jan–May 2026</div></div>
+    <div class="kpi"><div class="label">Avg / Month</div><div class="value" id="vs-avg-val">—</div><div class="delta" id="vs-avg-delta">avg per month</div></div>
   </div>
-  <div class="section-title">Food vs. Service Revenue</div>
-  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="vs-chart"></canvas></div></div>
-  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="vs-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
+
+  <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
+  <div class="card"><div class="chart-wrap"><canvas id="vs-chart"></canvas></div></div>
+
+  <div class="section-title">Monthly Breakdown</div>
   <div class="tbl-wrap"><table>
-    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
-    <tbody id="vs-tbody"></tbody>
-    <tfoot><tr><td colspan="1">Total</td><td class="r" id="vs-food-ft"></td><td class="r" id="vs-svc-ft"></td><td class="r" id="vs-ft"></td></tr></tfoot>
+    <thead><tr><th>Month</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th><th class="r">Food %</th></tr></thead>
+    <tbody id="vs-monthly-tbody"></tbody>
+    <tfoot><tr><td>Total</td><td class="r" id="vs-food-ft"></td><td class="r" id="vs-svc-ft"></td><td class="r" id="vs-ft"></td><td></td></tr></tfoot>
   </table></div>
+
+  <div class="section-title">Per-Flight Detail</div>
+  <div class="fin-note">Raw invoice data (311 flights, Jan–Jun 13 2026) available — per-flight table will populate once connected to the central Excel data sheet. V104 avg ~$8,000/flight · V110 avg ~$6,000/flight · V116 added Jun 2026.</div>
 </div>
+
+<!-- ── AA PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel" id="panel-aa">
-  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="aa-food-val">$81,910.48</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="aa-svc-val">$282,805.67</div><div class="delta" style="color:#60a5fa;">413909</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="aa-total-val">$364,716.15</div><div class="delta">food + service</div></div>
-    <div class="kpi"><div class="label">Avg / Period</div><div class="value" id="aa-avg-val">$15,196.51</div><div class="delta" id="aa-avg-delta">avg per period</div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="aa-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001 / 411011</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="aa-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="aa-total-val">—</div><div class="delta">Jan–May 2026</div></div>
+    <div class="kpi"><div class="label">Avg / Invoice</div><div class="value" id="aa-avg-val">—</div><div class="delta" id="aa-avg-delta">avg per invoice</div></div>
   </div>
-  <div class="section-title">Food vs. Service Revenue</div>
-  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="aa-chart"></canvas></div></div>
-  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="aa-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
+
+  <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
+  <div class="card"><div class="chart-wrap"><canvas id="aa-chart"></canvas></div></div>
+
+  <div class="section-title">Monthly Breakdown</div>
   <div class="tbl-wrap"><table>
-    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
-    <tbody id="aa-tbody"></tbody>
-    <tfoot><tr><td colspan="1">Total</td><td class="r" id="aa-food-ft"></td><td class="r" id="aa-svc-ft"></td><td class="r" id="aa-ft"></td></tr></tfoot>
+    <thead><tr><th>Month</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th><th class="r">Food %</th></tr></thead>
+    <tbody id="aa-monthly-tbody"></tbody>
+    <tfoot><tr><td>Total</td><td class="r" id="aa-food-ft"></td><td class="r" id="aa-svc-ft"></td><td class="r" id="aa-ft"></td><td></td></tr></tfoot>
+  </table></div>
+
+  <div class="section-title">Invoice Detail <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:#64748b;">(24 invoices · Jan–May 2026)</span></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Date</th><th>Invoice Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
+    <tbody id="aa-flights-tbody"></tbody>
   </table></div>
 </div>
+
+<!-- ── ET PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel" id="panel-et">
-  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="et-food-val">$130,425.96</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="et-svc-val">$15,375.00</div><div class="delta" style="color:#60a5fa;">413909</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="et-total-val">$145,800.96</div><div class="delta">food + service</div></div>
-    <div class="kpi"><div class="label">Avg / Period</div><div class="value" id="et-avg-val">$36,450.24</div><div class="delta" id="et-avg-delta">avg per period</div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="et-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="et-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909 · $1,050/flight flat</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="et-total-val">—</div><div class="delta">Jan–Feb + May 2026</div></div>
+    <div class="kpi"><div class="label">Avg / May Flight</div><div class="value" id="et-avg-val">—</div><div class="delta" id="et-avg-delta">ET519 ATL→ADD</div></div>
   </div>
-  <div class="section-title">Food vs. Service Revenue</div>
-  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="et-chart"></canvas></div></div>
-  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="et-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
+
+  <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
+  <div class="card"><div class="chart-wrap"><canvas id="et-chart"></canvas></div></div>
+
+  <div class="section-title">Monthly Breakdown</div>
   <div class="tbl-wrap"><table>
-    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
-    <tbody id="et-tbody"></tbody>
-    <tfoot><tr><td colspan="1">Total</td><td class="r" id="et-food-ft"></td><td class="r" id="et-svc-ft"></td><td class="r" id="et-ft"></td></tr></tfoot>
+    <thead><tr><th>Month</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th><th class="r">Food %</th></tr></thead>
+    <tbody id="et-monthly-tbody"></tbody>
+    <tfoot><tr><td>Total</td><td class="r" id="et-food-ft"></td><td class="r" id="et-svc-ft"></td><td class="r" id="et-ft"></td><td></td></tr></tfoot>
+  </table></div>
+
+  <div class="section-title">Per-Flight Detail <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:#64748b;">(May 2026 · from raw AR Invoice)</span></div>
+  <div class="fin-note">Jan–Feb 2026 data is from Sage Intacct invoices (no per-flight breakout). June 2026 AR Invoice tab has a data error — June 1 flight confirmed in delivery notes only.</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Flight Date</th><th>Flight #</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service Fee</th><th class="r">Total</th></tr></thead>
+    <tbody id="et-flights-tbody"></tbody>
   </table></div>
 </div>
+
+<!-- ── SK PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel" id="panel-sk">
-  <div class="kpis" style="grid-template-columns:repeat(4,1fr);">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="sk-food-val">$418,916.31</div><div class="delta" style="color:#34d399;">411001 / 411011</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="sk-svc-val">$60,800.00</div><div class="delta" style="color:#60a5fa;">413909</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="sk-total-val">$479,716.31</div><div class="delta">food + service</div></div>
-    <div class="kpi"><div class="label">Avg / Month</div><div class="value" id="sk-avg-val">$95,943.26</div><div class="delta" id="sk-avg-delta">avg per month</div></div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="sk-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001 / 411011</div></div>
+    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="sk-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909</div></div>
+    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="sk-total-val">—</div><div class="delta">Jan–May 2026 · Sage Intacct</div></div>
+    <div class="kpi"><div class="label">Avg / May Flight</div><div class="value" id="sk-avg-val">—</div><div class="delta" id="sk-avg-delta">20 May invoices · raw data</div></div>
   </div>
-  <div class="section-title">Food vs. Service Revenue</div>
-  <div class="card"><h3>Revenue by Type — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span> &nbsp;<span style="color:#fbbf24;font-size:11px;">— avg total</span></h3><div class="chart-wrap" style="height:240px;"><canvas id="sk-chart"></canvas></div></div>
-  <div class="section-title">Period Breakdown &nbsp;<span class="info" id="sk-info" style="font-size:11px;font-weight:400;color:#64748b;text-transform:none;letter-spacing:0;"></span></div>
+
+  <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
+  <div class="card"><div class="chart-wrap"><canvas id="sk-chart"></canvas></div></div>
+
+  <div class="section-title">Monthly Breakdown</div>
   <div class="tbl-wrap"><table>
-    <thead><tr><th>Period</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
-    <tbody id="sk-tbody"></tbody>
-    <tfoot><tr><td colspan="1">Total</td><td class="r" id="sk-food-ft"></td><td class="r" id="sk-svc-ft"></td><td class="r" id="sk-ft"></td></tr></tfoot>
+    <thead><tr><th>Month</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th><th class="r">Food %</th></tr></thead>
+    <tbody id="sk-monthly-tbody"></tbody>
+    <tfoot><tr><td>Total</td><td class="r" id="sk-food-ft"></td><td class="r" id="sk-svc-ft"></td><td class="r" id="sk-ft"></td><td></td></tr></tfoot>
+  </table></div>
+
+  <div class="section-title">May Invoice Detail <span style="font-size:11px;font-weight:400;text-transform:none;letter-spacing:0;color:#64748b;">(20 invoices · from raw SAS CSV · all status PA — unpaid)</span></div>
+  <div class="fin-note">Food/service split not available at per-invoice level in the raw SAS CSV. Monthly food/service split above is from Sage Intacct. <strong style="color:#f87171;">All 20 May invoices are PA (partially approved) — $129,144 outstanding.</strong></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Date</th><th>Invoice #</th><th class="r" style="color:#34d399;">Food</th><th class="r" style="color:#60a5fa;">Service</th><th class="r">Total</th></tr></thead>
+    <tbody id="sk-flights-tbody"></tbody>
   </table></div>
 </div>
 
@@ -1817,15 +2072,15 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 (function(){
   document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
   var pvs=document.getElementById('panel-vs');
-  if(pvs){pvs.classList.add('active'); try{renderVS();}catch(e){} }
+  if(pvs){pvs.classList.add('active'); try{renderVS();}catch(e){console.error(e);} }
 })();
 window.switchAirline=function(code){
   document.querySelectorAll('.atab').forEach(function(t){t.classList.remove('active');});
   document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
   var p=document.getElementById('panel-'+code);
-  if(p)p.classList.add('active');
+  if(p) p.classList.add('active');
   document.querySelectorAll('.atab').forEach(function(t){
-    if(t.getAttribute('onclick')&&t.getAttribute('onclick').indexOf("'"+code+"'")!==-1)t.classList.add('active');
+    if((t.getAttribute('onclick')||"").indexOf("'"+code+"'")!==-1) t.classList.add('active');
   });
   if(code==='vs'){try{renderVS();}catch(e){console.error(e);}}
   if(code==='aa'){try{renderAA();}catch(e){console.error(e);}}
@@ -1838,9 +2093,16 @@ window.switchAirline=function(code){
     window.switchTab=function(name){
       _orig(name);
       if(name==='financing'){
-        var active=document.querySelector('#fin-content .atab.active');
-        var code=active?(active.getAttribute('onclick')||'').replace(/.*'([^']+)'.*/,'$1'):'vs';
-        window.switchAirline(code||'vs');
+        // Sync with top airline pill if a specific one is selected
+        var pill=document.querySelector('.al-pill.active');
+        var pillCode=pill?pill.getAttribute('data-al'):'';
+        if(pillCode&&['VS','AA','ET','SK'].indexOf(pillCode)!==-1){
+          window.switchAirline(pillCode.toLowerCase());
+        } else {
+          var active=document.querySelector('#fin-content .atab.active');
+          var code=active?(active.getAttribute('onclick')||'').replace(/.*'([^']+)'.*/,'$1'):'vs';
+          window.switchAirline(code||'vs');
+        }
       }
     };
   }
