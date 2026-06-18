@@ -1385,8 +1385,8 @@ function selectAirline(btn, code) {
   if (typeof window.switchAirline === 'function') {
     var finPanel = document.getElementById('panel-financing');
     if (finPanel && finPanel.classList.contains('active')) {
-      var finCode = (code || 'vs').toLowerCase();
-      if (['vs','aa','et','sk'].indexOf(finCode) === -1) finCode = 'vs';
+      var finCode = code.toLowerCase();
+      if (finCode !== '' && ['vs','aa','et','sk'].indexOf(finCode) === -1) finCode = '';
       window.switchAirline(finCode);
     }
   }
@@ -2060,6 +2060,193 @@ function normRow(r){
           total:r.total||(r.food+r.service)||0, count:1, fi:r.fi};
 }
 
+// Airline brand colors (for All overview chart + comparison table)
+var alColors={VS:'#C41E3A',AA:'#0078D7',ET:'#007A4D',SK:'#5B6EBD'};
+var alChartColors={
+  VS:'rgba(196,30,58,0.88)',
+  AA:'rgba(0,120,215,0.88)',
+  ET:'rgba(0,154,68,0.88)',
+  SK:'rgba(91,110,189,0.88)'
+};
+var alNames={VS:'Virgin Atlantic',AA:'American Airlines',ET:'Ethiopian Airlines',SK:'SAS Scandinavian'};
+
+function renderAll(){
+  var airlines=['VS','AA','ET','SK'];
+
+  // Per-airline monthly data
+  var alMonthly={};
+  airlines.forEach(function(code){
+    var loaded=getLoaded(code);
+    if(loaded){
+      alMonthly[code]=toMonthly(loaded.map(normRow));
+    } else if(code==='VS'){ alMonthly[code]=VS_DATA;
+    } else if(code==='AA'){ alMonthly[code]=toMonthly(AA_DATA);
+    } else if(code==='ET'){ alMonthly[code]=toMonthly(ET_SAGE.concat(ET_FLIGHTS));
+    } else if(code==='SK'){ alMonthly[code]=SK_DATA; }
+  });
+
+  // Union of all months
+  var monthSet={};
+  airlines.forEach(function(code){
+    (alMonthly[code]||[]).forEach(function(r){ monthSet[r.date]=true; });
+  });
+  var sortedMonths=Object.keys(monthSet).sort();
+  var labels=sortedMonths.map(fdLabel);
+
+  // Monthly map per airline
+  var alMap={};
+  airlines.forEach(function(code){
+    alMap[code]={};
+    (alMonthly[code]||[]).forEach(function(r){ alMap[code][r.date]=r; });
+  });
+
+  // Per-airline aggregates
+  var alTotals={};
+  airlines.forEach(function(code){
+    var monthly=alMonthly[code]||[];
+    var food=monthly.reduce(function(s,r){return s+(r.food||0);},0);
+    var svc =monthly.reduce(function(s,r){return s+(r.service||0);},0);
+    var mom=momChange(monthly);
+    var loaded=getLoaded(code);
+    var out;
+    if(loaded){ out=computeOutstanding(loaded);
+    } else if(code==='SK'){ out={amount:129144,count:20};
+    } else { out={amount:null,count:null}; }
+    alTotals[code]={food:food,svc:svc,tot:food+svc,mom:mom,out:out};
+  });
+
+  // Grand totals
+  var grandFood=airlines.reduce(function(s,c){return s+alTotals[c].food;},0);
+  var grandSvc =airlines.reduce(function(s,c){return s+alTotals[c].svc;},0);
+  var grandTot =grandFood+grandSvc;
+  var grandOut =airlines.reduce(function(s,c){
+    return s+(alTotals[c].out.amount||0);
+  },0);
+
+  // Best month (combined)
+  var bestM={m:null,val:0};
+  sortedMonths.forEach(function(m){
+    var tot=airlines.reduce(function(s,code){
+      var r=alMap[code][m]; return s+(r?(r.food||0)+(r.service||0):0);
+    },0);
+    if(tot>bestM.val) bestM={m:m,val:tot};
+  });
+
+  // Largest airline by revenue
+  var topCode=airlines.reduce(function(best,code){
+    return alTotals[code].tot>(best?alTotals[best].tot:0)?code:best;
+  },null);
+
+  // ── KPI cards ──
+  var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
+  var sh=function(id,v){var el=document.getElementById(id);if(el)el.innerHTML=v;};
+  s('all-total-val', fmt(grandTot));
+  s('all-food-val',  fmt(grandFood));
+  s('all-svc-val',   fmt(grandSvc));
+  s('all-out-val',   grandOut>0?fmt(grandOut):'$0');
+
+  var outCard=document.getElementById('all-out-card');
+  if(outCard){
+    outCard.classList.remove('kpi-warn','kpi-clear');
+    outCard.classList.add(grandOut>0?'kpi-warn':'kpi-clear');
+  }
+
+  if(topCode){
+    var share=grandTot>0?((alTotals[topCode].tot/grandTot)*100).toFixed(0):0;
+    s('all-top-al',  alNames[topCode]);
+    s('all-top-pct', share+'% of total · '+fmt(alTotals[topCode].tot));
+  }
+  if(bestM.m){
+    s('all-best-month', fdLabel(bestM.m));
+    s('all-best-val',   fmt(bestM.val)+' combined');
+  }
+
+  // ── Stacked chart by airline ──
+  var datasets=airlines.map(function(code){
+    return {
+      label:alNames[code],
+      data:sortedMonths.map(function(m){
+        var r=alMap[code][m]; return r?(r.food||0)+(r.service||0):0;
+      }),
+      backgroundColor:alChartColors[code],
+      borderRadius:3,borderSkipped:false,stack:'rev'
+    };
+  });
+  // Total trend line
+  var totLine=sortedMonths.map(function(m){
+    return airlines.reduce(function(s,code){
+      var r=alMap[code][m]; return s+(r?(r.food||0)+(r.service||0):0);
+    },0);
+  });
+  datasets.push({
+    label:'Total',data:totLine,type:'line',
+    borderColor:'rgba(251,191,36,0.9)',borderWidth:2,borderDash:[5,4],
+    pointRadius:3,pointBackgroundColor:'rgba(251,191,36,0.9)',
+    tension:0.3,yAxisID:'y'
+  });
+
+  if(charts['all-chart']) charts['all-chart'].destroy();
+  charts['all-chart']=new Chart(document.getElementById('all-chart'),{
+    type:'bar',
+    data:{labels:labels,datasets:datasets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#94a3b8',boxWidth:10,padding:14,font:{size:11}}},
+        tooltip:{
+          mode:'index',intersect:false,
+          callbacks:{
+            label:function(c){return ' '+c.dataset.label+': '+fmt(c.raw);},
+            footer:function(items){
+              var tot=items.filter(function(i){return i.dataset.type!=='line';})
+                .reduce(function(s,i){return s+i.raw;},0);
+              return tot>0?'  Total: '+fmt(tot):'';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:'#64748b',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},
+        y:{stacked:true,ticks:{color:'#64748b',callback:function(v){return '$'+v.toLocaleString();},font:{size:11}},
+           grid:{color:'rgba(255,255,255,0.06)'},beginAtZero:true}
+      }
+    }
+  });
+
+  // ── Comparison table ──
+  var tbody=document.getElementById('all-comparison-tbody');
+  if(tbody){
+    tbody.innerHTML=airlines.map(function(code){
+      var d=alTotals[code];
+      var fpct=d.tot>0?((d.food/d.tot)*100).toFixed(0)+'%':'—';
+      var momHtml=d.mom!=null
+        ?'<span class="mom-badge '+(d.mom>=0?'mom-up':'mom-dn')+'">'+(d.mom>=0?'+':'')+d.mom.toFixed(1)+'%</span>'
+        :'<span class="mom-badge mom-na">—</span>';
+      var outHtml=d.out.amount!=null
+        ?(d.out.amount>0?'<span style="color:#fbbf24">'+fmt(d.out.amount)+'</span>':'<span style="color:#34d399">$0</span>')
+        :'—';
+      return '<tr>'+
+        '<td style="display:flex;align-items:center;gap:8px;padding:10px 14px;">'+
+          '<span style="width:9px;height:9px;border-radius:50%;background:'+alColors[code]+';flex-shrink:0;display:inline-block;"></span>'+
+          '<span style="font-weight:600">'+alNames[code]+'</span>'+
+        '</td>'+
+        '<td class="r bold">'+fmt(d.tot)+'</td>'+
+        '<td class="r" style="color:#34d399">'+fmt(d.food)+'</td>'+
+        '<td class="r" style="color:#60a5fa">'+fmt(d.svc)+'</td>'+
+        '<td class="r" style="color:#64748b">'+fpct+'</td>'+
+        '<td class="r">'+outHtml+'</td>'+
+        '<td class="r">'+momHtml+'</td>'+
+        '</tr>';
+    }).join('');
+    // Grand total tfoot
+    var gt=document.getElementById('all-grand-tot');   if(gt) gt.textContent=fmt(grandTot);
+    var gf=document.getElementById('all-grand-food');  if(gf) gf.textContent=fmt(grandFood);
+    var gs=document.getElementById('all-grand-svc');   if(gs) gs.textContent=fmt(grandSvc);
+    var go=document.getElementById('all-grand-out');
+    if(go) go.innerHTML=grandOut>0?'<span style="color:#fbbf24">'+fmt(grandOut)+'</span>':'<span style="color:#34d399">$0</span>';
+  }
+}
+
 function renderVS(){
   var loaded=getLoaded('VS');
   var monthly, flightRows, outstanding=null, outCount=null, revPerPax=null, paxDelta='per passenger';
@@ -2322,6 +2509,69 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 </style>
 <div id="fin-content">
 
+<!-- ── ALL AIRLINES PANEL ──────────────────────────────── -->
+<div class="panel active" id="panel-all">
+  <div class="kpis">
+    <div class="kpi" style="--ka:#a78bfa">
+      <div class="label">Total Revenue — All Airlines</div>
+      <div class="value" id="all-total-val">—</div>
+      <div class="delta">Jan–Jun 2026 · 4 airlines</div>
+    </div>
+    <div class="kpi" style="--ka:#34d399">
+      <div class="label">Total Food Revenue</div>
+      <div class="value" id="all-food-val">—</div>
+      <div class="delta" style="color:#34d399">acct 411001 / 411011</div>
+    </div>
+    <div class="kpi" style="--ka:#60a5fa">
+      <div class="label">Total Service Revenue</div>
+      <div class="value" id="all-svc-val">—</div>
+      <div class="delta" style="color:#60a5fa">acct 413909</div>
+    </div>
+    <div class="kpi-row-label">Highlights</div>
+    <div class="kpi kpi-sub" id="all-out-card" style="--ka:#f59e0b">
+      <div class="label">Total Outstanding Balance</div>
+      <div class="value" id="all-out-val">—</div>
+      <div class="delta">across all airlines</div>
+    </div>
+    <div class="kpi kpi-sub" style="--ka:#C41E3A">
+      <div class="label">Largest Revenue Airline</div>
+      <div class="value" id="all-top-al" style="font-size:16px;letter-spacing:-.01em">—</div>
+      <div class="delta" id="all-top-pct">by revenue share</div>
+    </div>
+    <div class="kpi kpi-sub" style="--ka:#fb923c">
+      <div class="label">Best Month</div>
+      <div class="value" id="all-best-month" style="font-size:18px">—</div>
+      <div class="delta" id="all-best-val">highest combined revenue</div>
+    </div>
+  </div>
+
+  <div class="section-title">Monthly Revenue by Airline</div>
+  <div class="card"><div class="chart-wrap" style="height:260px"><canvas id="all-chart"></canvas></div></div>
+
+  <div class="section-title">Airline Comparison</div>
+  <div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>Airline</th>
+      <th class="r">Total Revenue</th>
+      <th class="r" style="color:#34d399">Food</th>
+      <th class="r" style="color:#60a5fa">Service</th>
+      <th class="r">Food %</th>
+      <th class="r">Outstanding</th>
+      <th class="r">MoM</th>
+    </tr></thead>
+    <tbody id="all-comparison-tbody"></tbody>
+    <tfoot><tr>
+      <td><strong>Grand Total</strong></td>
+      <td class="r" id="all-grand-tot"></td>
+      <td class="r" id="all-grand-food" style="color:#34d399"></td>
+      <td class="r" id="all-grand-svc" style="color:#60a5fa"></td>
+      <td class="r"></td>
+      <td class="r" id="all-grand-out"></td>
+      <td class="r"></td>
+    </tr></tfoot>
+  </table></div>
+</div>
+
 <!-- ── VS PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel active" id="panel-vs">
   <div class="kpis">
@@ -2561,17 +2811,25 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 <script>
 (function(){
   document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
-  var pvs=document.getElementById('panel-vs');
-  if(pvs){pvs.classList.add('active'); try{renderVS();}catch(e){console.error(e);} }
+  var pill=document.querySelector('.al-pill.active');
+  var pillCode=pill?pill.getAttribute('data-al'):'';
+  if(pillCode&&['VS','AA','ET','SK'].indexOf(pillCode)!==-1){
+    window.switchAirline(pillCode.toLowerCase());
+  } else {
+    var pall=document.getElementById('panel-all');
+    if(pall){pall.classList.add('active'); try{renderAll();}catch(e){console.error(e);}}
+  }
 })();
 window.switchAirline=function(code){
   document.querySelectorAll('.atab').forEach(function(t){t.classList.remove('active');});
   document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
-  var p=document.getElementById('panel-'+code);
+  var panelId=code?'panel-'+code:'panel-all';
+  var p=document.getElementById(panelId);
   if(p) p.classList.add('active');
   document.querySelectorAll('.atab').forEach(function(t){
     if((t.getAttribute('onclick')||"").indexOf("'"+code+"'")!==-1) t.classList.add('active');
   });
+  if(!code||code==='all'){try{renderAll();}catch(e){console.error(e);}}
   if(code==='vs'){try{renderVS();}catch(e){console.error(e);}}
   if(code==='aa'){try{renderAA();}catch(e){console.error(e);}}
   if(code==='et'){try{renderET();}catch(e){console.error(e);}}
@@ -2589,9 +2847,7 @@ window.switchAirline=function(code){
         if(pillCode&&['VS','AA','ET','SK'].indexOf(pillCode)!==-1){
           window.switchAirline(pillCode.toLowerCase());
         } else {
-          var active=document.querySelector('#fin-content .atab.active');
-          var code=active?(active.getAttribute('onclick')||'').replace(/.*'([^']+)'.*/,'$1'):'vs';
-          window.switchAirline(code||'vs');
+          window.switchAirline('');
         }
       }
     };
