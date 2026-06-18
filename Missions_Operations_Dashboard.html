@@ -1893,8 +1893,8 @@ function toMonthly(flights){
 // ── CHART ───────────────────────────────────────────────────────────────────
 function buildSplitChart(id, labels, foodData, svcData){
   if(charts[id]) charts[id].destroy();
-  var totals=foodData.map(function(f,i){return f+svcData[i];});
-  var avg=totals.length?totals.reduce(function(s,v){return s+v;},0)/totals.length:0;
+  var foodAvg=foodData.length?foodData.reduce(function(s,v){return s+v;},0)/foodData.length:0;
+  var svcAvg=svcData.length?svcData.reduce(function(s,v){return s+v;},0)/svcData.length:0;
   charts[id]=new Chart(document.getElementById(id),{
     type:"bar",
     data:{
@@ -1904,8 +1904,11 @@ function buildSplitChart(id, labels, foodData, svcData){
          borderRadius:4,borderSkipped:false,barPercentage:0.75,categoryPercentage:0.7},
         {label:"Service Revenue",data:svcData,backgroundColor:"rgba(96,165,250,0.85)",
          borderRadius:4,borderSkipped:false,barPercentage:0.75,categoryPercentage:0.7},
-        {label:"Avg Total",data:labels.map(function(){return avg;}),type:"line",
-         borderColor:"rgba(251,191,36,0.85)",borderWidth:2,borderDash:[5,4],
+        {label:"Avg Food",data:labels.map(function(){return foodAvg;}),type:"line",
+         borderColor:"rgba(52,211,153,0.6)",borderWidth:1.5,borderDash:[5,4],
+         pointRadius:0,tension:0,yAxisID:"y"},
+        {label:"Avg Service",data:labels.map(function(){return svcAvg;}),type:"line",
+         borderColor:"rgba(96,165,250,0.6)",borderWidth:1.5,borderDash:[5,4],
          pointRadius:0,tension:0,yAxisID:"y"}
       ]
     },
