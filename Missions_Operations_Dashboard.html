@@ -1609,7 +1609,8 @@ document.addEventListener("DOMContentLoaded", init);
   // --- Format money ---
   function fmtM(v){
     var n=parseFloat((v||'').toString().replace(/[$,\s]/g,''));
-    return isNaN(n)?'—':'
+    return isNaN(n)?'—':'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  }
 
 function selectAirline(btn, code) {
   document.querySelectorAll('.al-pill').forEach(function(p){ p.classList.remove('active'); });
