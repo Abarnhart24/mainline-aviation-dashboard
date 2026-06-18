@@ -1921,13 +1921,73 @@ function buildSplitChart(id, labels, foodData, svcData){
 }
 
 // ── RENDER HELPERS ───────────────────────────────────────────────────────────
-function finKPIs(code, food, svc, tot, avgLabel, avgVal){
+// ── MoM helper — returns % change between last two months, or null
+function momChange(monthly){
+  if(!monthly||monthly.length<2) return null;
+  var last=monthly[monthly.length-1], prev=monthly[monthly.length-2];
+  var lt=(last.food||0)+(last.service||0), pt=(prev.food||0)+(prev.service||0);
+  if(pt===0) return null;
+  return (lt-pt)/pt*100;
+}
+
+// ── Outstanding helper — total of rows whose status is not Paid/PD/PF
+function computeOutstanding(rows){
+  var paid=['paid','pd','pf','paid - approved'];
+  var unpaid=rows.filter(function(r){return paid.indexOf((r.status||'').toLowerCase().trim())===-1;});
+  return {amount:unpaid.reduce(function(s,r){return s+(r.total||0);},0),count:unpaid.length};
+}
+
+// ── Master KPI setter
+// opts: { food, svc, tot, mom, dateRange,
+//         outstanding, outstandingCount,
+//         revPerPax, paxDelta,
+//         avgVal, avgLabel }
+function finKPIs(code, opts){
   var s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};
-  s(code+"-food-val",fmt(food));
-  s(code+"-svc-val",fmt(svc));
-  s(code+"-total-val",fmt(tot));
-  s(code+"-avg-val",fmt(avgVal));
-  s(code+"-avg-delta",avgLabel);
+
+  s(code+'-food-val', opts.food!=null ? fmt(opts.food) : '—');
+  s(code+'-svc-val',  opts.svc!=null  ? fmt(opts.svc)  : '—');
+  s(code+'-total-val',opts.tot!=null  ? fmt(opts.tot)  : '—');
+  if(opts.dateRange) s(code+'-date-range', opts.dateRange);
+
+  // MoM badge
+  var momEl=document.getElementById(code+'-mom-badge');
+  if(momEl){
+    if(opts.mom!=null){
+      var sign=opts.mom>=0?'+':'';
+      momEl.className='mom-badge '+(opts.mom>=0?'mom-up':'mom-dn');
+      momEl.textContent=sign+opts.mom.toFixed(1)+'% MoM';
+    } else {
+      momEl.className='mom-badge mom-na';
+      momEl.textContent='No prior month';
+    }
+  }
+
+  // Outstanding balance card
+  var outCard=document.getElementById(code+'-out-card');
+  if(opts.outstanding!=null){
+    s(code+'-out-val', opts.outstanding>0 ? fmt(opts.outstanding) : '$0');
+    s(code+'-out-delta', opts.outstandingCount!=null
+      ? (opts.outstandingCount>0
+         ? opts.outstandingCount+' unpaid invoice'+(opts.outstandingCount!==1?'s':'')
+         : 'All invoices paid ✓')
+      : 'unpaid invoices');
+    if(outCard){
+      outCard.classList.remove('kpi-warn','kpi-clear');
+      outCard.classList.add(opts.outstanding>0?'kpi-warn':'kpi-clear');
+    }
+  } else {
+    s(code+'-out-val','—');
+    s(code+'-out-delta','status data unavailable');
+  }
+
+  // Rev / Pax
+  s(code+'-pax-val', opts.revPerPax!=null ? fmt(opts.revPerPax) : '—');
+  if(opts.paxDelta) s(code+'-pax-delta', opts.paxDelta);
+
+  // Avg
+  s(code+'-avg-val', opts.avgVal!=null ? fmt(opts.avgVal) : '—');
+  if(opts.avgLabel) s(code+'-avg-delta', opts.avgLabel);
 }
 
 function renderMonthlyTable(code, monthly){
@@ -1984,16 +2044,29 @@ function normRow(r){
 
 function renderVS(){
   var loaded=getLoaded('VS');
-  var monthly, flightRows;
+  var monthly, flightRows, outstanding=null, outCount=null, revPerPax=null, paxDelta='per passenger';
   if(loaded){
     monthly=toMonthly(loaded.map(normRow));
     flightRows=loaded.filter(function(r){return r.fi&&r.fi!=='Monthly Summary';});
+    var out=computeOutstanding(loaded);
+    outstanding=out.amount; outCount=out.count;
+    var totPax=loaded.reduce(function(s,r){return s+(r.pax||0);},0);
+    var totRev=loaded.reduce(function(s,r){return s+(r.total||0);},0);
+    if(totPax>0){revPerPax=totRev/totPax; paxDelta=totPax.toLocaleString()+' total pax';}
   } else {
     monthly=VS_DATA; flightRows=null;
   }
   var food=monthly.reduce(function(s,r){return s+(r.food||0);},0);
   var svc =monthly.reduce(function(s,r){return s+(r.service||0);},0);
-  finKPIs("vs",food,svc,food+svc,"avg per month",(food+svc)/monthly.length);
+  var mom=momChange(monthly);
+  var flightCnt=flightRows?flightRows.length:311;
+  var flightTot=flightRows?flightRows.reduce(function(s,r){return s+(r.total||0);},0):food+svc;
+  finKPIs('vs',{
+    food:food, svc:svc, tot:food+svc, mom:mom, dateRange:'Jan–Jun 2026',
+    outstanding:outstanding, outstandingCount:outCount,
+    revPerPax:revPerPax, paxDelta:paxDelta,
+    avgVal:flightTot/flightCnt, avgLabel:'avg per flight ('+flightCnt+')'
+  });
   buildSplitChart("vs-chart",
     monthly.map(function(r){return fdLabel(r.date);}),
     monthly.map(function(r){return r.food||0;}),
@@ -2003,7 +2076,6 @@ function renderVS(){
     renderFlightTable("vs",flightRows.map(function(r){
       return {date:r.date,flight:r.fi,food:r.food,service:r.service,total:r.total};
     }),true);
-    // Show the table wrapper
     var wrap=document.querySelector('#panel-vs .tbl-wrap.flights-wrap');
     if(wrap) wrap.style.display='';
   }
@@ -2011,10 +2083,12 @@ function renderVS(){
 
 function renderAA(){
   var loaded=getLoaded('AA');
-  var monthly, detail;
+  var monthly, detail, outstanding=null, outCount=null;
   if(loaded){
     monthly=toMonthly(loaded.map(normRow));
     detail=loaded.map(function(r){return {date:r.date,invoice:r.fi,food:r.food,service:r.service,total:r.total};});
+    var out=computeOutstanding(loaded);
+    outstanding=out.amount; outCount=out.count;
   } else {
     monthly=toMonthly(AA_DATA);
     detail=AA_DATA.map(function(r){return {date:r.date,invoice:r.fi||'',food:r.food,service:r.service,total:r.total};});
@@ -2022,7 +2096,13 @@ function renderAA(){
   var food=monthly.reduce(function(s,r){return s+(r.food||0);},0);
   var svc =monthly.reduce(function(s,r){return s+(r.service||0);},0);
   var cnt=detail.length;
-  finKPIs("aa",food,svc,food+svc,"avg per invoice",cnt>0?(food+svc)/cnt:0);
+  var mom=momChange(monthly);
+  finKPIs('aa',{
+    food:food, svc:svc, tot:food+svc, mom:mom, dateRange:'Jan–May 2026',
+    outstanding:outstanding, outstandingCount:outCount,
+    revPerPax:null, paxDelta:'pax data unavailable',
+    avgVal:cnt>0?(food+svc)/cnt:0, avgLabel:'avg per invoice ('+cnt+')'
+  });
   buildSplitChart("aa-chart",
     monthly.map(function(r){return fdLabel(r.date);}),
     monthly.map(function(r){return r.food||0;}),
@@ -2033,12 +2113,17 @@ function renderAA(){
 
 function renderET(){
   var loaded=getLoaded('ET');
-  var allData, monthly, flightDetail;
+  var allData, monthly, flightDetail, outstanding=null, outCount=null, revPerPax=null, paxDelta='per passenger';
   if(loaded){
     allData=loaded.map(normRow);
     monthly=toMonthly(allData);
     flightDetail=loaded.filter(function(r){return r.fi&&r.fi!=='Monthly Summary'&&!/^ET-INV/.test(r.fi);})
       .map(function(r){return {date:r.date,flight:r.fi,food:r.food,service:r.service,total:r.total};});
+    var out=computeOutstanding(loaded);
+    outstanding=out.amount; outCount=out.count;
+    var totPax=loaded.reduce(function(s,r){return s+(r.pax||0);},0);
+    var totRev=loaded.reduce(function(s,r){return s+(r.total||0);},0);
+    if(totPax>0){revPerPax=totRev/totPax; paxDelta=totPax.toLocaleString()+' total pax';}
   } else {
     allData=ET_SAGE.concat(ET_FLIGHTS);
     monthly=toMonthly(allData);
@@ -2048,7 +2133,13 @@ function renderET(){
   var svc =allData.reduce(function(s,r){return s+(r.service||0);},0);
   var avgBase=flightDetail.length||1;
   var flightTot=flightDetail.reduce(function(s,r){return s+(r.total||0);},0);
-  finKPIs("et",food,svc,food+svc,"avg per flight",flightTot/avgBase);
+  var mom=momChange(monthly);
+  finKPIs('et',{
+    food:food, svc:svc, tot:food+svc, mom:mom, dateRange:'Jan–Feb + May 2026',
+    outstanding:outstanding, outstandingCount:outCount,
+    revPerPax:revPerPax, paxDelta:paxDelta,
+    avgVal:flightTot/avgBase, avgLabel:'avg per flight ('+flightDetail.length+')'
+  });
   buildSplitChart("et-chart",
     monthly.map(function(r){return fdLabel(r.date);}),
     monthly.map(function(r){return r.food||0;}),
@@ -2059,20 +2150,30 @@ function renderET(){
 
 function renderSK(){
   var loaded=getLoaded('SK');
-  var monthly, invoiceDetail;
+  var monthly, invoiceDetail, outstanding=null, outCount=null;
   if(loaded){
     monthly=toMonthly(loaded.map(normRow));
     invoiceDetail=loaded.filter(function(r){return /^SK-/.test(r.fi);})
-      .map(function(r){return {date:r.date,invoice:r.fi,total:r.total};});
+      .map(function(r){return {date:r.date,invoice:r.fi,total:r.total,status:r.status};});
+    var out=computeOutstanding(loaded);
+    outstanding=out.amount; outCount=out.count;
   } else {
     monthly=SK_DATA;
     invoiceDetail=SK_MAY_FLIGHTS;
+    // Hardcoded: all May invoices are PA (unpaid) — $129,144 outstanding
+    outstanding=129144; outCount=20;
   }
   var food=monthly.reduce(function(s,r){return s+(r.food||0);},0);
   var svc =monthly.reduce(function(s,r){return s+(r.service||0);},0);
   var avgBase=invoiceDetail.length||1;
   var invTot=invoiceDetail.reduce(function(s,r){return s+(r.total||0);},0);
-  finKPIs("sk",food,svc,food+svc,"avg per flight",invTot/avgBase);
+  var mom=momChange(monthly);
+  finKPIs('sk',{
+    food:food, svc:svc, tot:food+svc, mom:mom, dateRange:'Jan–May 2026',
+    outstanding:outstanding, outstandingCount:outCount,
+    revPerPax:null, paxDelta:'pax data unavailable',
+    avgVal:invTot/avgBase, avgLabel:'avg per invoice ('+invoiceDetail.length+')'
+  });
   buildSplitChart("sk-chart",
     monthly.map(function(r){return fdLabel(r.date);}),
     monthly.map(function(r){return r.food||0;}),
@@ -2113,11 +2214,69 @@ async function doLogin(){
 #panel-financing { padding-top: 0 !important; }
 .panel { display:none; }
 .panel.active { display:block; }
-.kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
-.kpi { background:#131826; border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:16px 20px; }
-.kpi .label { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:.08em; font-weight:600; margin-bottom:6px; }
-.kpi .value { font-size:20px; font-weight:700; color:#e8eef5; margin-bottom:4px; }
-.kpi .delta { font-size:12px; color:#64748b; }
+
+/* ── KPI GRID ─────────────────────────────────────── */
+.kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px; }
+.kpi {
+  background:linear-gradient(140deg,#131826 0%,#0d111d 100%);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px; padding:20px 22px;
+  position:relative; overflow:hidden;
+  transition:border-color .15s;
+}
+.kpi:hover { border-color:rgba(255,255,255,0.13); }
+.kpi::before {
+  content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+  border-radius:12px 0 0 12px;
+  background:var(--ka,#334155);
+}
+.kpi .label {
+  font-size:10px; color:#64748b; text-transform:uppercase;
+  letter-spacing:.1em; font-weight:700; margin-bottom:10px;
+}
+.kpi .value {
+  font-size:24px; font-weight:700; color:#e8eef5;
+  line-height:1.1; margin-bottom:8px;
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em;
+}
+.kpi .delta {
+  font-size:11px; color:#64748b;
+  display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+}
+/* secondary row: slightly muted */
+.kpi-sub {
+  background:linear-gradient(140deg,#0f1420 0%,#0b0f1a 100%);
+}
+.kpi-sub .value { font-size:20px; }
+/* outstanding states */
+.kpi-warn { border-color:rgba(245,158,11,.25) !important; }
+.kpi-warn::before { background:#f59e0b !important; }
+.kpi-warn .value { color:#fbbf24; }
+.kpi-clear::before { background:#34d399 !important; }
+.kpi-clear .value { color:#34d399; }
+/* MoM badge */
+.mom-badge {
+  display:inline-flex; align-items:center; gap:3px;
+  padding:2px 8px; border-radius:20px;
+  font-size:10px; font-weight:700; letter-spacing:.02em;
+  margin-left:auto; white-space:nowrap;
+}
+.mom-up { background:rgba(52,211,153,.12); color:#34d399; }
+.mom-dn { background:rgba(248,113,113,.12); color:#f87171; }
+.mom-na { background:rgba(100,116,139,.08); color:#475569; }
+/* divider between primary and secondary rows */
+.kpi-row-label {
+  grid-column:1/-1;
+  font-size:9px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.14em; color:#334155;
+  padding:2px 0 0; margin:-4px 0 -4px;
+  display:flex; align-items:center; gap:10px;
+}
+.kpi-row-label::after {
+  content:''; flex:1; height:1px; background:rgba(255,255,255,0.05);
+}
+
+/* ── SECTION TITLES & CARDS ──────────────────────── */
 .section-title { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.12em; color:#475569; margin:24px 0 12px; }
 .card { background:#131826; border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:20px; margin-bottom:16px; }
 h3 { font-size:13px; font-weight:600; color:#94a3b8; margin-bottom:14px; }
@@ -2148,11 +2307,44 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 <!-- ── VS PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel active" id="panel-vs">
   <div class="kpis">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="vs-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001 / 411011</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="vs-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="vs-total-val">—</div><div class="delta">Jan–May 2026</div></div>
-    <div class="kpi"><div class="label">Avg / Month</div><div class="value" id="vs-avg-val">—</div><div class="delta" id="vs-avg-delta">avg per month</div></div>
+  <!-- Primary metrics -->
+  <div class="kpi" style="--ka:#34d399">
+    <div class="label">Food Revenue</div>
+    <div class="value" id="vs-food-val">—</div>
+    <div class="delta" style="color:#34d399">acct 411001 / 411011</div>
   </div>
+  <div class="kpi" style="--ka:#60a5fa">
+    <div class="label">Service Revenue</div>
+    <div class="value" id="vs-svc-val">—</div>
+    <div class="delta" style="color:#60a5fa">acct 413909</div>
+  </div>
+  <div class="kpi" style="--ka:#a78bfa">
+    <div class="label">Total Revenue YTD</div>
+    <div class="value" id="vs-total-val">—</div>
+    <div class="delta">
+      <span id="vs-date-range">Jan–Jun 2026</span>
+      <span class="mom-badge mom-na" id="vs-mom-badge">—</span>
+    </div>
+  </div>
+  <!-- divider -->
+  <div class="kpi-row-label">Performance</div>
+  <!-- Secondary metrics -->
+  <div class="kpi kpi-sub" id="vs-out-card" style="--ka:#f59e0b">
+    <div class="label">Outstanding Balance</div>
+    <div class="value" id="vs-out-val">—</div>
+    <div class="delta" id="vs-out-delta">unpaid invoices</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#38bdf8">
+    <div class="label">Revenue / Pax</div>
+    <div class="value" id="vs-pax-val">—</div>
+    <div class="delta" id="vs-pax-delta">per passenger</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#fb923c">
+    <div class="label">Avg / Flight</div>
+    <div class="value" id="vs-avg-val">—</div>
+    <div class="delta" id="vs-avg-delta">—</div>
+  </div>
+</div>
 
   <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
   <div class="card"><div class="chart-wrap"><canvas id="vs-chart"></canvas></div></div>
@@ -2171,11 +2363,44 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 <!-- ── AA PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel" id="panel-aa">
   <div class="kpis">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="aa-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001 / 411011</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="aa-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="aa-total-val">—</div><div class="delta">Jan–May 2026</div></div>
-    <div class="kpi"><div class="label">Avg / Invoice</div><div class="value" id="aa-avg-val">—</div><div class="delta" id="aa-avg-delta">avg per invoice</div></div>
+  <!-- Primary metrics -->
+  <div class="kpi" style="--ka:#34d399">
+    <div class="label">Food Revenue</div>
+    <div class="value" id="aa-food-val">—</div>
+    <div class="delta" style="color:#34d399">acct 411001 / 411011</div>
   </div>
+  <div class="kpi" style="--ka:#60a5fa">
+    <div class="label">Service Revenue</div>
+    <div class="value" id="aa-svc-val">—</div>
+    <div class="delta" style="color:#60a5fa">acct 413909</div>
+  </div>
+  <div class="kpi" style="--ka:#a78bfa">
+    <div class="label">Total Revenue YTD</div>
+    <div class="value" id="aa-total-val">—</div>
+    <div class="delta">
+      <span id="aa-date-range">Jan–May 2026</span>
+      <span class="mom-badge mom-na" id="aa-mom-badge">—</span>
+    </div>
+  </div>
+  <!-- divider -->
+  <div class="kpi-row-label">Performance</div>
+  <!-- Secondary metrics -->
+  <div class="kpi kpi-sub" id="aa-out-card" style="--ka:#f59e0b">
+    <div class="label">Outstanding Balance</div>
+    <div class="value" id="aa-out-val">—</div>
+    <div class="delta" id="aa-out-delta">unpaid invoices</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#38bdf8">
+    <div class="label">Revenue / Pax</div>
+    <div class="value" id="aa-pax-val">—</div>
+    <div class="delta" id="aa-pax-delta">pax data unavailable</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#fb923c">
+    <div class="label">Avg / Invoice</div>
+    <div class="value" id="aa-avg-val">—</div>
+    <div class="delta" id="aa-avg-delta">—</div>
+  </div>
+</div>
 
   <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
   <div class="card"><div class="chart-wrap"><canvas id="aa-chart"></canvas></div></div>
@@ -2197,11 +2422,44 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 <!-- ── ET PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel" id="panel-et">
   <div class="kpis">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="et-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="et-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909 · $1,050/flight flat</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="et-total-val">—</div><div class="delta">Jan–Feb + May 2026</div></div>
-    <div class="kpi"><div class="label">Avg / May Flight</div><div class="value" id="et-avg-val">—</div><div class="delta" id="et-avg-delta">ET519 ATL→ADD</div></div>
+  <!-- Primary metrics -->
+  <div class="kpi" style="--ka:#34d399">
+    <div class="label">Food Revenue</div>
+    <div class="value" id="et-food-val">—</div>
+    <div class="delta" style="color:#34d399">acct 411001</div>
   </div>
+  <div class="kpi" style="--ka:#60a5fa">
+    <div class="label">Service Revenue</div>
+    <div class="value" id="et-svc-val">—</div>
+    <div class="delta" style="color:#60a5fa">acct 413909 · $1,050/flight flat</div>
+  </div>
+  <div class="kpi" style="--ka:#a78bfa">
+    <div class="label">Total Revenue YTD</div>
+    <div class="value" id="et-total-val">—</div>
+    <div class="delta">
+      <span id="et-date-range">Jan–Feb + May 2026</span>
+      <span class="mom-badge mom-na" id="et-mom-badge">—</span>
+    </div>
+  </div>
+  <!-- divider -->
+  <div class="kpi-row-label">Performance</div>
+  <!-- Secondary metrics -->
+  <div class="kpi kpi-sub" id="et-out-card" style="--ka:#f59e0b">
+    <div class="label">Outstanding Balance</div>
+    <div class="value" id="et-out-val">—</div>
+    <div class="delta" id="et-out-delta">unpaid invoices</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#38bdf8">
+    <div class="label">Revenue / Pax</div>
+    <div class="value" id="et-pax-val">—</div>
+    <div class="delta" id="et-pax-delta">biz + econ pax</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#fb923c">
+    <div class="label">Avg / Flight</div>
+    <div class="value" id="et-avg-val">—</div>
+    <div class="delta" id="et-avg-delta">—</div>
+  </div>
+</div>
 
   <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
   <div class="card"><div class="chart-wrap"><canvas id="et-chart"></canvas></div></div>
@@ -2224,11 +2482,44 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 <!-- ── SK PANEL ─────────────────────────────────────────────────────── -->
 <div class="panel" id="panel-sk">
   <div class="kpis">
-    <div class="kpi"><div class="label">Food Revenue</div><div class="value" id="sk-food-val">—</div><div class="delta" style="color:#34d399;">acct 411001 / 411011</div></div>
-    <div class="kpi"><div class="label">Service Revenue</div><div class="value" id="sk-svc-val">—</div><div class="delta" style="color:#60a5fa;">acct 413909</div></div>
-    <div class="kpi"><div class="label">Combined Total</div><div class="value" id="sk-total-val">—</div><div class="delta">Jan–May 2026 · Sage Intacct</div></div>
-    <div class="kpi"><div class="label">Avg / May Flight</div><div class="value" id="sk-avg-val">—</div><div class="delta" id="sk-avg-delta">20 May invoices · raw data</div></div>
+  <!-- Primary metrics -->
+  <div class="kpi" style="--ka:#34d399">
+    <div class="label">Food Revenue</div>
+    <div class="value" id="sk-food-val">—</div>
+    <div class="delta" style="color:#34d399">acct 411001 / 411011</div>
   </div>
+  <div class="kpi" style="--ka:#60a5fa">
+    <div class="label">Service Revenue</div>
+    <div class="value" id="sk-svc-val">—</div>
+    <div class="delta" style="color:#60a5fa">acct 413909</div>
+  </div>
+  <div class="kpi" style="--ka:#a78bfa">
+    <div class="label">Total Revenue YTD</div>
+    <div class="value" id="sk-total-val">—</div>
+    <div class="delta">
+      <span id="sk-date-range">Jan–May 2026</span>
+      <span class="mom-badge mom-na" id="sk-mom-badge">—</span>
+    </div>
+  </div>
+  <!-- divider -->
+  <div class="kpi-row-label">Performance</div>
+  <!-- Secondary metrics -->
+  <div class="kpi kpi-sub" id="sk-out-card" style="--ka:#f59e0b">
+    <div class="label">Outstanding Balance</div>
+    <div class="value" id="sk-out-val">—</div>
+    <div class="delta" id="sk-out-delta">20 PA invoices · May 2026</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#38bdf8">
+    <div class="label">Revenue / Pax</div>
+    <div class="value" id="sk-pax-val">—</div>
+    <div class="delta" id="sk-pax-delta">pax data unavailable</div>
+  </div>
+  <div class="kpi kpi-sub" style="--ka:#fb923c">
+    <div class="label">Avg / Invoice</div>
+    <div class="value" id="sk-avg-val">—</div>
+    <div class="delta" id="sk-avg-delta">—</div>
+  </div>
+</div>
 
   <div class="section-title">Monthly Revenue — <span style="color:#34d399;">Food</span> &amp; <span style="color:#60a5fa;">Service</span></div>
   <div class="card"><div class="chart-wrap"><canvas id="sk-chart"></canvas></div></div>

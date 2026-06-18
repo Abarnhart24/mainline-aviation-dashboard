@@ -1,8 +1,8 @@
 """
 merge_new_invoices.py
 ─────────────────────
-Drop new invoice files into:  Raw Data/New Invoices/
-Then run (from the repo root):  python automation/merge_new_invoices.py
+Drop new invoice files into:  Sullivan Dashboard\Raw Data\New Invoices\
+Then tell Claude "merge new data" — or run directly:  python automation/merge_new_invoices.py
 
 What it does:
   1. Auto-detects airline from each file's content
@@ -28,10 +28,21 @@ from openpyxl import load_workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-ROOT          = Path(__file__).parent.parent
-DROP_DIR      = ROOT / "Raw Data" / "New Invoices"
+# REPO: where Sullivan_Financials.xlsx lives (committed to GitHub)
+REPO_ROOT     = Path(__file__).parent.parent
+EXCEL_FILE    = REPO_ROOT / "Sullivan_Financials.xlsx"
+
+# DROP ZONE: Sullivan Dashboard Raw Data folder (where Tony keeps source files)
+# This folder sits next to the git repo on OneDrive.
+_SULLIVAN_DASH = REPO_ROOT.parent / "Sullivan Dashboard" / "Sullivan Dashboard"
+DROP_DIR      = _SULLIVAN_DASH / "Raw Data" / "New Invoices"
 PROCESSED_DIR = DROP_DIR / "Processed"
-EXCEL_FILE    = ROOT / "Sullivan_Financials.xlsx"
+
+# Fallback: if the Sullivan Dashboard path doesn't exist (e.g. running from a
+# different machine), fall back to the repo's own Raw Data folder.
+if not DROP_DIR.parent.exists():
+    DROP_DIR      = REPO_ROOT / "Raw Data" / "New Invoices"
+    PROCESSED_DIR = DROP_DIR / "Processed"
 
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
