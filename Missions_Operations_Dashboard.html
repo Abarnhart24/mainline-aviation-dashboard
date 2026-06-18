@@ -580,6 +580,17 @@ body.wall .wall-banner .pulse {
     </div>
   </div>
   <div class="spacer"></div>
+  <div style="display:flex;align-items:center;gap:8px;margin-right:14px;">
+    <label id="finLoadBtn" for="finFileInput" style="cursor:pointer;font-size:11px;font-weight:600;
+      padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
+      color:#94a3b8;background:rgba(255,255,255,0.04);white-space:nowrap;transition:all .15s;"
+      onmouseover="this.style.borderColor='rgba(255,255,255,0.4)'"
+      onmouseout="if(!window.__finData||!window.__finData.length)this.style.borderColor='rgba(255,255,255,0.2)'">
+      📊 Load Data
+    </label>
+    <input type="file" id="finFileInput" accept=".xlsx" style="display:none"
+           onchange="finLoadFile(this)">
+  </div>
   <div class="meta">
     <span><span class="live-dot"></span>SNAPSHOT</span>
     <span id="snaptime">Jun 16, 2026 at 06:16 AM EDT</span>
@@ -1633,6 +1644,129 @@ function selectAirline(btn, code) {
     return isNaN(n)?'—':'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   }
 </script>
+
+<script id="fin-excel-loader">
+(function(){
+  var STORE_KEY = 'sullivan_fin_v2';
+
+  // Restore persisted data on load
+  try {
+    var s = localStorage.getItem(STORE_KEY);
+    if (s) { window.__finData = JSON.parse(s); }
+  } catch(e) { window.__finData = null; }
+
+  function loadXLSXLib(cb){
+    if(window.XLSX){ cb(); return; }
+    var el=document.createElement('script');
+    el.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    el.onload=cb;
+    el.onerror=function(){ alert('Could not load Excel parser — check your internet connection.'); };
+    document.head.appendChild(el);
+  }
+
+  function setBtn(text, color){
+    var btn=document.getElementById('finLoadBtn');
+    if(!btn) return;
+    btn.textContent=text;
+    btn.style.borderColor=color; btn.style.color=color;
+  }
+
+  function parseFinSheet(file){
+    loadXLSXLib(function(){
+      var reader=new FileReader();
+      reader.onload=function(e){
+        try{
+          var wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
+          var ws=wb.Sheets['Flights'];
+          if(!ws){ alert('Sheet "Flights" not found. Make sure you are loading Sullivan_Financials.xlsx'); return; }
+
+          var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+
+          // Find header row (first row where col A === "Airline")
+          var hdrIdx=-1;
+          for(var i=0;i<Math.min(raw.length,6);i++){
+            if(String(raw[i][0]||'').trim()==='Airline'){ hdrIdx=i; break; }
+          }
+          if(hdrIdx<0){ alert('Could not find header row with "Airline" column.'); return; }
+
+          var hdrs=raw[hdrIdx].map(function(h){ return String(h||'').trim(); });
+          var AI=hdrs.indexOf('Airline');
+          var DI=hdrs.indexOf('Date');
+          var FI=hdrs.indexOf('Flight / Invoice');
+          var FOODI=hdrs.indexOf('Food Revenue');
+          var SVCI=hdrs.indexOf('Service Revenue');
+          var TOTI=hdrs.indexOf('Total Revenue');
+          var PAXI=hdrs.indexOf('Pax Count');
+          var STATI=hdrs.indexOf('Status');
+
+          var records=[];
+          for(var r=hdrIdx+1;r<raw.length;r++){
+            var row=raw[r];
+            var al=String(row[AI]||'').trim();
+            if(!al || al==='Airline') continue;
+
+            // Parse date — SheetJS with raw:false gives locale string; parse reliably
+            var dateStr='';
+            var dv=row[DI];
+            if(dv){
+              // Try JS Date parse on common formats
+              var d=new Date(String(dv));
+              if(!isNaN(d.getTime())){
+                dateStr=d.getFullYear()+'-'+
+                  ('0'+(d.getMonth()+1)).slice(-2)+'-'+
+                  ('0'+d.getDate()).slice(-2);
+              } else { dateStr=String(dv); }
+            }
+
+            var parseMoney=function(v){
+              var n=parseFloat(String(v||'').replace(/[$,\s]/g,''));
+              return isNaN(n)?null:n;
+            };
+
+            var food=parseMoney(row[FOODI]);
+            var svc =parseMoney(row[SVCI]);
+            var tot =parseMoney(row[TOTI]);
+            if(tot==null && food!=null && svc!=null) tot=food+svc;
+
+            records.push({
+              al:al, date:dateStr,
+              fi:String(row[FI]||'').trim(),
+              food:food, service:svc, total:tot,
+              pax:parseMoney(row[PAXI]),
+              status:String(row[STATI]||'').trim()
+            });
+          }
+
+          window.__finData=records;
+          try{ localStorage.setItem(STORE_KEY,JSON.stringify(records)); }catch(ex){}
+
+          setBtn('✓ '+file.name.replace(/\.xlsx$/i,'')+' ('+records.length+' rows)','#34d399');
+
+          // Re-render active financing panel
+          if(typeof window.switchAirline==='function'){
+            var active=document.querySelector('#fin-content .panel.active');
+            var code=active?active.id.replace('panel-',''):'vs';
+            window.switchAirline(code);
+          }
+        }catch(err){ alert('Error reading file: '+err.message+' — '+err.stack); }
+      };
+      reader.readAsBinaryString(file);
+    });
+  }
+
+  window.finLoadFile=function(input){
+    if(input.files && input.files[0]) parseFinSheet(input.files[0]);
+    input.value=''; // reset so same file can be reloaded
+  };
+
+  // Restore button label if data already in localStorage
+  document.addEventListener('DOMContentLoaded',function(){
+    if(window.__finData && window.__finData.length){
+      setBtn('✓ Data Loaded ('+window.__finData.length+' rows)','#34d399');
+    }
+  });
+})();
+</script>
 <script id="fin-data">
 // ── SOURCE DATA ─────────────────────────────────────────────────────────────
 // VS: monthly aggregates from Sage Intacct (Jan–May 2026)
@@ -1830,59 +1964,116 @@ function renderFlightTable(code, flights, hasSplit){
 }
 
 // ── AIRLINE RENDERERS ────────────────────────────────────────────────────────
+// Returns loaded rows for an airline, or null to fall back to hardcoded data
+function getLoaded(al){
+  if(!window.__finData||!window.__finData.length) return null;
+  var rows=window.__finData.filter(function(r){return r.al===al;});
+  return rows.length?rows:null;
+}
+
+// Normalise a loaded row to the {date,food,service,total} shape toMonthly() expects
+function normRow(r){
+  return {date:r.date, food:r.food||0, service:r.service||0,
+          total:r.total||(r.food+r.service)||0, count:1, fi:r.fi};
+}
+
 function renderVS(){
-  var m=VS_DATA;
-  var food=m.reduce(function(s,r){return s+r.food;},0);
-  var svc=m.reduce(function(s,r){return s+r.service;},0);
-  finKPIs("vs",food,svc,food+svc,"avg per month",(food+svc)/m.length);
+  var loaded=getLoaded('VS');
+  var monthly, flightRows;
+  if(loaded){
+    monthly=toMonthly(loaded.map(normRow));
+    flightRows=loaded.filter(function(r){return r.fi&&r.fi!=='Monthly Summary';});
+  } else {
+    monthly=VS_DATA; flightRows=null;
+  }
+  var food=monthly.reduce(function(s,r){return s+(r.food||0);},0);
+  var svc =monthly.reduce(function(s,r){return s+(r.service||0);},0);
+  finKPIs("vs",food,svc,food+svc,"avg per month",(food+svc)/monthly.length);
   buildSplitChart("vs-chart",
-    m.map(function(r){return fdLabel(r.date);}),
-    m.map(function(r){return r.food;}),
-    m.map(function(r){return r.service;}));
-  renderMonthlyTable("vs",m);
+    monthly.map(function(r){return fdLabel(r.date);}),
+    monthly.map(function(r){return r.food||0;}),
+    monthly.map(function(r){return r.service||0;}));
+  renderMonthlyTable("vs",monthly);
+  if(flightRows&&flightRows.length){
+    renderFlightTable("vs",flightRows.map(function(r){
+      return {date:r.date,flight:r.fi,food:r.food,service:r.service,total:r.total};
+    }),true);
+    // Show the table wrapper
+    var wrap=document.querySelector('#panel-vs .tbl-wrap.flights-wrap');
+    if(wrap) wrap.style.display='';
+  }
 }
 
 function renderAA(){
-  var monthly=toMonthly(AA_DATA);
-  var food=monthly.reduce(function(s,r){return s+r.food;},0);
-  var svc=monthly.reduce(function(s,r){return s+r.service;},0);
-  finKPIs("aa",food,svc,food+svc,"avg per invoice",(food+svc)/AA_DATA.length);
+  var loaded=getLoaded('AA');
+  var monthly, detail;
+  if(loaded){
+    monthly=toMonthly(loaded.map(normRow));
+    detail=loaded.map(function(r){return {date:r.date,invoice:r.fi,food:r.food,service:r.service,total:r.total};});
+  } else {
+    monthly=toMonthly(AA_DATA);
+    detail=AA_DATA.map(function(r){return {date:r.date,invoice:r.fi||'',food:r.food,service:r.service,total:r.total};});
+  }
+  var food=monthly.reduce(function(s,r){return s+(r.food||0);},0);
+  var svc =monthly.reduce(function(s,r){return s+(r.service||0);},0);
+  var cnt=detail.length;
+  finKPIs("aa",food,svc,food+svc,"avg per invoice",cnt>0?(food+svc)/cnt:0);
   buildSplitChart("aa-chart",
     monthly.map(function(r){return fdLabel(r.date);}),
-    monthly.map(function(r){return r.food;}),
-    monthly.map(function(r){return r.service;}));
+    monthly.map(function(r){return r.food||0;}),
+    monthly.map(function(r){return r.service||0;}));
   renderMonthlyTable("aa",monthly);
-  renderFlightTable("aa",AA_DATA,true);
+  renderFlightTable("aa",detail,true);
 }
 
 function renderET(){
-  var allData=ET_SAGE.concat(ET_FLIGHTS);
-  var monthly=toMonthly(allData);
-  var food=allData.reduce(function(s,r){return s+r.food;},0);
-  var svc=allData.reduce(function(s,r){return s+r.service;},0);
-  var mayFlights=ET_FLIGHTS.length;
-  var mayTotal=ET_FLIGHTS.reduce(function(s,r){return s+r.total;},0);
-  finKPIs("et",food,svc,food+svc,"avg per May flight",mayTotal/mayFlights);
+  var loaded=getLoaded('ET');
+  var allData, monthly, flightDetail;
+  if(loaded){
+    allData=loaded.map(normRow);
+    monthly=toMonthly(allData);
+    flightDetail=loaded.filter(function(r){return r.fi&&r.fi!=='Monthly Summary'&&!/^ET-INV/.test(r.fi);})
+      .map(function(r){return {date:r.date,flight:r.fi,food:r.food,service:r.service,total:r.total};});
+  } else {
+    allData=ET_SAGE.concat(ET_FLIGHTS);
+    monthly=toMonthly(allData);
+    flightDetail=ET_FLIGHTS;
+  }
+  var food=allData.reduce(function(s,r){return s+(r.food||0);},0);
+  var svc =allData.reduce(function(s,r){return s+(r.service||0);},0);
+  var avgBase=flightDetail.length||1;
+  var flightTot=flightDetail.reduce(function(s,r){return s+(r.total||0);},0);
+  finKPIs("et",food,svc,food+svc,"avg per flight",flightTot/avgBase);
   buildSplitChart("et-chart",
     monthly.map(function(r){return fdLabel(r.date);}),
-    monthly.map(function(r){return r.food;}),
-    monthly.map(function(r){return r.service;}));
+    monthly.map(function(r){return r.food||0;}),
+    monthly.map(function(r){return r.service||0;}));
   renderMonthlyTable("et",monthly);
-  renderFlightTable("et",ET_FLIGHTS,true);
+  renderFlightTable("et",flightDetail,true);
 }
 
 function renderSK(){
-  var m=SK_DATA;
-  var food=m.reduce(function(s,r){return s+r.food;},0);
-  var svc=m.reduce(function(s,r){return s+r.service;},0);
-  finKPIs("sk",food,svc,food+svc,"avg per May flight",
-    SK_MAY_FLIGHTS.reduce(function(s,r){return s+r.total;},0)/SK_MAY_FLIGHTS.length);
+  var loaded=getLoaded('SK');
+  var monthly, invoiceDetail;
+  if(loaded){
+    monthly=toMonthly(loaded.map(normRow));
+    invoiceDetail=loaded.filter(function(r){return /^SK-/.test(r.fi);})
+      .map(function(r){return {date:r.date,invoice:r.fi,total:r.total};});
+  } else {
+    monthly=SK_DATA;
+    invoiceDetail=SK_MAY_FLIGHTS;
+  }
+  var food=monthly.reduce(function(s,r){return s+(r.food||0);},0);
+  var svc =monthly.reduce(function(s,r){return s+(r.service||0);},0);
+  var avgBase=invoiceDetail.length||1;
+  var invTot=invoiceDetail.reduce(function(s,r){return s+(r.total||0);},0);
+  finKPIs("sk",food,svc,food+svc,"avg per flight",invTot/avgBase);
   buildSplitChart("sk-chart",
-    m.map(function(r){return fdLabel(r.date);}),
-    m.map(function(r){return r.food;}),
-    m.map(function(r){return r.service;}));
-  renderMonthlyTable("sk",m);
-  renderFlightTable("sk",SK_MAY_FLIGHTS,false);
+    monthly.map(function(r){return fdLabel(r.date);}),
+    monthly.map(function(r){return r.food||0;}),
+    monthly.map(function(r){return r.service||0;}));
+  renderMonthlyTable("sk",monthly);
+  renderFlightTable("sk",invoiceDetail,false);
 }
 </script>
 <div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:#0b0f1a;display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
