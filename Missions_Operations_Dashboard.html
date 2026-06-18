@@ -2079,10 +2079,10 @@ function renderAll(){
     var loaded=getLoaded(code);
     if(loaded){
       alMonthly[code]=toMonthly(loaded.map(normRow));
-    } else if(code==='VS'){ alMonthly[code]=VS_DATA;
+    } else if(code==='VS'){ alMonthly[code]=toMonthly(VS_DATA);
     } else if(code==='AA'){ alMonthly[code]=toMonthly(AA_DATA);
     } else if(code==='ET'){ alMonthly[code]=toMonthly(ET_SAGE.concat(ET_FLIGHTS));
-    } else if(code==='SK'){ alMonthly[code]=SK_DATA; }
+    } else if(code==='SK'){ alMonthly[code]=toMonthly(SK_DATA); }
   });
 
   // Union of all months
@@ -2226,10 +2226,10 @@ function renderAll(){
         ?(d.out.amount>0?'<span style="color:#fbbf24">'+fmt(d.out.amount)+'</span>':'<span style="color:#34d399">$0</span>')
         :'—';
       return '<tr>'+
-        '<td style="display:flex;align-items:center;gap:8px;padding:10px 14px;">'+
+        '<td><span style="display:inline-flex;align-items:center;gap:8px;">'+
           '<span style="width:9px;height:9px;border-radius:50%;background:'+alColors[code]+';flex-shrink:0;display:inline-block;"></span>'+
           '<span style="font-weight:600">'+alNames[code]+'</span>'+
-        '</td>'+
+        '</span></td>'+
         '<td class="r bold">'+fmt(d.tot)+'</td>'+
         '<td class="r" style="color:#34d399">'+fmt(d.food)+'</td>'+
         '<td class="r" style="color:#60a5fa">'+fmt(d.svc)+'</td>'+
