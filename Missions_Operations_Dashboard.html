@@ -1900,21 +1900,36 @@ function buildSplitChart(id, labels, foodData, svcData){
     data:{
       labels:labels,
       datasets:[
-        {label:"Food Revenue",data:foodData,backgroundColor:"rgba(52,211,153,0.82)",borderRadius:3,stack:"rev"},
-        {label:"Service Revenue",data:svcData,backgroundColor:"rgba(96,165,250,0.82)",borderRadius:3,stack:"rev"},
+        {label:"Food Revenue",data:foodData,backgroundColor:"rgba(52,211,153,0.85)",
+         borderRadius:4,borderSkipped:false,barPercentage:0.75,categoryPercentage:0.7},
+        {label:"Service Revenue",data:svcData,backgroundColor:"rgba(96,165,250,0.85)",
+         borderRadius:4,borderSkipped:false,barPercentage:0.75,categoryPercentage:0.7},
         {label:"Avg Total",data:labels.map(function(){return avg;}),type:"line",
-         borderColor:"rgba(251,191,36,0.9)",borderWidth:2,borderDash:[4,3],pointRadius:0,tension:0}
+         borderColor:"rgba(251,191,36,0.85)",borderWidth:2,borderDash:[5,4],
+         pointRadius:0,tension:0,yAxisID:"y"}
       ]
     },
     options:{
       responsive:true,maintainAspectRatio:false,
       plugins:{
-        legend:{labels:{color:"#94a3b8",boxWidth:12,padding:16}},
-        tooltip:{callbacks:{label:function(c){return c.dataset.label+": "+fmt(c.raw);}}}
+        legend:{labels:{color:"#94a3b8",boxWidth:10,padding:18,font:{size:12}}},
+        tooltip:{
+          mode:"index",intersect:false,
+          callbacks:{
+            label:function(c){return " "+c.dataset.label+": "+fmt(c.raw);},
+            footer:function(items){
+              var total=items.filter(function(i){return i.dataset.type!=="line";})
+                .reduce(function(s,i){return s+i.raw;},0);
+              return total>0?"  Total: "+fmt(total):"";
+            }
+          }
+        }
       },
       scales:{
-        x:{stacked:true,ticks:{color:"#64748b"},grid:{color:"rgba(255,255,255,0.05)"}},
-        y:{stacked:true,ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();}},grid:{color:"rgba(255,255,255,0.06)"}}
+        x:{ticks:{color:"#64748b",font:{size:11}},grid:{color:"rgba(255,255,255,0.04)"},
+           border:{color:"rgba(255,255,255,0.06)"}},
+        y:{ticks:{color:"#64748b",callback:function(v){return "$"+v.toLocaleString();},font:{size:11}},
+           grid:{color:"rgba(255,255,255,0.06)"},border:{color:"rgba(255,255,255,0.06)"},beginAtZero:true}
       }
     }
   });
