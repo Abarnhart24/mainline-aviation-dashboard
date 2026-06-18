@@ -581,15 +581,13 @@ body.wall .wall-banner .pulse {
   </div>
   <div class="spacer"></div>
   <div style="display:flex;align-items:center;gap:8px;margin-right:14px;">
-    <label id="finLoadBtn" for="finFileInput" style="cursor:pointer;font-size:11px;font-weight:600;
+    <button id="finLoadBtn" onclick="finFetchData()" style="cursor:pointer;font-size:11px;font-weight:600;
       padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
-      color:#94a3b8;background:rgba(255,255,255,0.04);white-space:nowrap;transition:all .15s;"
+      color:#94a3b8;background:rgba(255,255,255,0.04);white-space:nowrap;transition:all .15s;font-family:inherit;"
       onmouseover="this.style.borderColor='rgba(255,255,255,0.4)'"
-      onmouseout="if(!window.__finData||!window.__finData.length)this.style.borderColor='rgba(255,255,255,0.2)'">
-      📊 Load Data
-    </label>
-    <input type="file" id="finFileInput" accept=".xlsx" style="display:none"
-           onchange="finLoadFile(this)">
+      onmouseout="this.style.borderColor='rgba(255,255,255,0.2)'">
+      📊 Refresh Data
+    </button>
   </div>
   <div class="meta">
     <span><span class="live-dot"></span>SNAPSHOT</span>
@@ -1647,123 +1645,130 @@ function selectAirline(btn, code) {
 
 <script id="fin-excel-loader">
 (function(){
-  var STORE_KEY = 'sullivan_fin_v2';
+  var STORE_KEY  = 'sullivan_fin_v2';
+  var DATA_URL   = 'Sullivan_Financials.xlsx';
 
-  // Restore persisted data on load
-  try {
-    var s = localStorage.getItem(STORE_KEY);
-    if (s) { window.__finData = JSON.parse(s); }
-  } catch(e) { window.__finData = null; }
-
-  function loadXLSXLib(cb){
-    if(window.XLSX){ cb(); return; }
-    var el=document.createElement('script');
-    el.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-    el.onload=cb;
-    el.onerror=function(){ alert('Could not load Excel parser — check your internet connection.'); };
-    document.head.appendChild(el);
+  // ── Parse helpers ──────────────────────────────────────────────────────────
+  function parseMoney(v){
+    var n=parseFloat(String(v||'').replace(/[$,\s]/g,''));
+    return isNaN(n)?null:n;
+  }
+  function parseDate(v){
+    if(!v) return '';
+    var d=new Date(String(v));
+    if(!isNaN(d.getTime()))
+      return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+    return String(v);
   }
 
-  function setBtn(text, color){
+  function processWorkbook(arrayBuffer){
+    var wb=XLSX.read(arrayBuffer,{type:'array',cellDates:true});
+    var ws=wb.Sheets['Flights'];
+    if(!ws){ console.warn('Sullivan_Financials.xlsx: no Flights sheet'); return null; }
+
+    var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
+    var hdrIdx=-1;
+    for(var i=0;i<Math.min(raw.length,6);i++){
+      if(String(raw[i][0]||'').trim()==='Airline'){ hdrIdx=i; break; }
+    }
+    if(hdrIdx<0){ console.warn('Flights sheet: could not find Airline header'); return null; }
+
+    var hdrs=raw[hdrIdx].map(function(h){return String(h||'').trim();});
+    var idx=function(n){return hdrs.indexOf(n);};
+    var AI=idx('Airline'), DI=idx('Date'), FI=idx('Flight / Invoice'),
+        FOODI=idx('Food Revenue'), SVCI=idx('Service Revenue'),
+        TOTI=idx('Total Revenue'), PAXI=idx('Pax Count'), STATI=idx('Status');
+
+    var records=[];
+    for(var r=hdrIdx+1;r<raw.length;r++){
+      var row=raw[r];
+      var al=String(row[AI]||'').trim();
+      if(!al||al==='Airline') continue;
+      var food=parseMoney(row[FOODI]), svc=parseMoney(row[SVCI]), tot=parseMoney(row[TOTI]);
+      if(tot==null&&food!=null&&svc!=null) tot=food+svc;
+      records.push({
+        al:al, date:parseDate(row[DI]),
+        fi:String(row[FI]||'').trim(),
+        food:food, service:svc, total:tot,
+        pax:parseMoney(row[PAXI]),
+        status:String(row[STATI]||'').trim()
+      });
+    }
+    return records;
+  }
+
+  function setBtn(text, color, spinning){
     var btn=document.getElementById('finLoadBtn');
     if(!btn) return;
-    btn.textContent=text;
-    btn.style.borderColor=color; btn.style.color=color;
+    btn.textContent=(spinning?'⏳ ':'')+text;
+    btn.style.borderColor=color||'rgba(255,255,255,0.2)';
+    btn.style.color=color||'#94a3b8';
   }
 
-  function parseFinSheet(file){
+  function applyData(records){
+    if(!records||!records.length) return;
+    window.__finData=records;
+    try{ localStorage.setItem(STORE_KEY,JSON.stringify(records)); }catch(e){}
+    setBtn('✓ Data loaded ('+records.length+' rows)','#34d399');
+    // Re-render active financing panel
+    if(typeof window.switchAirline==='function'){
+      var active=document.querySelector('#fin-content .panel.active');
+      var code=active?active.id.replace('panel-',''):'vs';
+      window.switchAirline(code);
+    }
+  }
+
+  function loadXLSXLib(cb){
+    if(window.XLSX){cb();return;}
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=cb; s.onerror=function(){setBtn('Error loading parser','#f87171');};
+    document.head.appendChild(s);
+  }
+
+  // ── Public: fetch from repo URL ───────────────────────────────────────────
+  window.finFetchData=function(){
+    setBtn('Loading…','#fbbf24',true);
     loadXLSXLib(function(){
-      var reader=new FileReader();
-      reader.onload=function(e){
-        try{
-          var wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
-          var ws=wb.Sheets['Flights'];
-          if(!ws){ alert('Sheet "Flights" not found. Make sure you are loading Sullivan_Financials.xlsx'); return; }
-
-          var raw=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false});
-
-          // Find header row (first row where col A === "Airline")
-          var hdrIdx=-1;
-          for(var i=0;i<Math.min(raw.length,6);i++){
-            if(String(raw[i][0]||'').trim()==='Airline'){ hdrIdx=i; break; }
-          }
-          if(hdrIdx<0){ alert('Could not find header row with "Airline" column.'); return; }
-
-          var hdrs=raw[hdrIdx].map(function(h){ return String(h||'').trim(); });
-          var AI=hdrs.indexOf('Airline');
-          var DI=hdrs.indexOf('Date');
-          var FI=hdrs.indexOf('Flight / Invoice');
-          var FOODI=hdrs.indexOf('Food Revenue');
-          var SVCI=hdrs.indexOf('Service Revenue');
-          var TOTI=hdrs.indexOf('Total Revenue');
-          var PAXI=hdrs.indexOf('Pax Count');
-          var STATI=hdrs.indexOf('Status');
-
-          var records=[];
-          for(var r=hdrIdx+1;r<raw.length;r++){
-            var row=raw[r];
-            var al=String(row[AI]||'').trim();
-            if(!al || al==='Airline') continue;
-
-            // Parse date — SheetJS with raw:false gives locale string; parse reliably
-            var dateStr='';
-            var dv=row[DI];
-            if(dv){
-              // Try JS Date parse on common formats
-              var d=new Date(String(dv));
-              if(!isNaN(d.getTime())){
-                dateStr=d.getFullYear()+'-'+
-                  ('0'+(d.getMonth()+1)).slice(-2)+'-'+
-                  ('0'+d.getDate()).slice(-2);
-              } else { dateStr=String(dv); }
-            }
-
-            var parseMoney=function(v){
-              var n=parseFloat(String(v||'').replace(/[$,\s]/g,''));
-              return isNaN(n)?null:n;
-            };
-
-            var food=parseMoney(row[FOODI]);
-            var svc =parseMoney(row[SVCI]);
-            var tot =parseMoney(row[TOTI]);
-            if(tot==null && food!=null && svc!=null) tot=food+svc;
-
-            records.push({
-              al:al, date:dateStr,
-              fi:String(row[FI]||'').trim(),
-              food:food, service:svc, total:tot,
-              pax:parseMoney(row[PAXI]),
-              status:String(row[STATI]||'').trim()
-            });
-          }
-
-          window.__finData=records;
-          try{ localStorage.setItem(STORE_KEY,JSON.stringify(records)); }catch(ex){}
-
-          setBtn('✓ '+file.name.replace(/\.xlsx$/i,'')+' ('+records.length+' rows)','#34d399');
-
-          // Re-render active financing panel
-          if(typeof window.switchAirline==='function'){
-            var active=document.querySelector('#fin-content .panel.active');
-            var code=active?active.id.replace('panel-',''):'vs';
-            window.switchAirline(code);
-          }
-        }catch(err){ alert('Error reading file: '+err.message+' — '+err.stack); }
-      };
-      reader.readAsBinaryString(file);
+      fetch(DATA_URL+'?v='+Date.now())
+        .then(function(r){
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          return r.arrayBuffer();
+        })
+        .then(function(buf){
+          var records=processWorkbook(buf);
+          if(records) applyData(records);
+          else setBtn('Sheet not found','#f87171');
+        })
+        .catch(function(err){
+          setBtn('Error: '+err.message,'#f87171');
+          console.error('finFetchData:',err);
+        });
     });
-  }
-
-  window.finLoadFile=function(input){
-    if(input.files && input.files[0]) parseFinSheet(input.files[0]);
-    input.value=''; // reset so same file can be reloaded
   };
 
-  // Restore button label if data already in localStorage
+  // ── Auto-load on page open ────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded',function(){
-    if(window.__finData && window.__finData.length){
-      setBtn('✓ Data Loaded ('+window.__finData.length+' rows)','#34d399');
+    // Try localStorage first (instant, no network)
+    try{
+      var s=localStorage.getItem(STORE_KEY);
+      if(s){ window.__finData=JSON.parse(s); }
+    }catch(e){}
+
+    if(window.__finData&&window.__finData.length){
+      setBtn('✓ Data loaded ('+window.__finData.length+' rows)','#34d399');
     }
+
+    // Always fetch fresh copy from repo in background
+    loadXLSXLib(function(){
+      fetch(DATA_URL+'?v='+Date.now())
+        .then(function(r){ return r.ok?r.arrayBuffer():Promise.reject(r.status); })
+        .then(function(buf){
+          var records=processWorkbook(buf);
+          if(records) applyData(records);
+        })
+        .catch(function(){ /* silently fail — cached data still usable */ });
+    });
   });
 })();
 </script>
