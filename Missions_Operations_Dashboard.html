@@ -2171,7 +2171,8 @@ function renderAll(){
         var r=alMap[code][m]; return r?(r.food||0)+(r.service||0):0;
       }),
       backgroundColor:alChartColors[code],
-      borderRadius:3,borderSkipped:false,stack:'rev'
+      borderRadius:4,borderSkipped:false,
+      barPercentage:0.8,categoryPercentage:0.75
     };
   });
   // Total trend line
@@ -2208,9 +2209,10 @@ function renderAll(){
         }
       },
       scales:{
-        x:{stacked:true,ticks:{color:'#64748b',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'}},
-        y:{stacked:true,ticks:{color:'#64748b',callback:function(v){return '$'+v.toLocaleString();},font:{size:11}},
-           grid:{color:'rgba(255,255,255,0.06)'},beginAtZero:true}
+        x:{ticks:{color:'#64748b',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'},
+           border:{color:'rgba(255,255,255,0.06)'}},
+        y:{ticks:{color:'#64748b',callback:function(v){return '$'+v.toLocaleString();},font:{size:11}},
+           grid:{color:'rgba(255,255,255,0.06)'},border:{color:'rgba(255,255,255,0.06)'},beginAtZero:true}
       }
     }
   });
