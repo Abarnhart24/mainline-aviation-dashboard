@@ -581,6 +581,13 @@ body.wall .wall-banner .pulse {
   </div>
   <div class="spacer"></div>
   <div style="display:flex;align-items:center;gap:8px;margin-right:14px;">
+    <button id="missionsLoadBtn" onclick="missionsFetchData()" style="cursor:pointer;font-size:11px;font-weight:600;
+      padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
+      color:#94a3b8;background:rgba(255,255,255,0.04);white-space:nowrap;transition:all .15s;font-family:inherit;"
+      onmouseover="this.style.borderColor='rgba(255,255,255,0.4)'"
+      onmouseout="this.style.borderColor='rgba(255,255,255,0.2)'">
+      ✈ Refresh Missions
+    </button>
     <button id="finLoadBtn" onclick="finFetchData()" style="cursor:pointer;font-size:11px;font-weight:600;
       padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
       color:#94a3b8;background:rgba(255,255,255,0.04);white-space:nowrap;transition:all .15s;font-family:inherit;"
@@ -1290,6 +1297,115 @@ function rerenderAll() {
   document.getElementById("leadCount").textContent = "(" + leadSet.size + ")";
   document.getElementById("missionCount").textContent = "(" + rows.length + ")";
 }
+
+// ── CSV → RAW_MISSIONS parser (mirrors rebuild_dashboard.py logic) ────────────
+function parseSpringshot(csvText) {
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Parse CSV respecting quoted fields
+  function parseCSVLine(line) {
+    var row=[],field='',inQ=false;
+    for(var j=0;j<line.length;j++){
+      var ch=line[j];
+      if(ch==='"'){inQ=!inQ;}
+      else if(ch===','&&!inQ){row.push(field);field='';}
+      else{field+=ch;}
+    }
+    row.push(field);
+    return row;
+  }
+
+  var lines=csvText.replace(/
+/g,'
+').replace(//g,'
+').split('
+');
+  var headers=parseCSVLine(lines[0]).map(function(h){return h.trim().replace(/^"|"$/g,'');});
+
+  function col(row,name){
+    var i=headers.indexOf(name);
+    return i>=0?(row[i]||'').trim():'';
+  }
+
+  // Parse "Jun 16, 00:12, EDT" → Date (assume current year or next year if month already past)
+  function parseDt(s){
+    if(!s||s==='-'||s==='—') return null;
+    var clean=s.replace(/,?\s*(EDT|EST|CDT|CST|MDT|MST|PDT|PST|UTC)\s*/gi,'').trim();
+    // Try with current year and next year; pick whichever gives a valid date
+    var now=new Date();
+    for(var yr=now.getFullYear();yr<=now.getFullYear()+1;yr++){
+      var attempt=new Date(clean+', '+yr);
+      if(!isNaN(attempt.getTime())) return attempt;
+    }
+    return null;
+  }
+
+  function diffMin(a,b){
+    if(!a||!b) return null;
+    var d=(b-a)/60000;
+    return Math.abs(d)>1440?null:Math.round(d*10)/10;
+  }
+
+  function parsePct(s){
+    if(!s||s==='N/A'||s==='-'||s==='—') return null;
+    var n=parseFloat(s.replace('%',''));
+    return isNaN(n)?null:n;
+  }
+
+  var rows=[];
+  for(var i=1;i<lines.length;i++){
+    var line=lines[i].trim();
+    if(!line) continue;
+    var row=parseCSVLine(line);
+    if(row.length<5) continue;
+
+    var fa  =parseDt(col(row,'Flight Arrival'));
+    var ma  =parseDt(col(row,'Mission Assigned'));
+    var tarr=parseDt(col(row,'Team Arrival'));
+    var ms  =parseDt(col(row,'Mission Started'));
+    var mc  =parseDt(col(row,'Mission Completed'));
+    var fd  =parseDt(col(row,'Flight Departure'));
+
+    var dur =diffMin(ms,mc);
+    var resp=diffMin(ma,tarr);
+    var proper=!!(ms&&fd);
+    var ot=null;
+    if(mc&&fd) ot=mc<=fd;
+
+    var mo='',mo_idx=0;
+    if(fa){
+      mo=MONTHS[fa.getMonth()]+' '+fa.getFullYear();
+      mo_idx=fa.getFullYear()*12+(fa.getMonth()+1);
+    }
+
+    rows.push({
+      tl:   col(row,'Team Lead'),
+      al:   col(row,'Airline'),
+      mt:   col(row,'Mission Type'),
+      ws:   col(row,'Worksite'),
+      ast:  col(row,'Asset'),
+      atype:col(row,'Asset Type'),
+      loc:  col(row,'Location'),
+      eng:  parsePct(col(row,'Engagement')),
+      prod: parsePct(col(row,'Productivity')),
+      inb:  col(row,'Inbound Flight'),
+      outb: col(row,'Outbound Flight'),
+      fa:   col(row,'Flight Arrival'),
+      delay:null, sched_fa:'',
+      ma:   col(row,'Mission Assigned'),
+      tarr: col(row,'Team Arrival'),
+      ms:   col(row,'Mission Started'),
+      mc:   col(row,'Mission Completed'),
+      fd:   col(row,'Flight Departure'),
+      dur:  dur, ot:ot, resp:resp,
+      hr:   fa?fa.getHours():null,
+      mo:   mo, mo_idx:mo_idx,
+      proper:proper, transit:null, transit_kind:null
+    });
+  }
+  return rows;
+}
+
 function init() {
   document.getElementById("snaptime").textContent = SNAPSHOT_TIME;
   populateFilters();
@@ -1645,6 +1761,67 @@ function selectAirline(btn, code) {
   }
 </script>
 
+
+<script id="missions-csv-loader">
+(function(){
+  var CSV_URL  = 'MissionsSummary_master.csv';
+  var STORE_KEY= 'sullivan_missions_v1';
+
+  function setBtn(txt,color){
+    var b=document.getElementById('missionsLoadBtn');
+    if(b){b.textContent=txt;if(color)b.style.color=color;}
+  }
+
+  function applyLoaded(rows){
+    if(!rows||!rows.length) return;
+    window.RAW_MISSIONS=rows;
+    // Update snapshot indicator
+    var snap=document.getElementById('snaptime');
+    if(snap) snap.textContent='Live — '+rows.length+' missions';
+    // Rebuild filters and re-render
+    if(typeof populateFilters==='function') populateFilters();
+    if(typeof rerenderAll==='function') rerenderAll();
+    setBtn('✈ '+rows.length+' missions loaded','#34d399');
+  }
+
+  function fetchAndParse(){
+    setBtn('✈ Loading…','#60a5fa');
+    fetch(CSV_URL+'?v='+Date.now())
+      .then(function(r){return r.ok?r.text():Promise.reject(r.status);})
+      .then(function(text){
+        var rows=parseSpringshot(text);
+        if(rows.length){
+          try{localStorage.setItem(STORE_KEY,JSON.stringify({ts:Date.now(),rows:rows}));}catch(e){}
+          applyLoaded(rows);
+        } else {
+          setBtn('✈ Refresh Missions','');
+        }
+      })
+      .catch(function(e){
+        console.warn('Missions CSV fetch failed:',e);
+        setBtn('✈ Refresh Missions','');
+      });
+  }
+
+  // Load from cache immediately so page feels fast
+  try{
+    var cached=localStorage.getItem(STORE_KEY);
+    if(cached){
+      var d=JSON.parse(cached);
+      // Use cache if less than 10 minutes old
+      if(d.rows&&d.rows.length&&(Date.now()-d.ts)<600000){
+        applyLoaded(d.rows);
+      }
+    }
+  }catch(e){}
+
+  // Always fetch fresh in background
+  fetchAndParse();
+
+  // Expose for button
+  window.missionsFetchData=fetchAndParse;
+})();
+</script>
 <script id="fin-excel-loader">
 (function(){
   var STORE_KEY  = 'sullivan_fin_v2';
