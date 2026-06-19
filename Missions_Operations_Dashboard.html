@@ -1315,11 +1315,7 @@ function parseSpringshot(csvText) {
     return row;
   }
 
-  var lines=csvText.replace(/
-/g,'
-').replace(//g,'
-').split('
-');
+  var lines=csvText.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
   var headers=parseCSVLine(lines[0]).map(function(h){return h.trim().replace(/^"|"$/g,'');});
 
   function col(row,name){
