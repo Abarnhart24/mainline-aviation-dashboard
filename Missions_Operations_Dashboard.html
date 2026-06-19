@@ -706,10 +706,10 @@ body.wall .wall-banner .pulse {
 <div class="wrap">
 
   <section class="filters">
+    <!-- fAirline hidden — airline selection via pills; kept for applyFilters() sync -->
+    <select id="fAirline" style="display:none"><option value="">All</option></select>
     <label>Month</label>
     <select id="fMonth"><option value="">All</option></select>
-    <label>Airline</label>
-    <select id="fAirline"><option value="">All</option></select>
     <label>Mission Type</label>
     <select id="fType"><option value="">All</option></select>
     <label>Team Lead</label>
@@ -923,22 +923,24 @@ function median(arr) {
 }
 
 function populateFilters() {
-  // Months sorted chronologically (using mo_idx)
   const monthMap = new Map();
   for (const r of RAW_MISSIONS) {
     if (r.mo && r.mo_idx != null && !monthMap.has(r.mo)) monthMap.set(r.mo, r.mo_idx);
   }
   const months = [...monthMap.entries()].sort((a,b) => a[1]-b[1]).map(e => e[0]);
 
+  // Airline filter removed — selection handled by airline pills at top
   const sets = {
-    fMonth:   months,
-    fAirline: uniqueSorted(RAW_MISSIONS.map(r => r.al)),
-    fType:    uniqueSorted(RAW_MISSIONS.map(r => r.mt)),
-    fLead:    uniqueSorted(RAW_MISSIONS.map(r => r.tl)),
-    fAsset:   uniqueSorted(RAW_MISSIONS.map(r => r.atype)),
+    fMonth: months,
+    fType:  uniqueSorted(RAW_MISSIONS.map(r => r.mt)),
+    fLead:  uniqueSorted(RAW_MISSIONS.map(r => r.tl)),
+    fAsset: uniqueSorted(RAW_MISSIONS.map(r => r.atype)),
   };
   for (const [id, vals] of Object.entries(sets)) {
     const sel = document.getElementById(id);
+    if (!sel) continue;
+    // Clear existing options (keep "All") to prevent duplicates on reload
+    while (sel.options.length > 1) sel.remove(1);
     for (const v of vals) {
       const o = document.createElement("option");
       o.value = v; o.textContent = v;
