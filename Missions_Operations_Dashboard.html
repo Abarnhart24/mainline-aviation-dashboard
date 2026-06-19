@@ -584,6 +584,35 @@ body.wall .wall-banner .pulse {
 .al-sc-val.sc-warn{color:#fbbf24;}
 .al-sc-val.sc-bad{color:#f87171;}
 .al-sc-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.05em;padding:2px 5px;border-radius:4px;background:rgba(248,113,113,0.2);color:#f87171;margin-left:5px;}
+/* ── Mini KPI strips (Missions + Timeline tabs) ──────────── */
+.mini-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+@media(max-width:700px){.mini-kpis{grid-template-columns:repeat(2,1fr);}}
+.mini-kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:13px 16px;}
+.mini-kpi .mk-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:3px;}
+.mini-kpi .mk-val{font-size:22px;font-weight:700;color:var(--text-1);line-height:1;}
+.mini-kpi .mk-sub{font-size:11px;color:var(--text-3);margin-top:2px;}
+.mk-val.mk-good{color:#4ade80;}.mk-val.mk-warn{color:#fbbf24;}.mk-val.mk-bad{color:#f87171;}
+/* ── Executive leaderboard table ─────────────────────────── */
+.exec-lead-wrap{overflow-x:auto;margin-bottom:0;}
+.exec-lead-table{width:100%;border-collapse:collapse;font-size:13px;}
+.exec-lead-table thead th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);white-space:nowrap;}
+.exec-lead-table tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background .12s;}
+.exec-lead-table tbody tr:hover{background:rgba(255,255,255,0.04);}
+.exec-lead-table tbody td{padding:10px 14px;color:var(--text-2);vertical-align:middle;}
+.elt-rank{font-size:12px;font-weight:700;color:var(--text-3);width:36px;}
+.elt-rank.top1{color:#fbbf24;font-size:14px;}
+.elt-rank.top2{color:#94a3b8;font-size:14px;}
+.elt-rank.top3{color:#cd7f32;font-size:13px;}
+.elt-name{font-weight:600;color:var(--text-1);}
+.elt-num{font-weight:600;color:var(--text-2);text-align:right;}
+.elt-ot{font-weight:700;text-align:right;}
+.elt-ot.mk-good{color:#4ade80;}.elt-ot.mk-warn{color:#fbbf24;}.elt-ot.mk-bad{color:#f87171;}
+.elt-status span{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:4px;text-transform:uppercase;}
+.st-excellent{background:rgba(74,222,128,0.15);color:#4ade80;}
+.st-good{background:rgba(96,165,250,0.15);color:#60a5fa;}
+.st-monitor{background:rgba(251,191,36,0.15);color:#fbbf24;}
+.st-risk{background:rgba(248,113,113,0.15);color:#f87171;}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 </head>
@@ -694,8 +723,33 @@ body.wall .wall-banner .pulse {
       </div>
 
   <div class="tab-panel" id="panel-leads">
-    <div class="section-title">Top Performers</div>
-    <section class="leaderboard" id="leaderboard"></section>
+    <div class="section-title">Team Lead Performance</div>
+    <section class="card" style="padding:18px 20px;">
+      <div class="exec-lead-wrap">
+        <table class="exec-lead-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Team Lead</th>
+              <th style="text-align:right">Missions</th>
+              <th style="text-align:right">On-Time %</th>
+              <th style="text-align:right">Productivity</th>
+              <th style="text-align:right">Avg Duration</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="section-title">On-Time Rate by Team Lead</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>On-Time % per lead <span class="hint">≥5 missions · sorted best first</span></h3>
+        <div class="card-chart xtall"><canvas id="cOTByLead"></canvas></div>
+      </div>
+    </section>
 
     <div class="section-title">Mission Count by Team Lead</div>
     <section class="grid grid-1">
@@ -705,13 +759,7 @@ body.wall .wall-banner .pulse {
       </div>
     </section>
 
-    <div class="section-title">Avg Intra-Shift Transit Gap</div>
-    <section class="grid grid-1">
-      <div class="card">
-        <h3>Prior Mission Completed → Next Team Arrival <span class="hint">intra-shift only · sorted fastest first</span></h3>
-        <div class="card-chart xtall"><canvas id="cTransit"></canvas></div>
-      </div>
-    </section>
+
     <div class="section-title">Avg Response Time</div>
     <section class="grid grid-1">
       <div class="card">
@@ -737,8 +785,17 @@ body.wall .wall-banner .pulse {
   </div>
 
     <div class="tab-panel" id="panel-timeline">
-    <div class="section-title">Mission Timeline · most recent first</div>
+    <div id="tl-kpis" class="mini-kpis"></div>
 
+    <div class="section-title">On-Time Trend</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>On-Time Rate by Month <span class="hint">% missions completed before flight departure</span></h3>
+        <div class="card-chart"><canvas id="cMonthlyOT"></canvas></div>
+      </div>
+    </section>
+
+    <div class="section-title">Mission Timeline · most recent first</div>
     <section class="card" style="padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
       <span style="font-family: var(--mono); font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em;">View:</span>
       <div class="tl-mode-switch">
@@ -766,6 +823,7 @@ body.wall .wall-banner .pulse {
   </div>
 
   <div class="tab-panel" id="panel-missions">
+    <div id="missions-kpis" class="mini-kpis"></div>
     <div class="section-title">Mission Detail</div>
     <section class="table-card">
       <h3>All Missions <span class="hint" style="font-weight:400;color:var(--text-3)">— click any column header to sort · search to filter further</span></h3>
@@ -1404,12 +1462,195 @@ function renderMonthlyVol(rows) {
   });
 }
 
+// ── Mini KPI strip for Missions tab ───────────────────────────────────────
+function renderMissionsKpis(rows) {
+  var el = document.getElementById('missions-kpis');
+  if (!el) return;
+  var otRows = rows.filter(function(r){return r.ot!==null&&r.ot!==undefined;});
+  var otPct  = otRows.length ? otRows.filter(function(r){return r.ot;}).length/otRows.length*100 : null;
+  var durs   = rows.map(function(r){return r.dur;}).filter(function(v){return v!=null&&v>0&&v<200;});
+  var durAvg = durs.length ? durs.reduce(function(a,b){return a+b;},0)/durs.length : null;
+  var prods  = rows.map(function(r){return r.prod;}).filter(function(v){return v!=null;});
+  var prodAvg= prods.length ? prods.reduce(function(a,b){return a+b;},0)/prods.length : null;
+  var late   = otRows.filter(function(r){return !r.ot;}).length;
+
+  function otCls(v){return v==null?'':v>=95?'mk-good':v>=85?'mk-warn':'mk-bad';}
+  el.innerHTML =
+    mkpi('Total Missions', rows.length, 'in current filter') +
+    mkpi('On-Time Rate', otPct==null?'—':otPct.toFixed(1)+'%', late+' late', otCls(otPct)) +
+    mkpi('Avg Duration', durAvg==null?'—':Math.round(durAvg)+' min', 'mission start → complete') +
+    mkpi('Avg Productivity', prodAvg==null?'—':prodAvg.toFixed(1)+'%', 'vs 100% target');
+}
+
+// ── Mini KPI strip for Timeline tab ───────────────────────────────────────
+function renderTimelineKpis(rows) {
+  var el = document.getElementById('tl-kpis');
+  if (!el) return;
+  var otRows = rows.filter(function(r){return r.ot!==null&&r.ot!==undefined;});
+  var otPct  = otRows.length ? otRows.filter(function(r){return r.ot;}).length/otRows.length*100 : null;
+  var resps  = rows.map(function(r){return r.resp;}).filter(function(v){return v!=null&&v>0&&v<300;});
+  var respAvg= resps.length ? resps.reduce(function(a,b){return a+b;},0)/resps.length : null;
+  var durs   = rows.map(function(r){return r.dur;}).filter(function(v){return v!=null&&v>0&&v<200;});
+  var durAvg = durs.length ? durs.reduce(function(a,b){return a+b;},0)/durs.length : null;
+  var months = new Set(rows.map(function(r){return r.mo;}).filter(Boolean));
+
+  function otCls(v){return v==null?'':v>=95?'mk-good':v>=85?'mk-warn':'mk-bad';}
+  el.innerHTML =
+    mkpi('Missions', rows.length, months.size+' month(s) shown') +
+    mkpi('On-Time Rate', otPct==null?'—':otPct.toFixed(1)+'%', 'completed before departure', otCls(otPct)) +
+    mkpi('Avg Duration', durAvg==null?'—':Math.round(durAvg)+' min', 'started → completed') +
+    mkpi('Avg Response', respAvg==null?'—':Math.round(respAvg)+' min', 'assigned → team arrival');
+}
+
+function mkpi(lbl, val, sub, cls) {
+  return '<div class="mini-kpi">'+
+    '<div class="mk-lbl">'+lbl+'</div>'+
+    '<div class="mk-val'+(cls?' '+cls:'')+'">'+(val===null||val===undefined?'—':val)+'</div>'+
+    '<div class="mk-sub">'+(sub||'')+'</div>'+
+  '</div>';
+}
+
+// ── Monthly on-time trend (Timeline tab) ──────────────────────────────────
+function renderMonthlyOT(rows) {
+  var canvasId = 'cMonthlyOT';
+  if (typeof destroy==='function') destroy(canvasId);
+  var el = document.getElementById(canvasId);
+  if (!el) return;
+  var moMap = {};
+  rows.forEach(function(r){
+    if (!r.mo||!r.mo_idx) return;
+    if (!moMap[r.mo_idx]) moMap[r.mo_idx]={label:r.mo,total:0,ot:0};
+    if (r.ot!==null&&r.ot!==undefined){ moMap[r.mo_idx].total++; if(r.ot) moMap[r.mo_idx].ot++; }
+  });
+  var months = Object.keys(moMap).map(Number).sort(function(a,b){return a-b;});
+  if (!months.length) return;
+  var labels  = months.map(function(k){return moMap[k].label;});
+  var pcts    = months.map(function(k){
+    var m=moMap[k]; return m.total?+(m.ot/m.total*100).toFixed(1):null;
+  });
+  var ctx = el.getContext('2d');
+  new Chart(ctx,{
+    type:'line',
+    data:{labels:labels, datasets:[{
+      label:'On-Time %',
+      data:pcts,
+      borderColor:'#4ade80',
+      backgroundColor:'rgba(74,222,128,0.08)',
+      borderWidth:2.5,
+      pointBackgroundColor:'#4ade80',
+      pointRadius:5,
+      tension:0.3,
+      fill:true
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y!=null?ctx.parsed.y.toFixed(1)+'%':'—';}}}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#94a3b8'}},
+        y:{min:80,max:100,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#94a3b8',callback:function(v){return v+'%';}},
+          title:{display:true,text:'On-Time %',color:'#94a3b8'}}
+      }
+    }
+  });
+}
+
+// ── Executive leaderboard table ───────────────────────────────────────────
+function renderLeaderboard(rows) {
+  var byLead = {};
+  rows.forEach(function(r){
+    if (!r.tl) return;
+    if (!byLead[r.tl]) byLead[r.tl]={name:r.tl,all:[]};
+    byLead[r.tl].all.push(r);
+  });
+  var cards = [];
+  Object.values(byLead).forEach(function(lead){
+    if (lead.all.length < 3) return;
+    var otR = lead.all.filter(function(r){return r.ot!==null&&r.ot!==undefined;});
+    var otPct = otR.length ? otR.filter(function(r){return r.ot;}).length/otR.length*100 : null;
+    var prods = lead.all.map(function(r){return r.prod;}).filter(function(v){return v!=null;});
+    var prod  = prods.length ? prods.reduce(function(a,b){return a+b;},0)/prods.length : null;
+    var durs  = lead.all.map(function(r){return r.dur;}).filter(function(v){return v!=null&&v>0&&v<200;});
+    var dur   = durs.length ? durs.reduce(function(a,b){return a+b;},0)/durs.length : null;
+    var late  = otR.filter(function(r){return !r.ot;}).length;
+    cards.push({name:lead.name, n:lead.all.length, otPct:otPct, prod:prod, dur:dur, late:late});
+  });
+  // Sort: on-time % desc, then productivity desc
+  cards.sort(function(a,b){
+    var ao=a.otPct==null?-1:a.otPct, bo=b.otPct==null?-1:b.otPct;
+    if (Math.abs(ao-bo)>0.01) return bo-ao;
+    return (b.prod==null?-1:b.prod)-(a.prod==null?-1:a.prod);
+  });
+
+  function statusBadge(otPct,prod){
+    if (otPct==null) return '<span class="st-monitor">NO DATA</span>';
+    if (otPct>=97&&(prod==null||prod>=90)) return '<span class="st-excellent">EXCELLENT</span>';
+    if (otPct>=93) return '<span class="st-good">GOOD</span>';
+    if (otPct>=85) return '<span class="st-monitor">MONITOR</span>';
+    return '<span class="st-risk">RISK</span>';
+  }
+  function rankCls(i){return i===0?'elt-rank top1':i===1?'elt-rank top2':i===2?'elt-rank top3':'elt-rank';}
+  function rankGlyph(i){return i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);}
+  function otCls(v){return v==null?'elt-ot':v>=95?'elt-ot mk-good':v>=85?'elt-ot mk-warn':'elt-ot mk-bad';}
+
+  var rows2 = cards.map(function(c,i){
+    return '<tr>'+
+      '<td class="'+rankCls(i)+'">'+rankGlyph(i)+'</td>'+
+      '<td class="elt-name">'+c.name+'</td>'+
+      '<td class="elt-num">'+c.n+'</td>'+
+      '<td class="'+otCls(c.otPct)+'">'+(c.otPct==null?'—':c.otPct.toFixed(1)+'%')+'</td>'+
+      '<td class="elt-num">'+(c.prod==null?'—':c.prod.toFixed(1)+'%')+'</td>'+
+      '<td class="elt-num">'+(c.dur==null?'—':Math.round(c.dur)+' min')+'</td>'+
+      '<td class="elt-status">'+statusBadge(c.otPct,c.prod)+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var tbody = document.getElementById('leaderboard-tbody');
+  if (tbody) tbody.innerHTML = rows2 || '<tr><td colspan="7" style="color:var(--text-3);text-align:center;padding:20px;">No leads with ≥3 missions in this filter</td></tr>';
+
+  // On-Time % by Lead bar chart
+  var otEntries = cards.filter(function(c){return c.otPct!=null;})
+    .map(function(c){return [c.name, +c.otPct.toFixed(1)];});
+  var colors = otEntries.map(function(e){
+    return e[1]>=95?'rgba(74,222,128,0.8)':e[1]>=85?'rgba(251,191,36,0.8)':'rgba(248,113,113,0.8)';
+  });
+  if (typeof destroy==='function') destroy('cOTByLead');
+  var otEl = document.getElementById('cOTByLead');
+  if (otEl && otEntries.length) {
+    new Chart(otEl.getContext('2d'),{
+      type:'bar',
+      data:{
+        labels:otEntries.map(function(e){return e[0];}),
+        datasets:[{label:'On-Time %',data:otEntries.map(function(e){return e[1];}),
+          backgroundColor:colors,borderRadius:4,borderSkipped:false}]
+      },
+      options:{
+        indexAxis:'y',responsive:true,maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{label:function(ctx){return ctx.parsed.x.toFixed(1)+'%';}}}
+        },
+        scales:{
+          x:{min:80,max:100,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#94a3b8',callback:function(v){return v+'%';}},
+            title:{display:true,text:'On-Time %',color:'#94a3b8'}},
+          y:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:11}}}
+        }
+      }
+    });
+  }
+}
+
 function rerenderAll() {
   const rows = applyFilters();
   const safe = (name, fn) => { try { fn(); } catch (e) { console.error("[" + name + "] failed:", e); } };
   safe("renderKpis",        () => renderKpis(rows));
   safe("renderAlScoreCards",() => renderAlScoreCards(rows));
   safe("renderMonthlyVol",  () => renderMonthlyVol(rows));
+  safe("renderMissionsKpis",() => renderMissionsKpis(rows));
+  safe("renderTimelineKpis",() => renderTimelineKpis(rows));
+  safe("renderMonthlyOT",   () => renderMonthlyOT(rows));
   safe("renderCharts",      () => renderCharts(rows));
   safe("renderLeaderboard", () => renderLeaderboard(rows));
   safe("renderTimeline",    () => renderTimeline(rows));
