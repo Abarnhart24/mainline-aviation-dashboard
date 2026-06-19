@@ -2809,17 +2809,7 @@ tfoot td.r { text-align:right; color:#60a5fa; }
 
 </div><!-- end fin-content -->
 <script>
-(function(){
-  document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
-  var pill=document.querySelector('.al-pill.active');
-  var pillCode=pill?pill.getAttribute('data-al'):'';
-  if(pillCode&&['VS','AA','ET','SK'].indexOf(pillCode)!==-1){
-    window.switchAirline(pillCode.toLowerCase());
-  } else {
-    var pall=document.getElementById('panel-all');
-    if(pall){pall.classList.add('active'); try{renderAll();}catch(e){console.error(e);}}
-  }
-})();
+// Define switchAirline FIRST so the init IIFE below can call it
 window.switchAirline=function(code){
   document.querySelectorAll('.atab').forEach(function(t){t.classList.remove('active');});
   document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
@@ -2829,19 +2819,19 @@ window.switchAirline=function(code){
   document.querySelectorAll('.atab').forEach(function(t){
     if((t.getAttribute('onclick')||"").indexOf("'"+code+"'")!==-1) t.classList.add('active');
   });
-  if(!code||code==='all'){try{renderAll();}catch(e){console.error(e);}}
-  if(code==='vs'){try{renderVS();}catch(e){console.error(e);}}
-  if(code==='aa'){try{renderAA();}catch(e){console.error(e);}}
-  if(code==='et'){try{renderET();}catch(e){console.error(e);}}
-  if(code==='sk'){try{renderSK();}catch(e){console.error(e);}}
+  if(!code||code==='all'){try{renderAll();}catch(e){console.error('renderAll:',e);}}
+  if(code==='vs'){try{renderVS();}catch(e){console.error('renderVS:',e);}}
+  if(code==='aa'){try{renderAA();}catch(e){console.error('renderAA:',e);}}
+  if(code==='et'){try{renderET();}catch(e){console.error('renderET:',e);}}
+  if(code==='sk'){try{renderSK();}catch(e){console.error('renderSK:',e);}}
 };
+// Override switchTab to sync financing panel with active pill
 (function(){
   var _orig=window.switchTab;
   if(typeof _orig==='function'){
     window.switchTab=function(name){
       _orig(name);
       if(name==='financing'){
-        // Sync with top airline pill if a specific one is selected
         var pill=document.querySelector('.al-pill.active');
         var pillCode=pill?pill.getAttribute('data-al'):'';
         if(pillCode&&['VS','AA','ET','SK'].indexOf(pillCode)!==-1){
@@ -2851,6 +2841,17 @@ window.switchAirline=function(code){
         }
       }
     };
+  }
+})();
+// Init: show the correct panel on page load
+(function(){
+  document.querySelectorAll('#fin-content .panel').forEach(function(p){p.classList.remove('active');});
+  var pill=document.querySelector('.al-pill.active');
+  var pillCode=pill?pill.getAttribute('data-al'):'';
+  if(pillCode&&['VS','AA','ET','SK'].indexOf(pillCode)!==-1){
+    window.switchAirline(pillCode.toLowerCase());
+  } else {
+    window.switchAirline('');
   }
 })();
 </script>
