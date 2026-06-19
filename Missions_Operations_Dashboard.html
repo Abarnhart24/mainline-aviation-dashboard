@@ -1403,12 +1403,14 @@ function selectAirline(btn, code) {
       // Show/hide VS-specific data
       var vsData=document.getElementById("vs-data");
       if(vsData)vsData.style.display=code==="vs"?"":"none";
-      // Fix active states
+      // Fix active states for atabs
       document.querySelectorAll(".atab").forEach(function(t){
         t.classList.toggle("active",!!(t.getAttribute("onclick")&&t.getAttribute("onclick").indexOf("'"+code+"'")!==-1));
       });
+      // Show correct panel — '' means All overview
       document.querySelectorAll("#panel-financing .panel").forEach(function(p){p.classList.remove("active");});
-      var ap=document.getElementById("panel-"+code);
+      var panelId=code?("panel-"+code):"panel-all";
+      var ap=document.getElementById(panelId);
       if(ap)ap.classList.add("active");
     };
   }
