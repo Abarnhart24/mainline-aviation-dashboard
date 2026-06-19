@@ -1645,7 +1645,6 @@ function renderGateHeatmap(rows) {
 // ── Overview on-time trend (separate from Timeline tab) ────────────────────
 function renderOverviewOT(rows) {
   var canvasId='cOverviewOT';
-  if(typeof destroy==='function') destroy(canvasId);
   var el=document.getElementById(canvasId);
   if(!el) return;
   var moMap={};
@@ -1655,16 +1654,23 @@ function renderOverviewOT(rows) {
     if(r.ot!==null&&r.ot!==undefined){moMap[r.mo_idx].total++;if(r.ot)moMap[r.mo_idx].ot++;}
   });
   var months=Object.keys(moMap).map(Number).sort(function(a,b){return a-b;});
-  if(!months.length) return;
   var labels=months.map(function(k){return moMap[k].label;});
   var pcts=months.map(function(k){var m=moMap[k];return m.total?+(m.ot/m.total*100).toFixed(1):null;});
+  var target=labels.map(function(){return 95;});
+  if(charts[canvasId]){
+    charts[canvasId].data.labels=labels;
+    charts[canvasId].data.datasets[0].data=pcts;
+    charts[canvasId].data.datasets[1].data=target;
+    charts[canvasId].update('none');
+    return;
+  }
   var ctx=el.getContext('2d');
-  new Chart(ctx,{
+  charts[canvasId]=new Chart(ctx,{
     type:'line',
     data:{labels:labels,datasets:[
       {label:'On-Time %',data:pcts,borderColor:'#4ade80',backgroundColor:'rgba(74,222,128,0.08)',
        borderWidth:2.5,pointBackgroundColor:'#4ade80',pointRadius:6,tension:0.3,fill:true},
-      {label:'95% Target',data:labels.map(function(){return 95;}),borderColor:'rgba(251,191,36,0.5)',
+      {label:'95% Target',data:target,borderColor:'rgba(251,191,36,0.5)',
        borderWidth:1.5,borderDash:[6,4],pointRadius:0,tension:0}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
@@ -1820,7 +1826,6 @@ function mkpi(lbl, val, sub, cls) {
 // ── Monthly on-time trend (Timeline tab) ──────────────────────────────────
 function renderMonthlyOT(rows) {
   var canvasId = 'cMonthlyOT';
-  if (typeof destroy==='function') destroy(canvasId);
   var el = document.getElementById(canvasId);
   if (!el) return;
   var moMap = {};
@@ -1830,41 +1835,35 @@ function renderMonthlyOT(rows) {
     if (r.ot!==null&&r.ot!==undefined){ moMap[r.mo_idx].total++; if(r.ot) moMap[r.mo_idx].ot++; }
   });
   var months = Object.keys(moMap).map(Number).sort(function(a,b){return a-b;});
-  if (!months.length) return;
   var labels  = months.map(function(k){return moMap[k].label;});
-  var pcts    = months.map(function(k){
-    var m=moMap[k]; return m.total?+(m.ot/m.total*100).toFixed(1):null;
-  });
+  var pcts    = months.map(function(k){var m=moMap[k];return m.total?+(m.ot/m.total*100).toFixed(1):null;});
+  if (charts[canvasId]) {
+    charts[canvasId].data.labels = labels;
+    charts[canvasId].data.datasets[0].data = pcts;
+    charts[canvasId].update('none');
+    return;
+  }
   var ctx = el.getContext('2d');
-  new Chart(ctx,{
+  charts[canvasId] = new Chart(ctx,{
     type:'line',
     data:{labels:labels, datasets:[{
-      label:'On-Time %',
-      data:pcts,
-      borderColor:'#4ade80',
-      backgroundColor:'rgba(74,222,128,0.08)',
-      borderWidth:2.5,
-      pointBackgroundColor:'#4ade80',
-      pointRadius:5,
-      tension:0.3,
-      fill:true
+      label:'On-Time %', data:pcts,
+      borderColor:'#4ade80', backgroundColor:'rgba(74,222,128,0.08)',
+      borderWidth:2.5, pointBackgroundColor:'#4ade80', pointRadius:5, tension:0.3, fill:true
     }]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y!=null?ctx.parsed.y.toFixed(1)+'%':'—';}}}
-      },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(ctx){return ctx.parsed.y!=null?ctx.parsed.y.toFixed(1)+'%':'—';}}}},
       scales:{
         x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#94a3b8'}},
-        y:{min:80,max:100,grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#94a3b8',callback:function(v){return v+'%';}},
-          title:{display:true,text:'On-Time %',color:'#94a3b8'}}
+        y:{min:80,max:100,grid:{color:'rgba(255,255,255,0.05)'},
+           ticks:{color:'#94a3b8',callback:function(v){return v+'%';}},
+           title:{display:true,text:'On-Time %',color:'#94a3b8'}}
       }
     }
   });
 }
 
-// ── Executive leaderboard table ───────────────────────────────────────────
 function renderLeaderboard(rows) {
   var byLead = {};
   rows.forEach(function(r){
