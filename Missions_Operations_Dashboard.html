@@ -2175,19 +2175,6 @@ function renderAll(){
       barPercentage:0.8,categoryPercentage:0.75
     };
   });
-  // Total trend line
-  var totLine=sortedMonths.map(function(m){
-    return airlines.reduce(function(s,code){
-      var r=alMap[code][m]; return s+(r?(r.food||0)+(r.service||0):0);
-    },0);
-  });
-  datasets.push({
-    label:'Total',data:totLine,type:'line',
-    borderColor:'rgba(251,191,36,0.9)',borderWidth:2,borderDash:[5,4],
-    pointRadius:3,pointBackgroundColor:'rgba(251,191,36,0.9)',
-    tension:0.3,yAxisID:'y'
-  });
-
   if(charts['all-chart']) charts['all-chart'].destroy();
   charts['all-chart']=new Chart(document.getElementById('all-chart'),{
     type:'bar',
