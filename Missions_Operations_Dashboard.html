@@ -948,10 +948,13 @@ function populateFilters() {
     }
   }
 }
+// Active airline set by pill clicks; '' = all airlines
+window._activeAirline = window._activeAirline || '';
+
 function readFilters() {
   return {
     mo: document.getElementById("fMonth").value,
-    al: document.getElementById("fAirline").value,
+    al: window._activeAirline,
     mt: document.getElementById("fType").value,
     tl: document.getElementById("fLead").value,
     at: document.getElementById("fAsset").value,
@@ -2090,9 +2093,13 @@ function init() {
   });
   document.getElementById("resetBtn").addEventListener("click", () => {
     // Reset = clear all filters back to "All" (bypasses the month default)
-    ["fMonth","fAirline","fType","fLead","fAsset"].forEach(id => {
+    ["fMonth","fType","fLead","fAsset"].forEach(id => {
       document.getElementById(id).value = "";
     });
+    window._activeAirline = '';
+    document.querySelectorAll('.al-pill').forEach(function(p){p.classList.remove('active');});
+    var allPill = document.querySelector('.al-pill[data-al=""]');
+    if(allPill) allPill.classList.add('active');
     rerenderAll();
   });
   document.querySelectorAll(".tab").forEach(t => {
@@ -2157,12 +2164,10 @@ document.addEventListener("DOMContentLoaded", init);
 function selectAirline(btn, code) {
   document.querySelectorAll('.al-pill').forEach(function(p){ p.classList.remove('active'); });
   btn.classList.add('active');
-  // Sync the hidden fAirline dropdown so applyFilters() picks it up
-  var sel = document.getElementById('fAirline');
-  if (sel) {
-    sel.value = code;
-    sel.dispatchEvent(new Event('change'));
-  }
+  // Store active airline globally — readFilters() reads this directly
+  window._activeAirline = code;
+  // Re-render all mission charts/tables with new filter
+  if (typeof rerenderAll === 'function') rerenderAll();
   // If financing tab is visible, switch its panel too
   if (typeof window.switchAirline === 'function') {
     var finPanel = document.getElementById('panel-financing');
