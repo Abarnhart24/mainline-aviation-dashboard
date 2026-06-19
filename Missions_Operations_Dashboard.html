@@ -1748,7 +1748,7 @@ function renderMonthlyVol(rows) {
       backgroundColor:a.color, borderRadius:4, borderSkipped:false};
   });
   var ctx = el.getContext('2d');
-  new Chart(ctx, {
+  charts[canvasId] = new Chart(ctx, {
     type:'bar',
     data:{labels:labels, datasets:datasets},
     options:{
