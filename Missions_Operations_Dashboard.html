@@ -566,6 +566,24 @@ body.wall .wall-banner .pulse {
 #vs-kpis .kpi .value{font-size:17px!important;}
 #vs-kpis{display:flex!important;flex-wrap:nowrap!important;gap:8px!important;margin-bottom:24px!important;}
 #vs-kpis .kpi{flex:1 1 0!important;min-width:0!important;overflow:hidden!important;}
+/* ── Airline scorecard grid ──────────────────────────────────── */
+#al-scorecards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+@media(max-width:900px){#al-scorecards{grid-template-columns:repeat(2,1fr);}}
+.al-sc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
+.al-sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--sc-accent,#22d3ee);border-radius:12px 0 0 12px;}
+.al-sc.sc-danger{border-color:rgba(248,113,113,0.35);background:rgba(248,113,113,0.06);}
+.al-sc.sc-danger::before{background:#f87171;}
+.al-sc-name{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;}
+.al-sc-vol{font-size:26px;font-weight:700;color:var(--text-1);line-height:1;}
+.al-sc-vol-sub{font-size:11px;color:var(--text-3);margin-bottom:12px;}
+.al-sc-rows{display:flex;flex-direction:column;gap:7px;}
+.al-sc-row{display:flex;justify-content:space-between;align-items:center;}
+.al-sc-lbl{font-size:11px;color:var(--text-3);}
+.al-sc-val{font-size:13px;font-weight:600;color:var(--text-1);}
+.al-sc-val.sc-good{color:#4ade80;}
+.al-sc-val.sc-warn{color:#fbbf24;}
+.al-sc-val.sc-bad{color:#f87171;}
+.al-sc-badge{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.05em;padding:2px 5px;border-radius:4px;background:rgba(248,113,113,0.2);color:#f87171;margin-left:5px;}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 </head>
@@ -637,6 +655,18 @@ body.wall .wall-banner .pulse {
 
   <div class="tab-panel active" id="panel-overview">
     <section class="kpis" id="kpis"></section>
+
+    <div class="section-title">Airline Performance</div>
+    <div id="al-scorecards"></div>
+
+    <div class="section-title">Monthly Volume</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>Missions by Month <span class="hint">grouped by airline · filtered view</span></h3>
+        <div class="card-chart"><canvas id="cMonthlyVol"></canvas></div>
+      </div>
+    </section>
+
     <div class="section-title">Punctuality</div>
     <section class="grid grid-1">
       <div class="card">
@@ -839,8 +869,8 @@ function renderKpis(rows) {
   const kpis = [
     { label: "Total Missions", value: fmtNum(total), delta: proper + " proper · " + (total-proper) + " skipped" },
     { label: "On-Time Rate",   value: fmtPct(onTime,1), delta: lateCount + " late completions", cls: cls(onTime, 95, 85) },
-    { label: "Avg Response",   value: fmtMin(respAvg,1), delta: "median " + fmtMin(respMed,0), cls: cls(respAvg, 60, 100, true) },
-    { label: "Avg Intra-Shift Transit", value: fmtMin(transitAvg,1), delta: "median " + fmtMin(transitMed,0) + " · n=" + intraRows.length, cls: cls(transitAvg, 15, 30, true) },
+    { label: "Avg Duration",   value: fmtMin(avg(rows.map(r=>r.dur).filter(v=>v>0&&v<200)),1), delta: "mission started → completed" },
+    { label: "Avg Response",   value: fmtMin(respAvg,1), delta: "assigned → team arrival", cls: cls(respAvg, 60, 100, true) },
     { label: "Avg Productivity", value: fmtPct(prod,1), delta: "vs. 100% target", cls: cls(prod, 100, 70) },
     { label: "Avg Engagement",   value: fmtPct(eng,1), delta: "team participation", cls: cls(eng, 95, 80) },
   ];
@@ -1285,10 +1315,101 @@ function switchTab(name) {
   }, 50);
 }
 
+function renderAlScoreCards(rows) {
+  var container = document.getElementById('al-scorecards');
+  if (!container) return;
+  var airlines = [
+    { code:'AA', label:'American Airlines', accent:'#60a5fa' },
+    { code:'VS', label:'Virgin Atlantic',   accent:'#a78bfa' },
+    { code:'SK', label:'SAS',               accent:'#34d399' },
+    { code:'ET', label:'Ethiopian Airlines',accent:'#fbbf24' }
+  ];
+  var out = '';
+  airlines.forEach(function(al) {
+    var alRows = rows.filter(function(r){ return r.al === al.code; });
+    var total  = alRows.length;
+    if (!total) return;
+    var otRows = alRows.filter(function(r){ return r.ot !== null && r.ot !== undefined; });
+    var otPct  = otRows.length ? (otRows.filter(function(r){return r.ot;}).length / otRows.length * 100) : null;
+    var prods  = alRows.map(function(r){return r.prod;}).filter(function(v){return v!=null;});
+    var prod   = prods.length ? prods.reduce(function(a,b){return a+b;},0)/prods.length : null;
+    var durs   = alRows.map(function(r){return r.dur;}).filter(function(v){return v!=null && v>0 && v<200;});
+    var dur    = durs.length ? durs.reduce(function(a,b){return a+b;},0)/durs.length : null;
+    var otCls  = otPct==null?'':otPct>=95?'sc-good':otPct>=85?'sc-warn':'sc-bad';
+    var danger = otPct!=null && otPct < 85;
+    var prodCls= prod==null?'':prod>=95?'sc-good':prod>=70?'sc-warn':'sc-bad';
+    out += '<div class="al-sc'+(danger?' sc-danger':'')+'" style="--sc-accent:'+al.accent+'">' +
+      '<div class="al-sc-name">'+al.label+'</div>' +
+      '<div class="al-sc-vol">'+total+'</div>' +
+      '<div class="al-sc-vol-sub">missions</div>' +
+      '<div class="al-sc-rows">' +
+        '<div class="al-sc-row">' +
+          '<span class="al-sc-lbl">On-Time Rate</span>' +
+          '<span class="al-sc-val '+otCls+'">'+(otPct==null?'—':otPct.toFixed(1)+'%')+(danger?'<span class="al-sc-badge">RISK</span>':'')+'</span>' +
+        '</div>' +
+        '<div class="al-sc-row">' +
+          '<span class="al-sc-lbl">Productivity</span>' +
+          '<span class="al-sc-val '+prodCls+'">'+(prod==null?'—':prod.toFixed(1)+'%')+'</span>' +
+        '</div>' +
+        '<div class="al-sc-row">' +
+          '<span class="al-sc-lbl">Avg Duration</span>' +
+          '<span class="al-sc-val">'+(dur==null?'—':Math.round(dur)+' min')+'</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  });
+  container.innerHTML = out;
+}
+
+function renderMonthlyVol(rows) {
+  var canvasId = 'cMonthlyVol';
+  if (typeof destroy === 'function') destroy(canvasId);
+  var el = document.getElementById(canvasId);
+  if (!el) return;
+  var moMap = {};
+  rows.forEach(function(r) {
+    if (!r.mo || !r.mo_idx) return;
+    if (!moMap[r.mo_idx]) moMap[r.mo_idx] = {label:r.mo, AA:0, VS:0, SK:0, ET:0};
+    if (moMap[r.mo_idx][r.al] !== undefined) moMap[r.mo_idx][r.al]++;
+  });
+  var months = Object.keys(moMap).map(Number).sort(function(a,b){return a-b;});
+  if (!months.length) return;
+  var labels = months.map(function(k){ return moMap[k].label; });
+  var alCfg = [
+    {key:'AA', label:'American', color:'rgba(96,165,250,0.85)'},
+    {key:'VS', label:'Virgin',   color:'rgba(167,139,250,0.85)'},
+    {key:'SK', label:'SAS',      color:'rgba(52,211,153,0.85)'},
+    {key:'ET', label:'Ethiopian',color:'rgba(251,191,36,0.85)'}
+  ];
+  var datasets = alCfg.map(function(a){
+    return {label:a.label, data:months.map(function(k){return moMap[k][a.key]||0;}),
+      backgroundColor:a.color, borderRadius:4, borderSkipped:false};
+  });
+  var ctx = el.getContext('2d');
+  new Chart(ctx, {
+    type:'bar',
+    data:{labels:labels, datasets:datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'bottom', labels:{color:'#94a3b8', boxWidth:12, padding:16}},
+        tooltip:{mode:'index', intersect:false}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#94a3b8'}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#94a3b8'},
+           title:{display:true, text:'Missions', color:'#94a3b8'}}
+      }
+    }
+  });
+}
+
 function rerenderAll() {
   const rows = applyFilters();
   const safe = (name, fn) => { try { fn(); } catch (e) { console.error("[" + name + "] failed:", e); } };
   safe("renderKpis",        () => renderKpis(rows));
+  safe("renderAlScoreCards",() => renderAlScoreCards(rows));
+  safe("renderMonthlyVol",  () => renderMonthlyVol(rows));
   safe("renderCharts",      () => renderCharts(rows));
   safe("renderLeaderboard", () => renderLeaderboard(rows));
   safe("renderTimeline",    () => renderTimeline(rows));
