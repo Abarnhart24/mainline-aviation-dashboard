@@ -3,313 +3,429 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Mainline Aviation — Operations Hub</title>
+<title>Mainline Aviation — Business Intelligence Hub</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
 <style>
-:root{color-scheme:dark;--bg:#080c18;--card:#0e1526;--border:rgba(255,255,255,0.07);--text-1:#e2e8f0;--text-2:#94a3b8;--text-3:#4f6380;--green:#4ade80;--blue:#60a5fa;--purple:#a78bfa;--amber:#fbbf24;--red:#f87171;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{background:var(--bg);color:var(--text-1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:rgba(8,12,24,0.95);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px);}
-.brand{display:flex;align-items:center;gap:12px;}
-.brand-logo{width:36px;height:36px;background:#1e3a5f;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#60a5fa;}
-.brand-name{font-size:14px;font-weight:700;}.brand-sub{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);}
-.hub-badge{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:4px;background:rgba(96,165,250,0.12);color:#60a5fa;border:1px solid rgba(96,165,250,0.2);}
-.main{max-width:1400px;margin:0 auto;padding:28px 28px 60px;}
-.city-bar{display:flex;align-items:center;gap:10px;margin-bottom:28px;flex-wrap:wrap;}
-.city-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-right:6px;}
-.city-pill{display:inline-flex;align-items:center;gap:8px;padding:7px 18px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;}
-.city-pill:hover{border-color:rgba(255,255,255,0.2);color:var(--text-1);}
-.city-pill.active{background:rgba(96,165,250,0.12);border-color:rgba(96,165,250,0.35);color:#60a5fa;}
-.city-pill.coming-soon{opacity:.45;cursor:default;}
-.city-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0;}
-.cs-tag{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:rgba(148,163,184,0.12);padding:1px 5px;border-radius:3px;color:var(--text-3);}
-.scorecards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
-@media(max-width:900px){.scorecards{grid-template-columns:repeat(2,1fr);}}
-.sc-tile{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px 24px;position:relative;overflow:hidden;transition:border-color .15s;}
-.sc-tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:14px 0 0 14px;background:var(--sc-color,#60a5fa);}
-.sc-tile-icon{font-size:20px;margin-bottom:10px;}
-.sc-tile-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:6px;}
-.sc-tile-value{font-size:32px;font-weight:800;color:var(--text-1);line-height:1;margin-bottom:8px;font-variant-numeric:tabular-nums;}
-.sc-tile-sub{font-size:11px;color:var(--text-3);}
-.sc-delta{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px;margin-top:8px;}
-.sc-delta.up{background:rgba(74,222,128,0.1);color:#4ade80;}.sc-delta.down{background:rgba(248,113,113,0.1);color:#f87171;}.sc-delta.na{background:rgba(148,163,184,0.08);color:var(--text-3);}
-.sec-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.city-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px;}
+:root{
+  --bg:#05080f;--surface:#0c1220;--surface2:#111827;--border:#1e293b;
+  --text1:#f1f5f9;--text2:#94a3b8;--text3:#475569;
+  --blue:#3b82f6;--green:#22c55e;--purple:#8b5cf6;--amber:#f59e0b;--red:#ef4444;--teal:#14b8a6;
+}
+body{background:var(--bg);color:var(--text1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh;}
+
+/* ── AUTH ── */
+#auth{position:fixed;inset:0;z-index:999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:52px 48px;width:400px;max-width:92vw;text-align:center;}
+.auth-logo{width:56px;height:56px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:18px;font-weight:900;color:#fff;}
+.auth-org{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.auth-title{font-size:18px;font-weight:700;margin-bottom:32px;}
+.auth-input{width:100%;padding:13px 16px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;color:var(--text1);font-size:15px;outline:none;margin-bottom:10px;font-family:inherit;}
+.auth-input:focus{border-color:#3b82f6;}
+.auth-btn{width:100%;padding:13px;background:#2563eb;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s;}
+.auth-btn:hover{background:#1d4ed8;}
+.auth-err{color:var(--red);font-size:13px;margin-top:10px;min-height:18px;}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;border-bottom:1px solid var(--border);background:rgba(5,8,15,0.9);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;}
+.logo-group{display:flex;align-items:center;gap:12px;}
+.logo-box{width:32px;height:32px;background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;}
+.logo-name{font-size:13px;font-weight:700;}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.badge{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:4px;background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.2);}
+#stamp{font-size:11px;color:var(--text3);}
+
+/* ── PAGE ── */
+.page{max-width:1440px;margin:0 auto;padding:32px 32px 80px;}
+
+/* ── CITY FILTER ── */
+.filter-row{display:flex;align-items:center;gap:8px;margin-bottom:32px;}
+.filter-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-right:4px;}
+.cpill{display:inline-flex;align-items:center;gap:7px;padding:6px 16px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap;}
+.cpill:hover:not(.soon){border-color:rgba(255,255,255,0.18);color:var(--text1);}
+.cpill.active{background:rgba(59,130,246,0.12);border-color:rgba(59,130,246,0.4);color:var(--blue);}
+.cpill.soon{opacity:.4;cursor:default;}
+.cdot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+.stag{font-size:9px;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.07);color:var(--text3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+
+/* ── SCORECARDS ── */
+.scorecards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+@media(max-width:960px){.scorecards{grid-template-columns:repeat(2,1fr);}}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;overflow:hidden;}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0;background:var(--c,#3b82f6);}
+.sc-icon{font-size:22px;margin-bottom:12px;display:block;}
+.sc-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.sc-val{font-size:36px;font-weight:800;line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums;}
+.sc-sub{font-size:11px;color:var(--text3);margin-bottom:10px;}
+.sc-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:5px;}
+.sc-badge.g{background:rgba(34,197,94,0.1);color:#22c55e;}
+.sc-badge.a{background:rgba(245,158,11,0.1);color:#f59e0b;}
+.sc-badge.n{background:rgba(71,85,105,0.15);color:var(--text3);}
+
+/* ── SECTION HEADER ── */
+.sh{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.sh::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── CITY CARDS ── */
+.city-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:28px;}
 @media(max-width:700px){.city-cards{grid-template-columns:1fr;}}
-.city-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;cursor:pointer;transition:border-color .15s;}
-.city-card:hover{border-color:rgba(96,165,250,0.3);}
-.city-card.inactive{opacity:.5;cursor:default;pointer-events:none;}
-.city-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
-.city-card-name{font-size:16px;font-weight:700;}.city-card-airport{font-size:11px;color:var(--text-3);margin-top:2px;}
-.city-card-status{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap;}
-.status-active{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.2);}
-.status-soon{background:rgba(148,163,184,0.08);color:var(--text-3);border:1px solid var(--border);}
-.city-card-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-.ccm{padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;}
-.ccm-lbl{font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:3px;}
-.ccm-val{font-size:16px;font-weight:700;}
-.airline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
-@media(max-width:900px){.airline-grid{grid-template-columns:repeat(2,1fr);}}
-.al-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden;}
-.al-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:12px 0 0 12px;background:var(--al-color,#60a5fa);}
-.al-card-name{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);margin-bottom:4px;}
-.al-card-rev{font-size:22px;font-weight:700;margin-bottom:2px;}.al-card-sub{font-size:10px;color:var(--text-3);margin-bottom:12px;}
-.al-card-rows{display:flex;flex-direction:column;gap:6px;}
-.al-row{display:flex;justify-content:space-between;align-items:center;}
-.al-row-lbl{font-size:11px;color:var(--text-3);}.al-row-val{font-size:12px;font-weight:600;color:var(--text-2);}
-.al-row-val.good{color:var(--green);}.al-row-val.warn{color:var(--amber);}.al-row-val.bad{color:var(--red);}
-.al-ot-bar{height:3px;border-radius:2px;margin-top:10px;background:rgba(255,255,255,0.07);}
-.al-ot-fill{height:100%;border-radius:2px;}
-.charts-row{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:28px;}
-@media(max-width:900px){.charts-row{grid-template-columns:1fr;}}
-.chart-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
-.chart-card h3{font-size:12px;font-weight:700;color:var(--text-2);margin-bottom:4px;}
-.chart-card .hint{font-size:10px;color:var(--text-3);margin-bottom:14px;display:block;}
-.chart-wrap{height:200px;position:relative;}
-.detail-link-bar{background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.15);border-radius:10px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
-.dl-text{font-size:12px;color:var(--text-2);}.dl-text strong{color:var(--text-1);}
-.dl-btn{font-size:11px;font-weight:700;padding:7px 16px;border-radius:6px;background:#2563eb;border:none;color:#fff;cursor:pointer;font-family:inherit;}
-.dl-btn:hover{background:#1d4ed8;}
-#login-overlay{position:fixed;inset:0;z-index:9999;background:#080c18;display:flex;align-items:center;justify-content:center;}
-.login-box{background:#0e1526;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:48px 44px;width:380px;max-width:90vw;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
-.login-logo{width:52px;height:52px;background:#1e3a5f;border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:16px;font-weight:800;color:#60a5fa;}
-.login-org{font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:#64748b;font-weight:600;margin-bottom:6px;}
-.login-title{font-size:17px;font-weight:600;color:#e2e8f0;margin-bottom:36px;}
-.login-input{width:100%;padding:13px 16px;background:#080c18;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e2e8f0;font-size:15px;outline:none;margin-bottom:12px;}
-.login-btn{width:100%;padding:13px;background:#2563eb;border:none;border-radius:8px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;}
-.login-err{color:#f87171;font-size:13px;margin-top:12px;visibility:hidden;}
+.cc{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;cursor:pointer;transition:border-color .15s,transform .1s;}
+.cc:hover{border-color:rgba(59,130,246,0.35);transform:translateY(-1px);}
+.cc.dim{opacity:.45;cursor:default;pointer-events:none;}
+.cc-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
+.cc-name{font-size:17px;font-weight:700;}
+.cc-airport{font-size:11px;color:var(--text3);margin-top:2px;}
+.pill-active{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.2);}
+.pill-soon{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:rgba(71,85,105,0.12);color:var(--text3);border:1px solid var(--border);}
+.cc-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.ccm{padding:10px 12px;background:rgba(255,255,255,0.025);border-radius:8px;}
+.ccm-l{font-size:9px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;}
+.ccm-v{font-size:17px;font-weight:700;}
+
+/* ── AIRLINE GRID ── */
+.al-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
+@media(max-width:960px){.al-grid{grid-template-columns:repeat(2,1fr);}}
+.alc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;position:relative;overflow:hidden;}
+.alc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--ac,#3b82f6);}
+.alc-name{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.alc-rev{font-size:24px;font-weight:800;margin-bottom:2px;}
+.alc-sub{font-size:10px;color:var(--text3);margin-bottom:14px;}
+.alc-rows{display:flex;flex-direction:column;gap:7px;}
+.alc-row{display:flex;justify-content:space-between;align-items:center;}
+.alc-rl{font-size:11px;color:var(--text3);}
+.alc-rv{font-size:12px;font-weight:600;}
+.alc-rv.g{color:#22c55e;}.alc-rv.a{color:#f59e0b;}.alc-rv.r{color:#ef4444;}
+.ot-bar{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:12px;}
+.ot-fill{height:100%;border-radius:2px;}
+
+/* ── DRILL LINK ── */
+.drill{background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.12);border-radius:10px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:12px;flex-wrap:wrap;}
+.drill-txt{font-size:12px;color:var(--text2);}
+.drill-txt strong{color:var(--text1);}
+.drill-btn{font-size:11px;font-weight:700;padding:8px 18px;border-radius:8px;background:#2563eb;border:none;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.drill-btn:hover{background:#1d4ed8;}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:28px;}
+@media(max-width:960px){.charts-row{grid-template-columns:1fr;}}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.chart-box h3{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:2px;}
+.chart-box p{font-size:10px;color:var(--text3);margin-bottom:16px;}
+.chart-wrap{height:220px;position:relative;}
 </style>
 </head>
 <body>
-<div id="login-overlay">
-  <div class="login-box">
-    <div class="login-logo">MA</div>
-    <div class="login-org">Mainline Aviation</div>
-    <div class="login-title">Operations Hub</div>
-    <input type="password" id="pw-input" class="login-input" placeholder="Password" autofocus onkeydown="if(event.key==='Enter')doLogin()">
-    <button class="login-btn" onclick="doLogin()">Access Dashboard</button>
-    <div class="login-err" id="pw-error">Incorrect password</div>
+
+<!-- AUTH -->
+<div id="auth">
+  <div class="auth-card">
+    <div class="auth-logo">MA</div>
+    <div class="auth-org">Mainline Aviation</div>
+    <div class="auth-title">Business Intelligence Hub</div>
+    <input type="password" id="pw" class="auth-input" placeholder="Enter password" autofocus
+      onkeydown="if(event.key==='Enter')login()">
+    <button class="auth-btn" onclick="login()">Access Dashboard</button>
+    <div class="auth-err" id="err"></div>
   </div>
 </div>
+
+<!-- TOPBAR -->
 <header class="topbar">
-  <div class="brand">
-    <div class="brand-logo">MA</div>
-    <div><div class="brand-name">Mainline Aviation</div><div class="brand-sub">Operations Hub</div></div>
+  <div class="logo-group">
+    <div class="logo-box">MA</div>
+    <div>
+      <div class="logo-name">Mainline Aviation</div>
+      <div class="logo-sub">Business Intelligence Hub</div>
+    </div>
   </div>
-  <div style="display:flex;align-items:center;gap:14px;">
-    <span id="data-stamp" style="font-size:11px;color:var(--text-3)"></span>
-    <span class="hub-badge">Business Intelligence</span>
+  <div class="topbar-right">
+    <span id="stamp"></span>
+    <span class="badge">Executive View</span>
   </div>
 </header>
-<main class="main">
-  <div class="city-bar">
-    <span class="city-label">Location</span>
-    <button class="city-pill active" data-city="all" onclick="selectCity(this,'all')"><span class="city-dot"></span> All Cities</button>
-    <button class="city-pill" data-city="ATL" onclick="selectCity(this,'ATL')"><span class="city-dot" style="background:#4ade80"></span> Atlanta &middot; ATL</button>
-    <button class="city-pill coming-soon" data-city="BNA"><span class="city-dot" style="background:#94a3b8"></span> Nashville &middot; BNA <span class="cs-tag">Soon</span></button>
+
+<!-- MAIN -->
+<div class="page">
+
+  <!-- City filter -->
+  <div class="filter-row">
+    <span class="filter-lbl">City</span>
+    <button class="cpill active" data-city="all" onclick="setCity(this,'all')">
+      <span class="cdot"></span>All Cities
+    </button>
+    <button class="cpill" data-city="ATL" onclick="setCity(this,'ATL')">
+      <span class="cdot" style="color:#22c55e"></span>Atlanta &middot; ATL
+    </button>
+    <button class="cpill soon">
+      <span class="cdot" style="color:#475569"></span>Nashville &middot; BNA
+      <span class="stag">Soon</span>
+    </button>
   </div>
+
+  <!-- Scorecards -->
   <div class="scorecards" id="scorecards"></div>
-  <div id="city-section">
-    <div class="sec-title">City Breakdown</div>
+
+  <!-- City breakdown (All view) -->
+  <div id="view-all">
+    <div class="sh">City Breakdown</div>
     <div class="city-cards" id="city-cards"></div>
   </div>
-  <div id="airline-section" style="display:none">
-    <div class="sec-title">Airline Performance &mdash; <span id="al-city-name">ATL</span></div>
-    <div class="airline-grid" id="airline-grid"></div>
-    <div class="detail-link-bar">
-      <div class="dl-text"><strong>ATL Missions Dashboard</strong> &mdash; full timeline, team lead performance &amp; mission analytics</div>
-      <button class="dl-btn" onclick="window.open('Missions_Operations_Dashboard.html','_blank')">Open ATL Dashboard &rarr;</button>
+
+  <!-- ATL drill-down (city selected) -->
+  <div id="view-city" style="display:none">
+    <div class="sh" id="al-header">Airline Performance &mdash; ATL</div>
+    <div class="al-grid" id="al-grid"></div>
+    <div class="drill">
+      <div class="drill-txt"><strong>ATL Missions Dashboard</strong> &mdash; team lead rankings, timeline, gate heatmap &amp; full mission analytics</div>
+      <button class="drill-btn" onclick="window.open('Missions_Operations_Dashboard.html','_blank')">Open Full ATL Dashboard &rarr;</button>
     </div>
   </div>
-  <div class="sec-title">Monthly Trend</div>
+
+  <!-- Charts -->
+  <div class="sh">Monthly Performance</div>
   <div class="charts-row">
-    <div class="chart-card">
+    <div class="chart-box">
       <h3>Revenue vs Food Cost</h3>
-      <span class="hint">monthly &middot; ATL operations</span>
-      <div class="chart-wrap"><canvas id="cRevCost"></canvas></div>
+      <p>month by month &middot; ATL operations</p>
+      <div class="chart-wrap"><canvas id="cBar"></canvas></div>
     </div>
-    <div class="chart-card">
-      <h3>Mission Volume by Airline</h3>
-      <span class="hint">ATL &middot; Jan&ndash;May 2026</span>
-      <div class="chart-wrap"><canvas id="cMissions"></canvas></div>
+    <div class="chart-box">
+      <h3>Missions by Airline</h3>
+      <p>ATL &middot; Jan&ndash;May 2026</p>
+      <div class="chart-wrap"><canvas id="cDonut"></canvas></div>
     </div>
   </div>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+
+</div>
+
 <script>
-(function(){if(sessionStorage.getItem('ma_hub_auth')==='1')document.getElementById('login-overlay').style.display='none';})();
-async function doLogin(){
-  var pw=document.getElementById('pw-input').value;
-  var buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pw));
-  var hex=Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
-  if(hex==='976cde1020d3eaa062913df972c6e436e509109e2f68b4e0fea641dbc8595a18'){
-    sessionStorage.setItem('ma_hub_auth','1');
-    document.getElementById('login-overlay').style.display='none';
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+(function(){
+  if(sessionStorage.getItem('ma_ok')==='1')
+    document.getElementById('auth').style.display='none';
+})();
+async function login(){
+  var v=document.getElementById('pw').value;
+  var b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));
+  var h=Array.from(new Uint8Array(b)).map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+  if(h==='976cde1020d3eaa062913df972c6e436e509109e2f68b4e0fea641dbc8595a18'){
+    sessionStorage.setItem('ma_ok','1');
+    document.getElementById('auth').style.display='none';
   } else {
-    document.getElementById('pw-error').style.visibility='visible';
-    document.getElementById('pw-input').value='';
-    document.getElementById('pw-input').focus();
+    document.getElementById('err').textContent='Incorrect password.';
+    document.getElementById('pw').value='';
   }
 }
-var CITY_DATA={
-  ATL:{
-    name:'Atlanta',airport:'Hartsfield-Jackson International',
-    airlines:{
-      AA:{name:'American Airlines',color:'#60a5fa',months:[
-        {mo:'Jan 2026',rev:22704,food:4380},{mo:'Feb 2026',rev:14742,food:3456},
-        {mo:'Mar 2026',rev:19872,food:4536},{mo:'Apr 2026',rev:167136,food:37500},
-        {mo:'May 2026',rev:140262,food:32038}]},
-      VS:{name:'Virgin Atlantic',color:'#a78bfa',months:[
-        {mo:'Jan 2026',rev:370571.71,food:229644.41},{mo:'Feb 2026',rev:301921.63,food:186972.31},
-        {mo:'Mar 2026',rev:369295.19,food:241979.11},{mo:'Apr 2026',rev:427625.72,food:285489.64},
-        {mo:'May 2026',rev:451915.80,food:302760.27}]},
-      SK:{name:'SAS Scandinavian',color:'#34d399',months:[
-        {mo:'Jan 2026',rev:60800,food:50800},{mo:'Feb 2026',rev:76800,food:66350},
-        {mo:'Mar 2026',rev:100116,food:86966},{mo:'Apr 2026',rev:120000,food:106200},
-        {mo:'May 2026',rev:122000,food:108600}]},
-      ET:{name:'Ethiopian Airlines',color:'#fbbf24',months:[
-        {mo:'Apr 2026',rev:12000,food:8200},{mo:'May 2026',rev:15000,food:10400}]}
+
+// ── DATA ──────────────────────────────────────────────────────────────────────
+var DATA = {
+  ATL: {
+    airlines: {
+      AA:{label:'American Airlines',color:'#3b82f6',missions:696,ot:97.8,months:[
+        {m:'Jan',rev:22704,food:4380},{m:'Feb',rev:14742,food:3456},
+        {m:'Mar',rev:19872,food:4536},{m:'Apr',rev:167136,food:37500},{m:'May',rev:140262,food:32038}]},
+      VS:{label:'Virgin Atlantic',color:'#8b5cf6',missions:234,ot:95.7,months:[
+        {m:'Jan',rev:370572,food:229644},{m:'Feb',rev:301922,food:186972},
+        {m:'Mar',rev:369295,food:241979},{m:'Apr',rev:427626,food:285490},{m:'May',rev:451916,food:302760}]},
+      SK:{label:'SAS Scandinavian',color:'#22c55e',missions:50,ot:90.0,months:[
+        {m:'Jan',rev:60800,food:50800},{m:'Feb',rev:76800,food:66350},
+        {m:'Mar',rev:100116,food:86966},{m:'Apr',rev:120000,food:106200},{m:'May',rev:122000,food:108600}]},
+      ET:{label:'Ethiopian Airlines',color:'#f59e0b',missions:20,ot:70.0,months:[
+        {m:'Apr',rev:12000,food:8200},{m:'May',rev:15000,food:10400}]}
     },
-    ontime:{AA:97.8,VS:95.7,SK:90.0,ET:70.0},
-    missions:{AA:696,VS:234,SK:50,ET:20,total:1000}
+    missions:1000
   }
 };
-var activeCity='all';
-var charts={};
-function fmtM(v){if(v==null||isNaN(v))return '—';return v>=1000000?'$'+(v/1000000).toFixed(2)+'M':'$'+(v/1000).toFixed(0)+'K';}
-function fmtPct(v){return v==null?'—':v.toFixed(1)+'%';}
-function cityTotals(k){
-  var c=CITY_DATA[k];if(!c)return null;
+
+function airlineTotals(al){
   var rev=0,food=0;
-  Object.values(c.airlines).forEach(function(al){al.months.forEach(function(m){rev+=m.rev;food+=m.food;});});
-  return {rev:rev,food:food,missions:c.missions.total};
+  al.months.forEach(function(m){rev+=m.rev;food+=m.food;});
+  return {rev:rev,food:food};
 }
+
+function cityTotals(ck){
+  var c=DATA[ck],rev=0,food=0;
+  Object.values(c.airlines).forEach(function(al){
+    var t=airlineTotals(al);rev+=t.rev;food+=t.food;
+  });
+  return {rev:rev,food:food,missions:c.missions};
+}
+
 function allTotals(){
   var rev=0,food=0,missions=0;
-  Object.keys(CITY_DATA).forEach(function(k){var t=cityTotals(k);if(t){rev+=t.rev;food+=t.food;missions+=t.missions;}});
+  Object.keys(DATA).forEach(function(k){
+    var t=cityTotals(k);rev+=t.rev;food+=t.food;missions+=t.missions;
+  });
   return {rev:rev,food:food,missions:missions};
 }
-function renderScorecards(){
-  var t=activeCity==='all'?allTotals():cityTotals(activeCity);if(!t)return;
-  var foodPct=t.rev>0?(t.food/t.rev*100):null;
+
+function fmt(v){
+  if(v==null)return '—';
+  return v>=1e6?'$'+(v/1e6).toFixed(2)+'M':'$'+(v/1e3).toFixed(0)+'K';
+}
+function pct(v){return v==null?'—':v.toFixed(1)+'%';}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+var city='all';
+var charts={};
+
+// ── SCORECARDS ────────────────────────────────────────────────────────────────
+function renderSC(){
+  var t=city==='all'?allTotals():cityTotals(city);
+  var fp=t.rev>0?t.food/t.rev*100:null;
   var tiles=[
-    {icon:'💰',label:'Revenue',value:fmtM(t.rev),sub:'billed to airlines · YTD',color:'#4ade80',dc:'up',dv:fmtM(t.rev),dn:'Jan–May 2026'},
-    {icon:'🍽️',label:'Food Cost',value:fmtM(t.food),sub:fmtPct(foodPct)+' of revenue',color:'#60a5fa',dc:foodPct!=null&&foodPct<65?'up':'down',dv:fmtPct(foodPct),dn:'food cost ratio'},
-    {icon:'👥',label:'Labor Cost',value:'—',sub:'add reports to Reports/ATL/Labor/',color:'#a78bfa',dc:'na',dv:'N/A',dn:'no data yet'},
-    {icon:'✈️',label:'Missions',value:t.missions.toLocaleString(),sub:'completed · ATL',color:'#fbbf24',dc:'up',dv:'96.4%',dn:'on-time rate'}
+    {icon:'💰',lbl:'Revenue',val:fmt(t.rev),sub:'billed to airlines · YTD',c:'#22c55e',
+     badge:'g',bval:fmt(t.rev),bnote:'Jan–May 2026'},
+    {icon:'🍽️',lbl:'Food Cost',val:fmt(t.food),sub:'food & beverage · YTD',c:'#3b82f6',
+     badge:fp!=null&&fp<65?'g':'a',bval:pct(fp),bnote:'of revenue'},
+    {icon:'👷',lbl:'Labor Cost',val:'—',sub:'drop reports to unlock',c:'#8b5cf6',
+     badge:'n',bval:'N/A',bnote:'no data yet'},
+    {icon:'✈️',lbl:'Missions',val:t.missions.toLocaleString(),sub:'completed · ATL',c:'#f59e0b',
+     badge:'g',bval:'96.4%',bnote:'on-time rate'}
   ];
-  document.getElementById('scorecards').innerHTML=tiles.map(function(tile){
-    return '<div class="sc-tile" style="--sc-color:'+tile.color+'">'+
-      '<div class="sc-tile-icon">'+tile.icon+'</div>'+
-      '<div class="sc-tile-label">'+tile.label+'</div>'+
-      '<div class="sc-tile-value">'+tile.value+'</div>'+
-      '<div class="sc-tile-sub">'+tile.sub+'</div>'+
-      '<div class="sc-delta '+tile.dc+'">'+tile.dv+' <span style="font-weight:400;opacity:.7">'+tile.dn+'</span></div>'+
+  document.getElementById('scorecards').innerHTML=tiles.map(function(t){
+    return '<div class="sc" style="--c:'+t.c+'">'+
+      '<span class="sc-icon">'+t.icon+'</span>'+
+      '<div class="sc-lbl">'+t.lbl+'</div>'+
+      '<div class="sc-val">'+t.val+'</div>'+
+      '<div class="sc-sub">'+t.sub+'</div>'+
+      '<span class="sc-badge '+t.badge+'">'+t.bval+' <span style="font-weight:400;opacity:.7">'+t.bnote+'</span></span>'+
     '</div>';
   }).join('');
 }
+
+// ── CITY CARDS ────────────────────────────────────────────────────────────────
 function renderCityCards(){
   var t=cityTotals('ATL');
   document.getElementById('city-cards').innerHTML=
-    '<div class="city-card" onclick="selectCityByCode(\'ATL\')">'+
-      '<div class="city-card-header">'+
-        '<div><div class="city-card-name">Atlanta</div><div class="city-card-airport">Hartsfield-Jackson &middot; ATL</div></div>'+
-        '<span class="city-card-status status-active">&#x25CF; Active</span>'+
+    '<div class="cc" onclick="drillCity(\'ATL\')">'+
+      '<div class="cc-head">'+
+        '<div><div class="cc-name">Atlanta</div><div class="cc-airport">Hartsfield-Jackson &middot; ATL</div></div>'+
+        '<span class="pill-active">&#x25CF; Active</span>'+
       '</div>'+
-      '<div class="city-card-metrics">'+
-        '<div class="ccm"><div class="ccm-lbl">Revenue</div><div class="ccm-val">'+fmtM(t.rev)+'</div></div>'+
-        '<div class="ccm"><div class="ccm-lbl">Food Cost</div><div class="ccm-val">'+fmtM(t.food)+'</div></div>'+
-        '<div class="ccm"><div class="ccm-lbl">Labor</div><div class="ccm-val" style="color:var(--text-3)">—</div></div>'+
-        '<div class="ccm"><div class="ccm-lbl">Missions</div><div class="ccm-val">'+t.missions+'</div></div>'+
+      '<div class="cc-metrics">'+
+        '<div class="ccm"><div class="ccm-l">Revenue</div><div class="ccm-v">'+fmt(t.rev)+'</div></div>'+
+        '<div class="ccm"><div class="ccm-l">Food Cost</div><div class="ccm-v">'+fmt(t.food)+'</div></div>'+
+        '<div class="ccm"><div class="ccm-l">Labor</div><div class="ccm-v" style="color:var(--text3)">—</div></div>'+
+        '<div class="ccm"><div class="ccm-l">Missions</div><div class="ccm-v">'+t.missions+'</div></div>'+
       '</div>'+
     '</div>'+
-    '<div class="city-card inactive">'+
-      '<div class="city-card-header">'+
-        '<div><div class="city-card-name">Nashville</div><div class="city-card-airport">Nashville International &middot; BNA</div></div>'+
-        '<span class="city-card-status status-soon">Coming Soon</span>'+
+    '<div class="cc dim">'+
+      '<div class="cc-head">'+
+        '<div><div class="cc-name">Nashville</div><div class="cc-airport">Nashville International &middot; BNA</div></div>'+
+        '<span class="pill-soon">Coming Soon</span>'+
       '</div>'+
-      '<div class="city-card-metrics">'+
-        '<div class="ccm"><div class="ccm-lbl">Revenue</div><div class="ccm-val" style="color:var(--text-3)">—</div></div>'+
-        '<div class="ccm"><div class="ccm-lbl">Food Cost</div><div class="ccm-val" style="color:var(--text-3)">—</div></div>'+
-        '<div class="ccm"><div class="ccm-lbl">Labor</div><div class="ccm-val" style="color:var(--text-3)">—</div></div>'+
-        '<div class="ccm"><div class="ccm-lbl">Missions</div><div class="ccm-val" style="color:var(--text-3)">—</div></div>'+
+      '<div class="cc-metrics">'+
+        ['Revenue','Food Cost','Labor','Missions'].map(function(l){
+          return '<div class="ccm"><div class="ccm-l">'+l+'</div><div class="ccm-v" style="color:var(--text3)">—</div></div>';
+        }).join('')+
       '</div>'+
     '</div>';
 }
-function renderAirlineGrid(){
-  var c=CITY_DATA['ATL'];
-  var html='';
-  ['AA','VS','SK','ET'].forEach(function(code){
-    var al=c.airlines[code];if(!al)return;
-    var rev=0,food=0;
-    al.months.forEach(function(m){rev+=m.rev;food+=m.food;});
-    var missions=c.missions[code]||0;
-    var ot=c.ontime[code];
-    var margin=rev>0?((rev-food)/rev*100):null;
-    var otCls=ot>=95?'good':ot>=85?'warn':'bad';
-    var mCls=margin!=null&&margin>=30?'good':margin!=null&&margin>=15?'warn':'bad';
-    html+='<div class="al-card" style="--al-color:'+al.color+'">'+
-      '<div class="al-card-name">'+al.name+'</div>'+
-      '<div class="al-card-rev">'+fmtM(rev)+'</div>'+
-      '<div class="al-card-sub">revenue &middot; '+missions+' missions</div>'+
-      '<div class="al-card-rows">'+
-        '<div class="al-row"><span class="al-row-lbl">Food Cost</span><span class="al-row-val">'+fmtM(food)+'</span></div>'+
-        '<div class="al-row"><span class="al-row-lbl">On-Time Rate</span><span class="al-row-val '+otCls+'">'+fmtPct(ot)+'</span></div>'+
-        '<div class="al-row"><span class="al-row-lbl">Gross Margin</span><span class="al-row-val '+mCls+'">'+fmtPct(margin)+'</span></div>'+
+
+// ── AIRLINE GRID ──────────────────────────────────────────────────────────────
+function renderAirlines(){
+  var c=DATA[city==='all'?'ATL':city];
+  var order=['AA','VS','SK','ET'];
+  document.getElementById('al-grid').innerHTML=order.map(function(code){
+    var al=c.airlines[code];
+    var t=airlineTotals(al);
+    var margin=t.rev>0?(t.rev-t.food)/t.rev*100:null;
+    var otCls=al.ot>=95?'g':al.ot>=85?'a':'r';
+    var mCls=margin>=30?'g':margin>=15?'a':'r';
+    var barW=Math.max(0,Math.min(100,(al.ot-70)/30*100));
+    return '<div class="alc" style="--ac:'+al.color+'">'+
+      '<div class="alc-name">'+al.label+'</div>'+
+      '<div class="alc-rev">'+fmt(t.rev)+'</div>'+
+      '<div class="alc-sub">'+al.missions+' missions</div>'+
+      '<div class="alc-rows">'+
+        '<div class="alc-row"><span class="alc-rl">Food Cost</span><span class="alc-rv">'+fmt(t.food)+'</span></div>'+
+        '<div class="alc-row"><span class="alc-rl">On-Time</span><span class="alc-rv '+otCls+'">'+pct(al.ot)+'</span></div>'+
+        '<div class="alc-row"><span class="alc-rl">Gross Margin</span><span class="alc-rv '+mCls+'">'+pct(margin)+'</span></div>'+
       '</div>'+
-      '<div class="al-ot-bar"><div class="al-ot-fill" style="width:'+Math.max(0,Math.min(100,(ot-80)/20*100))+'%;background:'+al.color+'"></div></div>'+
+      '<div class="ot-bar"><div class="ot-fill" style="width:'+barW+'%;background:'+al.color+'"></div></div>'+
     '</div>';
-  });
-  document.getElementById('airline-grid').innerHTML=html;
+  }).join('');
 }
+
+// ── CHARTS ────────────────────────────────────────────────────────────────────
 function renderCharts(){
-  var c=CITY_DATA['ATL'];
-  var moOrder=['Jan 2026','Feb 2026','Mar 2026','Apr 2026','May 2026'];
-  var moMap={};
+  var c=DATA['ATL'];
+  var months=['Jan','Feb','Mar','Apr','May'];
+  var moRev={},moFood={};
   Object.values(c.airlines).forEach(function(al){
-    al.months.forEach(function(m){if(!moMap[m.mo])moMap[m.mo]={rev:0,food:0};moMap[m.mo].rev+=m.rev;moMap[m.mo].food+=m.food;});
+    al.months.forEach(function(m){
+      moRev[m.m]=(moRev[m.m]||0)+m.rev;
+      moFood[m.m]=(moFood[m.m]||0)+m.food;
+    });
   });
-  var labels=moOrder.filter(function(k){return moMap[k];});
-  var shortLbls=labels.map(function(l){return l.replace(' 2026','');});
-  var revs=labels.map(function(k){return Math.round(moMap[k].rev);});
-  var foods=labels.map(function(k){return Math.round(moMap[k].food);});
-  var ctx1=document.getElementById('cRevCost').getContext('2d');
-  if(charts.revCost)charts.revCost.destroy();
-  charts.revCost=new Chart(ctx1,{type:'bar',data:{labels:shortLbls,datasets:[
-    {label:'Revenue',data:revs,backgroundColor:'rgba(74,222,128,0.75)',borderRadius:4,borderSkipped:false},
-    {label:'Food Cost',data:foods,backgroundColor:'rgba(96,165,250,0.65)',borderRadius:4,borderSkipped:false}
-  ]},options:{responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',boxWidth:12,padding:14,font:{size:11}}},
-      tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': $'+(ctx.parsed.y/1000).toFixed(0)+'K';}}}},
-    scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#94a3b8'}},
-      y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#94a3b8',callback:function(v){return '$'+(v/1000).toFixed(0)+'K';}}}}}});
-  var alCodes=['AA','VS','SK','ET'];
-  var alLbls=[],alVals=[],alColors=[];
-  alCodes.forEach(function(code){if(c.missions[code]>0){alLbls.push(c.airlines[code].name);alVals.push(c.missions[code]);alColors.push(c.airlines[code].color);}});
-  var ctx2=document.getElementById('cMissions').getContext('2d');
-  if(charts.missions)charts.missions.destroy();
-  charts.missions=new Chart(ctx2,{type:'doughnut',data:{labels:alLbls,datasets:[{data:alVals,backgroundColor:alColors,borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+  var labels=months.filter(function(m){return moRev[m];});
+  var revs=labels.map(function(m){return Math.round(moRev[m]);});
+  var foods=labels.map(function(m){return Math.round(moFood[m]);});
+
+  // Bar chart
+  if(charts.bar) charts.bar.destroy();
+  charts.bar=new Chart(document.getElementById('cBar').getContext('2d'),{
+    type:'bar',
+    data:{labels:labels,datasets:[
+      {label:'Revenue',data:revs,backgroundColor:'rgba(34,197,94,0.7)',borderRadius:5,borderSkipped:false},
+      {label:'Food Cost',data:foods,backgroundColor:'rgba(59,130,246,0.65)',borderRadius:5,borderSkipped:false}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',boxWidth:12,padding:14,font:{size:11}}},
+        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': $'+(ctx.parsed.y/1000).toFixed(0)+'K';}}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#94a3b8',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#94a3b8',font:{size:11},
+          callback:function(v){return '$'+(v/1000).toFixed(0)+'K';}}}
+      }}
+  });
+
+  // Donut
+  var codes=['AA','VS','SK','ET'];
+  var dlabels=[],dvals=[],dcolors=[];
+  codes.forEach(function(code){
+    var al=c.airlines[code];
+    if(al.missions>0){dlabels.push(al.label);dvals.push(al.missions);dcolors.push(al.color);}
+  });
+  if(charts.donut) charts.donut.destroy();
+  charts.donut=new Chart(document.getElementById('cDonut').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:dlabels,datasets:[{data:dvals,backgroundColor:dcolors,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
       plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',boxWidth:10,padding:10,font:{size:11}}},
-        tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.parsed+' missions';}}}}}});
+        tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.parsed+' missions';}}}}}
+  });
 }
-function selectCity(btn,code){
-  document.querySelectorAll('.city-pill').forEach(function(p){p.classList.remove('active');});
-  btn.classList.add('active');activeCity=code;
+
+// ── CITY SELECTION ────────────────────────────────────────────────────────────
+function setCity(btn,code){
+  document.querySelectorAll('.cpill').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  city=code;
   var isAll=code==='all';
-  document.getElementById('city-section').style.display=isAll?'':'none';
-  document.getElementById('airline-section').style.display=isAll?'none':'';
-  if(!isAll)document.getElementById('al-city-name').textContent=code;
-  renderScorecards();if(!isAll)renderAirlineGrid();
+  document.getElementById('view-all').style.display=isAll?'':'none';
+  document.getElementById('view-city').style.display=isAll?'none':'';
+  if(!isAll){
+    document.getElementById('al-header').textContent='Airline Performance — '+code;
+    renderAirlines();
+  }
+  renderSC();
 }
-function selectCityByCode(code){
-  var btn=document.querySelector('.city-pill[data-city="'+code+'"]');
-  if(btn)selectCity(btn,code);
+
+function drillCity(code){
+  var btn=document.querySelector('.cpill[data-city="'+code+'"]');
+  if(btn) setCity(btn,code);
 }
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
-  renderScorecards();renderCityCards();renderCharts();
-  document.getElementById('data-stamp').textContent='ATL Data · Jan–May 2026';
+  renderSC();
+  renderCityCards();
+  renderCharts();
+  document.getElementById('stamp').textContent='ATL · Jan–May 2026';
 });
 </script>
 </body>
 </html>
-
