@@ -8,3 +8,20 @@ automation/azure_config.py
 # Logs
 automation/refresh.log
 automation/backups/
+
+# Browser download cache / Excel Online artifacts
+*.download
+*.crdownload
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Excel temp files
+~$*.xlsx
+~$*.xls
+
+# Python cache
+__pycache__/
+*.pyc

@@ -1,0 +1,709 @@
+https://raw.githubusercontent.com/Abarnhart24/mainline-aviation-dashboard/main/Missions_Operations_Dashboard.html
+→ https://raw.githubusercontent.com/Abarnhart24/mainline-aviation-dashboard/main/Missions_Operations_Dashboard.html
+Content-Type: text/plain; charset=utf-8
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Mainline Aviation · Sullivan Rd Missions Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/gridjs@5.0.2/dist/gridjs.umd.js" integrity="sha384-/XXDzxe4FsGiAe50i/u9pY/Vy/uX654MHB1xoc1BJNnH1WXHhqHga9g3q5tF4gj7" crossorigin="anonymous"></script>
+<style>
+:root {
+  color-scheme: dark;
+  --bg-base: #0a0e1a;
+  --bg-card: #131826;
+  --bg-card-2: #1a2030;
+  --bg-header: #0d1220;
+  --bg-input: #0f1422;
+  --border: #232a3d;
+  --border-strong: #2e3851;
+  --text-1: #e8eef5;
+  --text-2: #94a3b8;
+  --text-3: #64748b;
+  --neon-cyan: #22d3ee;
+  --neon-teal: #2dd4bf;
+  --neon-green: #4ade80;
+  --neon-amber: #fbbf24;
+  --neon-red: #f87171;
+  --neon-purple: #a78bfa;
+  --mono: "SF Mono", Monaco, Consolas, "Cascadia Code", "Roboto Mono", monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text-1);
+  background: var(--bg-base);
+  font-size: 14px;
+  line-height: 1.45;
+  min-height: 100vh;
+}
+
+.topbar {
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; gap: 18px;
+  position: sticky; top: 0; z-index: 50;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono);
+  font-weight: 700; font-size: 15px; color: #0a0e1a;
+  letter-spacing: -0.02em;
+  box-shadow: 0 0 16px rgba(34, 211, 238, 0.25);
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-text .co { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--text-2); font-weight: 600; }
+.brand-text .product { font-size: 16px; font-weight: 600; color: var(--text-1); margin-top: 2px; }
+.topbar .spacer { flex: 1; }
+.topbar .meta { font-family: var(--mono); font-size: 11px; color: var(--text-2); display: flex; gap: 14px; align-items: center; }
+.live-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green);
+  animation: pulse 2s ease-in-out infinite;
+  display: inline-block; margin-right: 6px;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+.tabs {
+  background: var(--bg-header);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  display: flex; gap: 0;
+  position: sticky; top: 67px; z-index: 49;
+}
+.tab {
+  padding: 12px 22px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+  font-family: inherit;
+}
+.tab:hover { color: var(--text-1); }
+.tab.active { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
+.tab .count { font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-left: 6px; }
+.tab.active .count { color: var(--neon-cyan); opacity: 0.7; }
+
+.wrap { padding: 22px 28px 60px; max-width: 1500px; margin: 0 auto; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; animation: fadein 0.2s ease; }
+@keyframes fadein { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: none; } }
+
+.filters {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  align-items: center;
+}
+.filters label { font-size: 11px; color: var(--text-3); font-weight: 500; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+.filters select {
+  font-size: 12px; padding: 6px 10px;
+  background: var(--bg-input);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-width: 130px;
+  font-family: inherit;
+}
+.filters select:focus { outline: none; border-color: var(--neon-cyan); }
+.filters .reset {
+  padding: 6px 12px; font-size: 12px;
+  background: var(--bg-input);
+  color: var(--text-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.filters .reset:hover { border-color: var(--text-2); }
+.filters .badge {
+  margin-left: auto;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--neon-green);
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  padding: 4px 10px; border-radius: 999px; font-weight: 500;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: var(--neon-cyan); opacity: 0.7;
+}
+.kpi.good::before { background: var(--neon-green); }
+.kpi.warn::before { background: var(--neon-amber); }
+.kpi.bad::before  { background: var(--neon-red); }
+.kpi .label { color: var(--text-3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+.kpi .value { font-family: var(--mono); font-size: 28px; font-weight: 600; margin-top: 6px; color: var(--text-1); letter-spacing: -0.02em; }
+.kpi.good .value { color: var(--neon-green); }
+.kpi.warn .value { color: var(--neon-amber); }
+.kpi.bad  .value { color: var(--neon-red); }
+.kpi .delta { font-size: 11px; color: var(--text-2); margin-top: 4px; font-family: var(--mono); }
+
+.section-title {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  margin: 22px 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 18px; }
+.grid-3 { grid-template-columns: 2fr 1fr; }
+.grid-1 { grid-template-columns: 1fr; }
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-1);
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  letter-spacing: 0.01em;
+}
+.card .hint { font-size: 11px; color: var(--text-3); font-weight: 400; text-align: right; flex-shrink: 0; font-family: var(--mono); }
+.card-chart { position: relative; height: 240px; }
+.card-chart.tall { height: 360px; }
+.card-chart.xtall { height: 480px; }
+
+.transit-note { font-size: 12px; color: var(--text-2); margin-top: 10px; }
+.legend-pill {
+  display: inline-block; padding: 2px 8px; margin-right: 6px;
+  border-radius: 999px; font-size: 11px; font-weight: 500;
+  font-family: var(--mono);
+  border: 1px solid;
+}
+.lp-intra   { background: rgba(34, 211, 238, 0.1); color: var(--neon-cyan); border-color: rgba(34, 211, 238, 0.4); }
+.lp-break   { background: rgba(148, 163, 184, 0.1); color: var(--text-2); border-color: rgba(148, 163, 184, 0.4); }
+.lp-overlap { background: rgba(248, 113, 113, 0.1); color: var(--neon-red); border-color: rgba(248, 113, 113, 0.4); }
+.lp-skip    { background: rgba(251, 191, 36, 0.1); color: var(--neon-amber); border-color: rgba(251, 191, 36, 0.4); }
+.lp-first   { background: rgba(167, 139, 250, 0.1); color: var(--neon-purple); border-color: rgba(167, 139, 250, 0.4); }
+
+.leaderboard {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.leader {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.leader .rank { font-family: var(--mono); font-size: 11px; color: var(--text-3); display: flex; align-items: center; gap: 6px; }
+.leader .rank.top { color: var(--neon-cyan); }
+.leader .name { font-size: 13px; font-weight: 600; color: var(--text-1); margin: 4px 0 6px; }
+.leader .stats { font-family: var(--mono); font-size: 11px; color: var(--text-2); display: flex; flex-wrap: wrap; gap: 12px; }
+.leader .stats b { color: var(--text-1); font-weight: 600; }
+
+.table-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.table-card h3 { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: var(--text-1); }
+
+.gridjs-container { font-family: inherit !important; color: var(--text-1) !important; }
+.gridjs-wrapper { box-shadow: none !important; border: 1px solid var(--border) !important; border-radius: 8px !important; background: var(--bg-card-2) !important; overflow-x: auto; }
+.gridjs-table { font-size: 12px !important; width: 100%; border-collapse: collapse; }
+.gridjs-th, .gridjs-td { padding: 8px 10px !important; border-bottom: 1px solid var(--border) !important; text-align: left; vertical-align: middle; white-space: nowrap; background: transparent !important; }
+.gridjs-th { background: var(--bg-card) !important; color: var(--text-2) !important; font-weight: 600 !important; font-size: 11px !important; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; user-select: none; position: sticky; top: 0; }
+.gridjs-th-sort:after { content: " \2195"; color: var(--text-3); font-size: 10px; }
+.gridjs-th-sort.gridjs-th-sort-asc:after { content: " \2191"; color: var(--neon-cyan); }
+.gridjs-th-sort.gridjs-th-sort-desc:after { content: " \2193"; color: var(--neon-cyan); }
+.gridjs-td { color: var(--text-1) !important; font-family: var(--mono); }
+.gridjs-tr:hover .gridjs-td { background: rgba(34, 211, 238, 0.04) !important; }
+.gridjs-search { margin-bottom: 10px; }
+.gridjs-search-input {
+  padding: 6px 10px; font-size: 12px;
+  background: var(--bg-input) !important;
+  color: var(--text-1) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 6px;
+  width: 260px;
+  font-family: inherit;
+}
+.gridjs-search-input:focus { outline: none; border-color: var(--neon-cyan) !important; }
+.gridjs-pagination { margin-top: 12px; display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--text-2); flex-wrap: wrap; font-family: var(--mono); }
+.gridjs-pagination .gridjs-pages { display: inline-flex; gap: 4px; margin-left: auto; }
+.gridjs-pagination button { padding: 4px 10px; background: var(--bg-input) !important; color: var(--text-1) !important; border: 1px solid var(--border) !important; border-radius: 4px; cursor: pointer; font-family: inherit; font-size: 11px; }
+.gridjs-pagination button:disabled { color: var(--text-3) !important; cursor: not-allowed; }
+.gridjs-pagination button.gridjs-currentPage { background: var(--neon-cyan) !important; color: var(--bg-base) !important; border-color: var(--neon-cyan) !important; }
+.gridjs-summary { color: var(--text-3) !important; }
+
+footer { text-align: center; color: var(--text-3); font-size: 11px; margin: 28px 0 12px; font-family: var(--mono); }
+
+@media (max-width: 1100px) { .grid, .grid-3 { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {
+  .topbar { padding: 12px 16px; flex-wrap: wrap; }
+  .topbar .meta { font-size: 10px; gap: 8px; }
+  .tabs { padding: 0 16px; overflow-x: auto; }
+  .tab { padding: 12px 16px; }
+  .wrap { padding: 16px; }
+}
+
+/* ====== WALL DISPLAY MODE (activated by ?wall=1) ====== */
+body.wall .tabs,
+body.wall .filters,
+body.wall footer { display: none !important; }
+body.wall .topbar { padding: 18px 32px; }
+body.wall .topbar .brand-mark { width: 46px; height: 46px; font-size: 17px; }
+body.wall .topbar .brand-text .product { font-size: 19px; }
+body.wall .wrap { padding: 28px 36px 36px; max-width: none; }
+body.wall .kpi .value { font-size: 34px; }
+body.wall .kpi .label { font-size: 12px; }
+body.wall .card-chart { height: 280px; }
+body.wall .card-chart.tall { height: 400px; }
+body.wall .section-title { font-size: 12px; }
+body.wall .wall-banner {
+  position: fixed; bottom: 14px; right: 18px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-3);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  display: flex; align-items: center; gap: 8px;
+  z-index: 100;
+  opacity: 0.7;
+}
+body.wall .wall-banner .pulse {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--neon-green);
+  box-shadow: 0 0 6px var(--neon-green);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ====== TIMELINE TAB ====== */
+.timeline-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 11px; color: var(--text-2); align-items: center; }
+.tl-seg { display: inline-block; width: 18px !important; height: 10px; border-radius: 3px; }
+.tl-seg.pre     { background: #4b5563; }
+.tl-seg.drive   { background: var(--neon-cyan); }
+.tl-seg.setup   { background: var(--neon-purple); }
+.tl-seg.active  { background: var(--neon-green); }
+.tl-seg.buffer  { background: #374151; }
+.tl-seg.delayed { background: var(--neon-amber); opacity: 0.85; }
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 240px 1fr 130px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.tl-row:hover { background: rgba(34, 211, 238, 0.04); }
+.tl-row .meta { color: var(--text-1); line-height: 1.35; }
+.tl-row .meta .hdr { font-size: 12px; font-weight: 600; }
+.tl-row .meta .sub { color: var(--text-3); font-size: 10px; }
+.tl-row .totals { color: var(--text-2); text-align: right; line-height: 1.35; }
+.tl-row .totals .big { color: var(--text-1); font-weight: 600; font-size: 12px; }
+.tl-row .totals .small { color: var(--text-3); font-size: 10px; }
+
+.tl-bar-wrap { display: flex; flex-direction: column; gap: 8px; }
+.tl-bar-wrap:has(.tl-bar.multi) { padding-left: 36px; }
+.tl-bar {
+  position: relative;
+  height: 26px;
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
+  border: none;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.2);
+}
+.tl-bar.multi {
+  height: auto;
+  border-bottom: none;
+}
+.tl-bar.multi .lane-divider {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: rgba(148, 163, 184, 0.08);
+  pointer-events: none;
+}
+.tl-bar.multi .lane-label {
+  position: absolute;
+  left: -32px;
+  width: 28px;
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.tl-bar.multi .lane-accent {
+  position: absolute;
+  left: -3px;
+  width: 3px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+/* Mission colors — applied to lane-label and lane-accent via inline style */
+.tl-times .lbl.m1 .ev, .tl-bar.multi .lane-label.m1 { color: #22d3ee; }
+.tl-times .lbl.m2 .ev, .tl-bar.multi .lane-label.m2 { color: #a78bfa; }
+.tl-times .lbl.m3 .ev, .tl-bar.multi .lane-label.m3 { color: #4ade80; }
+.tl-times .lbl.m4 .ev, .tl-bar.multi .lane-label.m4 { color: #fbbf24; }
+.tl-times .lbl.m5 .ev, .tl-bar.multi .lane-label.m5 { color: #f87171; }
+.tl-times .lbl.m6 .ev, .tl-bar.multi .lane-label.m6 { color: #2dd4bf; }
+.tl-times .lbl.m7 .ev, .tl-bar.multi .lane-label.m7 { color: #60a5fa; }
+.tl-times .lbl.m8 .ev, .tl-bar.multi .lane-label.m8 { color: #ec4899; }
+.tl-times .lbl.m9 .ev, .tl-bar.multi .lane-label.m9 { color: #84cc16; }
+.tl-times .lbl.m1::before { background: #22d3ee; }
+.tl-times .lbl.m2::before { background: #a78bfa; }
+.tl-times .lbl.m3::before { background: #4ade80; }
+.tl-times .lbl.m4::before { background: #fbbf24; }
+.tl-times .lbl.m5::before { background: #f87171; }
+.tl-times .lbl.m6::before { background: #2dd4bf; }
+.tl-times .lbl.m7::before { background: #60a5fa; }
+.tl-times .lbl.m8::before { background: #ec4899; }
+.tl-times .lbl.m9::before { background: #84cc16; }
+.tl-bar .seg {
+  position: absolute; top: 0; bottom: 0;
+  cursor: help;
+  transition: filter 0.15s, transform 0.15s;
+  border-radius: 2px;
+}
+.tl-bar .seg:hover { filter: brightness(1.35); transform: translateY(-1px); }
+.tl-bar .seg.pre     { background: #4b5563; }
+.tl-bar .seg.drive   { background: var(--neon-cyan); }
+.tl-bar .seg.setup   { background: var(--neon-purple); }
+.tl-bar .seg.active  { background: var(--neon-green); }
+.tl-bar .seg.buffer  { background: #374151; }
+.tl-bar .seg.delayed { background: var(--neon-amber); opacity: 0.7; }
+
+/* Timestamp labels under each timeline bar */
+.tl-times {
+  position: relative;
+  height: 40px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  pointer-events: none;
+  margin-top: 4px;
+}
+.tl-times .lbl {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center;
+  line-height: 1.1;
+  gap: 1px;
+}
+.tl-times .lbl::before {
+  content: "";
+  width: 2px; height: 7px;
+  background: var(--text-3);
+  display: block;
+  margin-bottom: 2px;
+  border-radius: 1px;
+}
+.tl-times .lbl .ev { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+.tl-times .lbl .tm { color: var(--text-1); font-weight: 600; font-size: 12px; }
+.tl-times .lbl.fa::before { background: #4b5563; }
+.tl-times .lbl.ma::before { background: var(--neon-cyan); }
+.tl-times .lbl.mc::before { background: var(--neon-green); }
+.tl-times .lbl.fd::before { background: #6b7280; }
+.tl-times .lbl.fa .ev    { color: #6b7280; }
+.tl-times .lbl.ma .ev    { color: var(--neon-cyan); }
+.tl-times .lbl.mc .ev    { color: var(--neon-green); }
+.tl-times .lbl.fd .ev    { color: #94a3b8; }
+
+.timeline-more { margin-top: 12px; text-align: center; font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+
+.timeline-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.tl-toggle-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.tl-toggle { display: inline-flex; background: var(--bg-card-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px; gap: 2px; }
+.tl-toggle-btn {
+  border: 0; background: transparent; color: var(--text-2);
+  font-size: 12px; font-family: inherit;
+  padding: 5px 12px; border-radius: 4px; cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tl-toggle-btn:hover { color: var(--text-1); }
+.tl-toggle-btn.active { background: var(--neon-cyan); color: var(--bg-base); font-weight: 600; }
+
+/* Lead/Day grouped view */
+.tl-leadday-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.tl-leadday-row:hover { background: rgba(34, 211, 238, 0.04); }
+.tl-leadday-header {
+  display: grid;
+  grid-template-columns: 240px 1fr 130px;
+  gap: 12px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+.tl-leadday-header .meta .hdr { font-size: 13px; font-weight: 600; color: var(--text-1); }
+.tl-leadday-header .meta .sub { color: var(--text-3); font-size: 10px; line-height: 1.4; margin-top: 2px; }
+.tl-leadday-header .totals { color: var(--text-2); text-align: right; line-height: 1.35; }
+.tl-leadday-header .totals .big { color: var(--text-1); font-weight: 600; font-size: 12px; }
+.tl-leadday-header .totals .small { color: var(--text-3); font-size: 10px; }
+.tl-day-bars { display: grid; grid-template-columns: 240px 1fr 130px; gap: 12px; }
+.tl-day-bars .day-spacer { /* empty col under meta */ }
+.tl-day-bars .day-bars-stack { display: flex; flex-direction: column; gap: 3px; }
+.tl-day-bar {
+  position: relative;
+  height: 18px;
+  background: var(--bg-card-2);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.tl-day-bar .seg { position: absolute; top: 0; bottom: 0; cursor: help; transition: filter 0.15s; }
+.tl-day-bar .seg:hover { filter: brightness(1.4); }
+.tl-day-bar .seg.pre     { background: #4b5563; }
+.tl-day-bar .seg.drive   { background: var(--neon-cyan); }
+.tl-day-bar .seg.setup   { background: var(--neon-purple); }
+.tl-day-bar .seg.active  { background: var(--neon-green); }
+.tl-day-bar .seg.buffer  { background: #374151; }
+.tl-day-bar .seg.delayed { background: var(--neon-amber); opacity: 0.7; }
+.tl-day-axis {
+  position: relative;
+  height: 22px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  color: var(--text-3);
+  margin-top: 4px;
+}
+.tl-day-axis .tick { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; display: flex; flex-direction: column; align-items: center; }
+.tl-day-axis .tick::before { content: ""; width: 1px; height: 4px; background: var(--text-3); display: block; margin-bottom: 2px; }
+.tl-day-asset-label {
+  position: absolute; left: 4px; top: 50%; transform: translateY(-50%);
+  font-size: 9px; color: rgba(255,255,255,0.7); font-weight: 600;
+  pointer-events: none; mix-blend-mode: difference;
+}
+
+@media (max-width: 900px) { .tl-row { grid-template-columns: 1fr; } }
+
+/* Timeline mode switch */
+.tl-mode-switch {
+  display: inline-flex;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 2px;
+  gap: 2px;
+}
+.tl-mode {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tl-mode:hover { color: var(--text-1); }
+.tl-mode.active {
+  background: var(--neon-cyan);
+  color: var(--bg-base);
+  font-weight: 600;
+}
+
+#panel-financing.active ~ * .filters, .wrap:has(#panel-financing.active) .filters { display: none !important; }
+#panel-financing > div:first-child { margin-top: 0 !important; }
+#vs-kpis{grid-template-columns:repeat(5,1fr)!important;gap:8px!important;}
+#vs-kpis .kpi{padding:12px 14px!important;min-width:0!important;}
+#vs-kpis .kpi .label{font-size:10px!important;}
+#vs-kpis .kpi .value{font-size:17px!important;}
+#vs-kpis{display:flex!important;flex-wrap:nowrap!important;gap:8px!important;margin-bottom:24px!important;}
+#vs-kpis .kpi{flex:1 1 0!important;min-width:0!important;overflow:hidden!important;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">MA</div>
+    <div class="brand-text">
+      <span class="co">Mainline Aviation</span>
+      <span class="product">Sullivan Rd Missions Dashboard</span>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  <div class="meta">
+    <span><span class="live-dot"></span>SNAPSHOT</span>
+    <span id="snaptime">Jun 16, 2026 at 06:16 AM EDT</span>
+    <span>ATL</span>
+  </div>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="overview" onclick="var f=document.querySelector('.wrap .filters');if(f)f.style.display='';var w=document.querySelector('.wrap');if(w)w.style.paddingBottom='';">Overview</button>
+  <button class="tab" data-tab="leads" onclick="var f=document.querySelector('.wrap .filters');if(f)f.style.display='';var w=document.querySelector('.wrap');if(w)w.style.paddingBottom='';">Team Leads <span class="count" id="leadCount"></span></button>
+  <button class="tab" data-tab="timeline" onclick="var f=document.querySelector('.wrap .filters');if(f)f.style.display='';var w=document.querySelector('.wrap');if(w)w.style.paddingBottom='';">Timeline</button>
+  <button class="tab" data-tab="missions" onclick="var f=document.querySelector('.wrap .filters');if(f)f.style.display='';var w=document.querySelector('.wrap');if(w)w.style.paddingBottom='';">Missions <span class="count" id="missionCount"></span></button>
+  <button class="tab" data-tab="financing" onclick="var f=document.querySelector('.wrap .filters');if(f)f.style.display='none';var w=document.querySelector('.wrap');if(w)w.style.paddingBottom='0';">Financing</button>
+</nav>
+
+<div class="wrap">
+
+  <section class="filters">
+    <label>Month</label>
+    <select id="fMonth"><option value="">All</option></select>
+    <label>Airline</label>
+    <select id="fAirline"><option value="">All</option></select>
+    <label>Mission Type</label>
+    <select id="fType"><option value="">All</option></select>
+    <label>Team Lead</label>
+    <select id="fLead"><option value="">All</option></select>
+    <label>Asset Type</label>
+    <select id="fAsset"><option value="">All</option></select>
+    <button class="reset" id="resetBtn">Reset</button>
+    <span class="badge" id="countBadge">— missions</span>
+  </section>
+
+  <div class="tab-panel active" id="panel-overview">
+    <section class="kpis" id="kpis"></section>
+    <div class="section-title">Punctuality</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>On-Time vs Late <span class="hint">missions completed before vs after flight departure</span></h3>
+        <div class="card-chart tall"><canvas id="cOnTime"></canvas></div>
+      </div>
+    </section>
+    <div class="section-title">Volume</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>Mission Volume by Hour <span class="hint">when work began · EDT</span></h3>
+        <div class="card-chart"><canvas id="cHour"></canvas></div>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="card">
+        <h3>Missions by Airline <span class="hint">distribution</span></h3>
+        <div class="card-chart"><canvas id="cAirline"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Mission Type <span class="hint">distribution</span></h3>
+        <div class="card-chart"><canvas id="cMissionType"></canvas></div>
+      </div>
+    </section>
+      </div>
+
+  <div class="tab-panel" id="panel-leads">
+    <div class="section-title">Top Performers</div>
+    <section class="leaderboard" id="leaderboard"></section>
+
+    <div class="section-title">Mission Count by Team Lead</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>Total missions per lead <span class="hint">in current filter · sorted most-active first</span></h3>
+        <div class="card-chart xtall"><canvas id="cMissionCount"></canvas></div>
+      </div>
+    </section>
+
+    <div class="section-title">Avg Intra-Shift Transit Gap</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>Prior Mission Completed → Next Team Arrival <span class="hint">intra-shift only · sorted fastest first</span></h3>
+        <div class="card-chart xtall"><canvas id="cTransit"></canvas></div>
+      </div>
+    </section>
+    <div class="section-title">Avg Response Time</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>Mission Accepted → Team Arrival <span class="hint">engagement > 0%</span></h3>
+        <div class="card-chart xtall"><canvas id="cResponse"></canvas></div>
+      </div>
+    </section>
+    <div class="section-title">Avg Productivity</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>Per-Lead Productivity Score <span class="hint">≥5 missions · 100% target</span></h3>
+        <div class="card-chart xtall"><canvas id="cTeamLead"></canvas></div>
+      </div>
+    </section>
+
+    <div class="section-title">Late Missions by Team Lead</div>
+    <section class="grid grid-1">
+      <div class="card">
+        <h3>Count of late completions <span class="hint">missions completed after flight departure</span></h3>
+        <div class="card-chart xtall"><canvas id="cLateByLead"></canvas></div>
+      </div>
+    </section>
+  </div>
+
+    <div class="tab-panel" id="panel-timeline">
+    <div class="section-title">Mission Timeline · most recent first</div>
+
+    <section class="card" style="padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em;">View:</span>
+      <div class="tl-mode-switch">
+        <button class="tl-mode active" data-mode="mission">Per Mission</button>
+      </div>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--text-3); margin-left: auto;" id="tlModeHint">One row per mission, sorted most-recent first</span>
+    </section>
+
+    <section class="card" style="padding: 14px 18px; margin-bottom: 14px;">
+      <div class="timeline-legend">
+        <span class="tl-seg delayed"></span><span>Flight late — scheduled vs actual arrival gap</span>
+        <span class="tl-seg pre"></span><span>Pre-acceptance — flight on ground, mission waiting</span>
+        <span class="tl-seg drive"></span><span>Response — accepted → team driving to gate</span>
+        <span class="tl-seg setup"></span><span>Setup — team arrived → starting work</span>
+        <span class="tl-seg active"></span><span>Active mission — in progress</span>
+        <span class="tl-seg buffer"></span><span>Buffer — completed → flight departure</span>
+      </div>
+    </section>
+
+    <section class="card" style="padding: 16px 18px;">
+      <h3>Timeline rows <span class="hint">each row spans Scheduled/Actual Arrival → Flight Departure · hover for details</span></h3>
+      <div id="timelineList"></div>
+      <div id="timelineMore" class="timeline-more"></div>
+    </section>
+  </div>
+
+  <div class="tab-panel" id="panel-missions">
+    <div class="section-title">Mission Detail</div>
+    <section class="table-card">
+      <h3>All Missions <span class="hint" style="font-weight:400;color:var(--text-3)">— click any column header to sort · search to filter further</span></h3>
+      <div id="tbl"></div>
+    </section>
+  </div>
+
+  <footer>Mainline Aviation · ATL Operations</footer>
+</div>
+
+<script>
+const SNAPSHOT_TIME = "Jun 16, 2026 at 10:16 AM EDT";
+const RAW_MISSIONS = [{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3KJ","atype":"737","loc":"Gate T11","eng":100.0,"prod":106.0,"inb":"3295","outb":"1777","fa":"May 05, 15:25","delay":null,"sched_fa":"","ma":"May 06, 02:03","tarr":"May 06, 03:57","ms":"May 06, 03:57","mc":"May 06, 04:16","fd":"May 06, 09:03","dur":19.0,"ot":true,"resp":114.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":3.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3EW","atype":"737","loc":"Gate T15","eng":100.0,"prod":219.0,"inb":"1539","outb":"3190","fa":"May 05, 20:55","delay":null,"sched_fa":"","ma":"May 06, 02:03","tarr":"May 06, 03:44","ms":"May 06, 03:44","mc":"May 06, 03:54","fd":"May 06, 07:49","dur":10.0,"ot":true,"resp":101.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"002","atype":"A319","loc":"Gate T12","eng":100.0,"prod":null,"inb":"2779","outb":"3222","fa":"May 05, 22:07","delay":null,"sched_fa":"","ma":"May 06, 02:03","tarr":"May 06, 03:33","ms":"May 06, 03:33","mc":"May 06, 03:40","fd":"May 06, 07:23","dur":7.0,"ot":true,"resp":90.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":5.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"915","atype":"A321","loc":"Gate T10","eng":100.0,"prod":null,"inb":"3212","outb":"1567","fa":"May 05, 23:23","delay":null,"sched_fa":"","ma":"May 06, 02:03","tarr":"May 06, 03:22","ms":"May 06, 03:22","mc":"May 06, 03:28","fd":"May 06, 08:13","dur":6.0,"ot":true,"resp":79.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":9.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"773","atype":"A319","loc":"Gate T13","eng":100.0,"prod":null,"inb":"1075","outb":"1753","fa":"May 05, 22:44","delay":null,"sched_fa":"","ma":"May 06, 02:22","tarr":"May 06, 03:20","ms":"May 06, 03:20","mc":"May 06, 03:21","fd":"May 06, 06:54","dur":1.0,"ot":true,"resp":58.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":11.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3DV","atype":"737","loc":"Gate T12","eng":100.0,"prod":null,"inb":"1812","outb":"2770","fa":"May 05, 20:50","delay":null,"sched_fa":"","ma":"May 06, 02:03","tarr":"May 06, 03:05","ms":"May 06, 03:05","mc":"May 06, 03:13","fd":"May 06, 05:58","dur":8.0,"ot":true,"resp":62.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4218.0,"transit_kind":"shift_break"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3KG","atype":"737","loc":"Gate T15","eng":100.0,"prod":null,"inb":"659","outb":"3150","fa":"May 05, 23:59","delay":null,"sched_fa":"","ma":"May 06, 02:22","tarr":"May 06, 03:08","ms":"May 06, 03:08","mc":"May 06, 03:09","fd":"May 06, 06:09","dur":1.0,"ot":true,"resp":46.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":11.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"005","atype":"A319","loc":"Gate T14","eng":100.0,"prod":null,"inb":"3041","outb":"2132","fa":"May 05, 22:03","delay":null,"sched_fa":"","ma":"May 06, 02:22","tarr":"May 06, 02:56","ms":"May 06, 02:56","mc":"May 06, 02:57","fd":"May 06, 06:27","dur":1.0,"ot":true,"resp":34.0,"hr":2,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1368.0,"transit_kind":"shift_break"},{"tl":"Alexander Wayne","al":"SK","mt":"CAT","ws":"ATL","ast":"Unknown A3","atype":"A330","loc":"UNASSIGNED","eng":100.0,"prod":12.0,"inb":"929","outb":"930","fa":"May 05, 17:24","delay":null,"sched_fa":"","ma":"May 05, 16:08","tarr":"May 05, 17:42","ms":"May 05, 17:42","mc":"May 05, 20:26","fd":"May 05, 19:22","dur":164.0,"ot":false,"resp":94.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":2810.0,"transit_kind":"shift_break"},{"tl":"Christian Lawson","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F8","eng":100.0,"prod":60.0,"inb":"","outb":"110","fa":"May 05, 18:35","delay":null,"sched_fa":"","ma":"May 05, 17:44","tarr":"May 05, 17:44","ms":"May 05, 17:44","mc":"May 05, 18:18","fd":"May 05, 19:35","dur":34.0,"ot":true,"resp":0.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4356.0,"transit_kind":"shift_break"},{"tl":"Issa Camara","al":"AA","mt":"TNC","ws":"ATL","ast":"184","atype":"A321","loc":"Gate T11","eng":100.0,"prod":66.0,"inb":"1802","outb":"1256","fa":"May 05, 17:23","delay":null,"sched_fa":"","ma":"May 05, 15:17","tarr":"May 05, 17:03","ms":"May 05, 17:29","mc":"May 05, 18:00","fd":"May 05, 18:23","dur":31.0,"ot":true,"resp":106.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1369.0,"transit_kind":"shift_break"},{"tl":"Claudette St. Juste","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":51.0,"inb":"","outb":"104","fa":"May 05, 17:10","delay":null,"sched_fa":"","ma":"May 05, 16:02","tarr":"May 05, 16:02","ms":"May 05, 16:09","mc":"May 05, 16:49","fd":"May 05, 18:10","dur":40.0,"ot":true,"resp":0.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1420.0,"transit_kind":"shift_break"},{"tl":"Abubakarr Sessay","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":82.0,"inb":"","outb":"104","fa":"May 05, 17:10","delay":null,"sched_fa":"","ma":"May 05, 16:08","tarr":"May 05, 16:08","ms":"May 05, 16:08","mc":"May 05, 16:33","fd":"May 05, 18:10","dur":25.0,"ot":true,"resp":0.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1430.0,"transit_kind":"shift_break"},{"tl":"Walter Tardieff III","al":"AA","mt":"TNC","ws":"ATL","ast":"014","atype":"A319","loc":"Gate E29","eng":100.0,"prod":null,"inb":"2779","outb":"3222","fa":"May 05, 01:36","delay":null,"sched_fa":"","ma":"May 05, 02:32","tarr":"May 05, 05:59","ms":"May 05, 05:59","mc":"May 05, 05:59","fd":"May 05, 07:24","dur":null,"ot":true,"resp":207.0,"hr":5,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":88.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"906","atype":"A321","loc":"Gate T14","eng":100.0,"prod":157.0,"inb":"3212","outb":"1567","fa":"May 04, 21:52","delay":null,"sched_fa":"","ma":"May 05, 02:32","tarr":"May 05, 04:19","ms":"May 05, 04:19","mc":"May 05, 04:31","fd":"May 05, 08:13","dur":12.0,"ot":true,"resp":107.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":5.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3NE","atype":"737","loc":"Gate T11","eng":100.0,"prod":null,"inb":"2391","outb":"3190","fa":"May 04, 21:45","delay":null,"sched_fa":"","ma":"May 05, 02:32","tarr":"May 05, 04:11","ms":"May 05, 04:11","mc":"May 05, 04:14","fd":"May 05, 07:48","dur":3.0,"ot":true,"resp":99.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":18.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"023","atype":"A319","loc":"Gate T13","eng":100.0,"prod":null,"inb":"3041","outb":"2132","fa":"May 04, 22:04","delay":null,"sched_fa":"","ma":"May 05, 02:28","tarr":"May 05, 04:07","ms":"May 05, 04:07","mc":"May 05, 04:08","fd":"May 05, 06:30","dur":1.0,"ot":true,"resp":99.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":22.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3CR","atype":"737","loc":"Gate T10","eng":100.0,"prod":62.0,"inb":"1539","outb":"1777","fa":"May 04, 21:06","delay":null,"sched_fa":"","ma":"May 05, 02:32","tarr":"May 05, 03:21","ms":"May 05, 03:21","mc":"May 05, 03:53","fd":"May 05, 07:08","dur":32.0,"ot":true,"resp":49.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":5682.0,"transit_kind":"shift_break"},{"tl":"Joshua Williams","al":"AA","mt":"TNC","ws":"ATL","ast":"3DP","atype":"737","loc":"Gate T12","eng":100.0,"prod":null,"inb":"659","outb":"3150","fa":"May 05, 00:44","delay":null,"sched_fa":"","ma":"May 05, 02:28","tarr":"May 05, 03:44","ms":"May 05, 03:44","mc":"May 05, 03:45","fd":"May 05, 06:09","dur":1.0,"ot":true,"resp":76.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":25.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3CG","atype":"737","loc":"Gate T15","eng":100.0,"prod":null,"inb":"2749","outb":"2770","fa":"May 04, 23:26","delay":null,"sched_fa":"","ma":"May 05, 02:28","tarr":"May 05, 03:18","ms":"May 05, 03:18","mc":"May 05, 03:19","fd":"May 05, 05:54","dur":1.0,"ot":true,"resp":50.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":11.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"755","atype":"A319","loc":"Gate T14","eng":100.0,"prod":null,"inb":"1075","outb":"1753","fa":"May 04, 23:43","delay":null,"sched_fa":"","ma":"May 05, 02:28","tarr":"May 05, 03:07","ms":"May 05, 03:07","mc":"May 05, 03:07","fd":"May 05, 06:04","dur":null,"ot":true,"resp":39.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1338.0,"transit_kind":"shift_break"},{"tl":"Bobbie Jackson III","al":"AA","mt":"TNC","ws":"ATL","ast":"912","atype":"A321","loc":"Gate T13","eng":100.0,"prod":73.0,"inb":"1802","outb":"1805","fa":"May 04, 20:33","delay":null,"sched_fa":"","ma":"May 04, 14:06","tarr":"May 04, 20:48","ms":"May 04, 20:48","mc":"May 04, 21:16","fd":"May 04, 21:23","dur":28.0,"ot":true,"resp":402.0,"hr":20,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":69.0,"transit_kind":"intra"},{"tl":"Bobbie Jackson III","al":"VS","mt":"INC","ws":"ATL","ast":"GVSXY","atype":"A330","loc":"Gate F8","eng":100.0,"prod":18.0,"inb":"","outb":"110","fa":"May 04, 18:39","delay":null,"sched_fa":"","ma":"May 04, 16:36","tarr":"May 04, 17:10","ms":"May 04, 17:50","mc":"May 04, 19:39","fd":"May 04, 19:39","dur":109.0,"ot":true,"resp":34.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1452.0,"transit_kind":"shift_break"},{"tl":"Issa Camara","al":"VS","mt":"INC","ws":"ATL","ast":"GVSXY","atype":"A330","loc":"Gate F8","eng":100.0,"prod":126.0,"inb":"","outb":"110","fa":"May 04, 18:39","delay":null,"sched_fa":"","ma":"May 04, 16:04","tarr":"May 04, 17:58","ms":"May 04, 17:58","mc":"May 04, 18:14","fd":"May 04, 19:39","dur":16.0,"ot":true,"resp":114.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":115.0,"transit_kind":"intra"},{"tl":"Claudette St. Juste","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":58.0,"inb":"","outb":"104","fa":"May 04, 17:19","delay":null,"sched_fa":"","ma":"May 04, 15:48","tarr":"May 04, 15:48","ms":"May 04, 15:48","mc":"May 04, 16:22","fd":"May 04, 18:19","dur":34.0,"ot":true,"resp":0.0,"hr":15,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1390.0,"transit_kind":"shift_break"},{"tl":"Abubakarr Sessay","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":71.0,"inb":"","outb":"104","fa":"May 04, 17:19","delay":null,"sched_fa":"","ma":"May 04, 15:49","tarr":"May 04, 15:49","ms":"May 04, 15:50","mc":"May 04, 16:18","fd":"May 04, 18:19","dur":28.0,"ot":true,"resp":0.0,"hr":15,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":2797.0,"transit_kind":"shift_break"},{"tl":"Issa Camara","al":"AA","mt":"TNC","ws":"ATL","ast":"558","atype":"A321","loc":"Gate T11","eng":100.0,"prod":46.0,"inb":"3295","outb":"1256","fa":"May 04, 15:15","delay":null,"sched_fa":"","ma":"May 04, 14:17","tarr":"May 04, 15:19","ms":"May 04, 15:19","mc":"May 04, 16:03","fd":"May 04, 16:35","dur":44.0,"ot":true,"resp":62.0,"hr":15,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1308.0,"transit_kind":"shift_break"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"005","atype":"A319","loc":"Gate T9","eng":100.0,"prod":169.0,"inb":"2779","outb":"3222","fa":"May 03, 22:16","delay":null,"sched_fa":"","ma":"May 04, 03:08","tarr":"May 04, 04:47","ms":"May 04, 04:47","mc":"May 04, 04:59","fd":"May 04, 07:26","dur":12.0,"ot":true,"resp":99.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":3.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3PR","atype":"737","loc":"Gate T13","eng":100.0,"prod":null,"inb":"1539","outb":"3150","fa":"May 03, 21:51","delay":null,"sched_fa":"","ma":"May 04, 02:54","tarr":"May 04, 04:49","ms":"May 04, 04:49","mc":"May 04, 04:49","fd":"May 04, 06:05","dur":null,"ot":true,"resp":115.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":30.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"980","atype":"A321","loc":"Gate T10","eng":100.0,"prod":null,"inb":"3212","outb":"1567","fa":"May 03, 21:45","delay":null,"sched_fa":"","ma":"May 04, 03:08","tarr":"May 04, 04:39","ms":"May 04, 04:39","mc":"May 04, 04:44","fd":"May 04, 08:15","dur":5.0,"ot":true,"resp":91.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":11.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3DC","atype":"737","loc":"Gate T11","eng":100.0,"prod":81.0,"inb":"2749","outb":"1777","fa":"May 04, 00:46","delay":null,"sched_fa":"","ma":"May 04, 03:08","tarr":"May 04, 04:03","ms":"May 04, 04:03","mc":"May 04, 04:28","fd":"May 04, 07:07","dur":25.0,"ot":true,"resp":55.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"018","atype":"A319","loc":"Gate T15","eng":100.0,"prod":null,"inb":"1075","outb":"1753","fa":"May 04, 00:20","delay":null,"sched_fa":"","ma":"May 04, 02:54","tarr":"May 04, 04:18","ms":"May 04, 04:18","mc":"May 04, 04:19","fd":"May 04, 07:04","dur":1.0,"ot":true,"resp":84.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":10.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"032","atype":"A319","loc":"Gate T14","eng":100.0,"prod":null,"inb":"3041","outb":"2132","fa":"May 03, 23:02","delay":null,"sched_fa":"","ma":"May 04, 02:54","tarr":"May 04, 04:07","ms":"May 04, 04:07","mc":"May 04, 04:08","fd":"May 04, 06:33","dur":1.0,"ot":true,"resp":73.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":10.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3PC","atype":"737","loc":"Gate T12","eng":100.0,"prod":null,"inb":"659","outb":"3190","fa":"May 04, 00:03","delay":null,"sched_fa":"","ma":"May 04, 03:08","tarr":"May 04, 03:52","ms":"May 04, 03:52","mc":"May 04, 03:59","fd":"May 04, 07:55","dur":7.0,"ot":true,"resp":44.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1461.0,"transit_kind":"shift_break"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3FB","atype":"737","loc":"Gate T12","eng":100.0,"prod":203.0,"inb":"2391","outb":"2770","fa":"May 03, 21:53","delay":null,"sched_fa":"","ma":"May 04, 02:54","tarr":"May 04, 03:48","ms":"May 04, 03:48","mc":"May 04, 03:57","fd":"May 04, 06:00","dur":9.0,"ot":true,"resp":54.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":2870.0,"transit_kind":"shift_break"},{"tl":"Alexander Wayne","al":"SK","mt":"CAT","ws":"ATL","ast":"Unknown A3","atype":"A330","loc":"UNASSIGNED","eng":100.0,"prod":40.0,"inb":"929","outb":"930","fa":"May 03, 17:50","delay":null,"sched_fa":"","ma":"May 03, 15:48","tarr":"May 03, 18:02","ms":"May 03, 18:02","mc":"May 03, 18:52","fd":"May 03, 19:33","dur":50.0,"ot":true,"resp":134.0,"hr":18,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1421.0,"transit_kind":"shift_break"},{"tl":"Issa Camara","al":"AA","mt":"TNC","ws":"ATL","ast":"997","atype":"A321","loc":"Gate T11","eng":100.0,"prod":59.0,"inb":"1802","outb":"1805","fa":"May 03, 16:53","delay":null,"sched_fa":"","ma":"May 03, 14:31","tarr":"May 03, 16:57","ms":"May 03, 16:57","mc":"May 03, 17:31","fd":"May 03, 17:54","dur":34.0,"ot":true,"resp":146.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":38.0,"transit_kind":"intra"},{"tl":"Bobbie Jackson III","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":72.0,"inb":"","outb":"104","fa":"May 03, 17:24","delay":null,"sched_fa":"","ma":"May 03, 16:30","tarr":"May 03, 16:31","ms":"May 03, 16:31","mc":"May 03, 16:58","fd":"May 03, 18:24","dur":27.0,"ot":true,"resp":1.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1279.0,"transit_kind":"shift_break"},{"tl":"Claudette St. Juste","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":60.0,"inb":"","outb":"104","fa":"May 03, 17:24","delay":null,"sched_fa":"","ma":"May 03, 14:57","tarr":"May 03, 16:04","ms":"May 03, 16:04","mc":"May 03, 16:38","fd":"May 03, 18:24","dur":34.0,"ot":true,"resp":67.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4294.0,"transit_kind":"shift_break"},{"tl":"Gabriel Silva Mane","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F8","eng":100.0,"prod":61.0,"inb":"","outb":"110","fa":"May 03, 17:06","delay":null,"sched_fa":"","ma":"May 03, 16:01","tarr":"May 03, 16:01","ms":"May 03, 16:05","mc":"May 03, 16:38","fd":"May 03, 18:06","dur":33.0,"ot":true,"resp":0.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":2807.0,"transit_kind":"shift_break"},{"tl":"Issa Camara","al":"AA","mt":"TNC","ws":"ATL","ast":"509","atype":"A321","loc":"Gate T12","eng":100.0,"prod":55.0,"inb":"3295","outb":"1256","fa":"May 03, 15:39","delay":null,"sched_fa":"","ma":"May 03, 14:31","tarr":"May 03, 15:43","ms":"May 03, 15:43","mc":"May 03, 16:19","fd":"May 03, 17:03","dur":36.0,"ot":true,"resp":72.0,"hr":15,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4190.0,"transit_kind":"shift_break"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3HV","atype":"737","loc":"Gate T12","eng":100.0,"prod":47.0,"inb":"3295","outb":"3190","fa":"May 02, 19:29","delay":null,"sched_fa":"","ma":"May 03, 02:03","tarr":"May 03, 04:05","ms":"May 03, 04:05","mc":"May 03, 04:47","fd":"May 03, 07:53","dur":42.0,"ot":true,"resp":122.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":8.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3JT","atype":"737","loc":"Gate T11","eng":100.0,"prod":64.0,"inb":"1539","outb":"1777","fa":"May 02, 23:03","delay":null,"sched_fa":"","ma":"May 03, 02:03","tarr":"May 03, 03:25","ms":"May 03, 03:25","mc":"May 03, 03:57","fd":"May 03, 07:25","dur":32.0,"ot":true,"resp":82.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"023","atype":"A319","loc":"Gate T15","eng":100.0,"prod":null,"inb":"2779","outb":"3222","fa":"May 02, 22:06","delay":null,"sched_fa":"","ma":"May 03, 02:01","tarr":"May 03, 03:24","ms":"May 03, 03:24","mc":"May 03, 03:31","fd":"May 03, 07:10","dur":7.0,"ot":true,"resp":83.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"876","atype":"A321","loc":"Gate T10","eng":100.0,"prod":180.0,"inb":"3212","outb":"1567","fa":"May 02, 22:17","delay":null,"sched_fa":"","ma":"May 03, 02:03","tarr":"May 03, 03:10","ms":"May 03, 03:10","mc":"May 03, 03:21","fd":"May 03, 08:43","dur":11.0,"ot":true,"resp":67.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1354.0,"transit_kind":"shift_break"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"828","atype":"A319","loc":"Gate T14","eng":100.0,"prod":null,"inb":"1075","outb":"1753","fa":"May 02, 23:39","delay":null,"sched_fa":"","ma":"May 03, 02:01","tarr":"May 03, 03:15","ms":"May 03, 03:15","mc":"May 03, 03:20","fd":"May 03, 06:55","dur":5.0,"ot":true,"resp":74.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":7.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"002","atype":"A319","loc":"Gate T13","eng":100.0,"prod":null,"inb":"3041","outb":"2132","fa":"May 02, 22:08","delay":null,"sched_fa":"","ma":"May 03, 02:00","tarr":"May 03, 03:02","ms":"May 03, 03:02","mc":"May 03, 03:08","fd":"May 03, 06:27","dur":6.0,"ot":true,"resp":62.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":3.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3ST","atype":"737","loc":"Gate T12","eng":100.0,"prod":null,"inb":"659","outb":"3150","fa":"May 03, 01:15","delay":null,"sched_fa":"","ma":"May 03, 02:01","tarr":"May 03, 02:54","ms":"May 03, 02:54","mc":"May 03, 02:59","fd":"May 03, 06:05","dur":5.0,"ot":true,"resp":53.0,"hr":2,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":2.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3BS","atype":"737","loc":"Gate T11","eng":100.0,"prod":null,"inb":"2749","outb":"2770","fa":"May 02, 23:37","delay":null,"sched_fa":"","ma":"May 03, 02:00","tarr":"May 03, 02:47","ms":"May 03, 02:47","mc":"May 03, 02:52","fd":"May 03, 06:04","dur":5.0,"ot":true,"resp":47.0,"hr":2,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":500.0,"transit_kind":"shift_break"},{"tl":"Bobbie Jackson III","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F8","eng":100.0,"prod":127.0,"inb":"","outb":"110","fa":"May 02, 18:40","delay":null,"sched_fa":"","ma":"May 02, 18:04","tarr":"May 02, 18:04","ms":"May 02, 18:56","mc":"May 02, 19:12","fd":"May 02, 19:40","dur":16.0,"ot":true,"resp":0.0,"hr":18,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1479.0,"transit_kind":"shift_break"},{"tl":"Komna-Ouadja Gbandi","al":"SK","mt":"CAT","ws":"ATL","ast":"Unknown A3","atype":"A330","loc":"UNASSIGNED","eng":100.0,"prod":42.0,"inb":"929","outb":"930","fa":"May 02, 17:22","delay":null,"sched_fa":"","ma":"May 02, 15:51","tarr":"May 02, 17:41","ms":"May 02, 17:41","mc":"May 02, 18:29","fd":"May 02, 19:27","dur":48.0,"ot":true,"resp":110.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":2838.0,"transit_kind":"shift_break"},{"tl":"Maurice Smith","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F8","eng":100.0,"prod":167.0,"inb":"","outb":"110","fa":"May 02, 18:40","delay":null,"sched_fa":"","ma":"May 02, 18:15","tarr":"May 02, 18:15","ms":"May 02, 18:15","mc":"May 02, 18:27","fd":"May 02, 19:40","dur":12.0,"ot":true,"resp":0.0,"hr":18,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1435.0,"transit_kind":"shift_break"},{"tl":"Alexander Wayne","al":"SK","mt":"CAT","ws":"ATL","ast":"Unknown A3","atype":"A330","loc":"UNASSIGNED","eng":100.0,"prod":46.0,"inb":"929","outb":"930","fa":"May 02, 17:22","delay":null,"sched_fa":"","ma":"May 02, 15:43","tarr":"May 02, 17:38","ms":"May 02, 17:38","mc":"May 02, 18:21","fd":"May 02, 19:27","dur":43.0,"ot":true,"resp":115.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":2843.0,"transit_kind":"shift_break"},{"tl":"Tecari Brown","al":"AA","mt":"TNC","ws":"ATL","ast":"856","atype":"A321","loc":"Gate T12","eng":100.0,"prod":53.0,"inb":"1802","outb":"1256","fa":"May 02, 16:44","delay":null,"sched_fa":"","ma":"May 02, 16:06","tarr":"May 02, 16:48","ms":"May 02, 16:48","mc":"May 02, 17:26","fd":"May 02, 17:38","dur":38.0,"ot":true,"resp":42.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1267.0,"transit_kind":"shift_break"},{"tl":"Abubakarr Sessay","al":"VS","mt":"INC","ws":"ATL","ast":"350UNK","atype":"A350","loc":"Gate F2","eng":100.0,"prod":50.0,"inb":"","outb":"104","fa":"May 02, 17:16","delay":null,"sched_fa":"","ma":"May 02, 16:32","tarr":"May 02, 16:32","ms":"May 02, 16:32","mc":"May 02, 17:12","fd":"May 02, 18:16","dur":40.0,"ot":true,"resp":0.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4293.0,"transit_kind":"shift_break"},{"tl":"Christian Lawson","al":"VS","mt":"INC","ws":"ATL","ast":"350UNK","atype":"A350","loc":"Gate F2","eng":100.0,"prod":61.0,"inb":"","outb":"104","fa":"May 02, 17:16","delay":null,"sched_fa":"","ma":"May 02, 16:33","tarr":"May 02, 16:35","ms":"May 02, 16:35","mc":"May 02, 17:08","fd":"May 02, 18:16","dur":33.0,"ot":true,"resp":2.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1344.0,"transit_kind":"shift_break"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3KK","atype":"737","loc":"Gate T12","eng":100.0,"prod":48.0,"inb":"2391","outb":"1777","fa":"May 01, 21:31","delay":null,"sched_fa":"","ma":"May 02, 02:01","tarr":"May 02, 03:54","ms":"May 02, 03:54","mc":"May 02, 04:36","fd":"May 02, 07:20","dur":42.0,"ot":true,"resp":113.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":5.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3MH","atype":"737","loc":"Gate T12","eng":100.0,"prod":112.0,"inb":"1539","outb":"2770","fa":"May 01, 20:46","delay":null,"sched_fa":"","ma":"May 02, 02:21","tarr":"May 02, 03:40","ms":"May 02, 03:40","mc":"May 02, 03:58","fd":"May 02, 05:57","dur":18.0,"ot":true,"resp":79.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":10.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"002","atype":"A319","loc":"Gate T13","eng":100.0,"prod":198.0,"inb":"2779","outb":"3222","fa":"May 01, 22:07","delay":null,"sched_fa":"","ma":"May 02, 02:01","tarr":"May 02, 03:39","ms":"May 02, 03:39","mc":"May 02, 03:49","fd":"May 02, 07:22","dur":10.0,"ot":true,"resp":98.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"873","atype":"A321","loc":"Gate T15","eng":100.0,"prod":243.0,"inb":"3212","outb":"1567","fa":"May 01, 21:46","delay":null,"sched_fa":"","ma":"May 02, 02:01","tarr":"May 02, 03:27","ms":"May 02, 03:27","mc":"May 02, 03:35","fd":"May 02, 08:36","dur":8.0,"ot":true,"resp":86.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":13.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"807","atype":"A319","loc":"Gate T15","eng":100.0,"prod":null,"inb":"1075","outb":"1753","fa":"May 01, 23:45","delay":null,"sched_fa":"","ma":"May 02, 02:21","tarr":"May 02, 03:30","ms":"May 02, 03:30","mc":"May 02, 03:30","fd":"May 02, 06:28","dur":null,"ot":true,"resp":69.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":13.0,"transit_kind":"intra"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"018","atype":"A319","loc":"Gate T14","eng":100.0,"prod":null,"inb":"3041","outb":"2132","fa":"May 01, 22:29","delay":null,"sched_fa":"","ma":"May 02, 02:21","tarr":"May 02, 03:16","ms":"May 02, 03:16","mc":"May 02, 03:17","fd":"May 02, 06:36","dur":1.0,"ot":true,"resp":55.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":12.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3HL","atype":"737","loc":"Gate T14","eng":100.0,"prod":225.0,"inb":"659","outb":"3190","fa":"May 01, 23:41","delay":null,"sched_fa":"","ma":"May 02, 02:01","tarr":"May 02, 03:05","ms":"May 02, 03:05","mc":"May 02, 03:14","fd":"May 02, 08:12","dur":9.0,"ot":true,"resp":64.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1325.0,"transit_kind":"shift_break"},{"tl":"Joshua Williams","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3NL","atype":"737","loc":"Gate T13","eng":100.0,"prod":null,"inb":"2749","outb":"3150","fa":"May 01, 23:40","delay":null,"sched_fa":"","ma":"May 02, 02:21","tarr":"May 02, 02:58","ms":"May 02, 02:58","mc":"May 02, 03:04","fd":"May 02, 06:12","dur":6.0,"ot":true,"resp":37.0,"hr":2,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4270.0,"transit_kind":"shift_break"},{"tl":"Tecari Brown","al":"AA","mt":"TNC","ws":"ATL","ast":"459","atype":"A321","loc":"Gate T12","eng":100.0,"prod":55.0,"inb":"1802","outb":"1805","fa":"May 01, 18:59","delay":null,"sched_fa":"","ma":"May 01, 15:43","tarr":"May 01, 19:05","ms":"May 01, 19:05","mc":"May 01, 19:41","fd":"May 01, 19:43","dur":36.0,"ot":true,"resp":202.0,"hr":19,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":145.0,"transit_kind":"intra"},{"tl":"Maurice Smith","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F4","eng":100.0,"prod":50.0,"inb":"109","outb":"110","fa":"May 01, 16:30","delay":null,"sched_fa":"","ma":"May 01, 15:12","tarr":"May 01, 17:40","ms":"May 01, 17:40","mc":"May 01, 18:20","fd":"May 01, 19:49","dur":40.0,"ot":true,"resp":148.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":5806.0,"transit_kind":"shift_break"},{"tl":"Christian Lawson","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F4","eng":100.0,"prod":78.0,"inb":"109","outb":"110","fa":"May 01, 16:30","delay":null,"sched_fa":"","ma":"May 01, 15:13","tarr":"May 01, 17:45","ms":"May 01, 17:46","mc":"May 01, 18:11","fd":"May 01, 19:49","dur":25.0,"ot":true,"resp":152.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1445.0,"transit_kind":"shift_break"},{"tl":"Bobbie Jackson III","al":"VS","mt":"INC","ws":"ATL","ast":"350UNK","atype":"A350","loc":"Gate F2","eng":100.0,"prod":null,"inb":"103","outb":"104","fa":"May 01, 15:16","delay":null,"sched_fa":"","ma":"May 01, 16:34","tarr":"May 01, 16:54","ms":"May 01, 17:25","mc":"May 01, 17:25","fd":"May 01, 18:29","dur":null,"ot":true,"resp":20.0,"hr":17,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1368.0,"transit_kind":"shift_break"},{"tl":"Gabriel Silva Mane","al":"VS","mt":"INC","ws":"ATL","ast":"350UNK","atype":"A350","loc":"Gate F2","eng":100.0,"prod":50.0,"inb":"103","outb":"104","fa":"May 01, 15:16","delay":null,"sched_fa":"","ma":"May 01, 16:34","tarr":"May 01, 16:34","ms":"May 01, 16:34","mc":"May 01, 17:14","fd":"May 01, 18:29","dur":40.0,"ot":true,"resp":0.0,"hr":16,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":null,"transit_kind":"first"},{"tl":"Tecari Brown","al":"AA","mt":"TNC","ws":"ATL","ast":"896","atype":"A321","loc":"Gate T14","eng":100.0,"prod":40.0,"inb":"3295","outb":"1256","fa":"May 01, 15:23","delay":null,"sched_fa":"","ma":"May 01, 15:43","tarr":"May 01, 15:51","ms":"May 01, 15:51","mc":"May 01, 16:40","fd":"May 01, 16:40","dur":49.0,"ot":true,"resp":8.0,"hr":15,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4277.0,"transit_kind":"shift_break"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3DH","atype":"737","loc":"Gate T14","eng":100.0,"prod":44.0,"inb":"659","outb":"1777","fa":"May 01, 00:20","delay":null,"sched_fa":"","ma":"May 01, 02:03","tarr":"May 01, 04:15","ms":"May 01, 04:15","mc":"May 01, 05:00","fd":"May 01, 07:14","dur":45.0,"ot":true,"resp":132.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":10.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"977","atype":"A321","loc":"Gate T13","eng":100.0,"prod":140.0,"inb":"3212","outb":"1567","fa":"Apr 30, 22:18","delay":null,"sched_fa":"","ma":"May 01, 02:31","tarr":"May 01, 04:24","ms":"May 01, 04:24","mc":"May 01, 04:39","fd":"May 01, 08:33","dur":15.0,"ot":true,"resp":113.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":4.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"032","atype":"A319","loc":"Gate T15","eng":100.0,"prod":240.0,"inb":"2779","outb":"3222","fa":"Apr 30, 21:53","delay":null,"sched_fa":"","ma":"May 01, 02:31","tarr":"May 01, 04:12","ms":"May 01, 04:12","mc":"May 01, 04:20","fd":"May 01, 07:28","dur":8.0,"ot":true,"resp":101.0,"hr":4,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":9.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3AC","atype":"737","loc":"Gate T12","eng":100.0,"prod":130.0,"inb":"2391","outb":"3190","fa":"Apr 30, 21:51","delay":null,"sched_fa":"","ma":"May 01, 02:03","tarr":"May 01, 03:50","ms":"May 01, 03:50","mc":"May 01, 04:05","fd":"May 01, 08:03","dur":15.0,"ot":true,"resp":107.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":6.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"029","atype":"A319","loc":"Gate T13","eng":100.0,"prod":188.0,"inb":"3041","outb":"2132","fa":"Apr 30, 22:07","delay":null,"sched_fa":"","ma":"May 01, 02:31","tarr":"May 01, 03:52","ms":"May 01, 03:52","mc":"May 01, 04:03","fd":"May 01, 06:26","dur":11.0,"ot":true,"resp":81.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":6.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3JU","atype":"737","loc":"Gate T15","eng":100.0,"prod":69.0,"inb":"2749","outb":"3150","fa":"Apr 30, 23:43","delay":null,"sched_fa":"","ma":"May 01, 02:31","tarr":"May 01, 03:17","ms":"May 01, 03:17","mc":"May 01, 03:46","fd":"May 01, 06:13","dur":29.0,"ot":true,"resp":46.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1333.0,"transit_kind":"shift_break"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"748","atype":"A319","loc":"Gate T10","eng":100.0,"prod":null,"inb":"1075","outb":"1753","fa":"May 01, 00:09","delay":null,"sched_fa":"","ma":"May 01, 02:03","tarr":"May 01, 03:36","ms":"May 01, 03:36","mc":"May 01, 03:44","fd":"May 01, 06:59","dur":8.0,"ot":true,"resp":93.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":10.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3DV","atype":"737","loc":"Gate T14","eng":100.0,"prod":163.0,"inb":"1539","outb":"2770","fa":"Apr 30, 21:20","delay":null,"sched_fa":"","ma":"May 01, 02:03","tarr":"May 01, 03:14","ms":"May 01, 03:14","mc":"May 01, 03:26","fd":"May 01, 05:58","dur":12.0,"ot":true,"resp":71.0,"hr":3,"mo":"May 2026","mo_idx":24317,"proper":true,"transit":1362.0,"transit_kind":"shift_break"},{"tl":"Komna-Ouadja Gbandi","al":"SK","mt":"CAT","ws":"ATL","ast":"Unknown A3","atype":"A330","loc":"UNASSIGNED","eng":100.0,"prod":35.0,"inb":"929","outb":"930","fa":"Apr 30, 17:14","delay":null,"sched_fa":"","ma":"Apr 30, 15:36","tarr":"Apr 30, 17:26","ms":"Apr 30, 17:26","mc":"Apr 30, 18:23","fd":"Apr 30, 19:46","dur":57.0,"ot":true,"resp":110.0,"hr":17,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":2812.0,"transit_kind":"shift_break"},{"tl":"Alexander Wayne","al":"SK","mt":"CAT","ws":"ATL","ast":"Unknown A3","atype":"A330","loc":"UNASSIGNED","eng":100.0,"prod":50.0,"inb":"929","outb":"930","fa":"Apr 30, 17:14","delay":null,"sched_fa":"","ma":"Apr 30, 15:30","tarr":"Apr 30, 17:35","ms":"Apr 30, 17:35","mc":"Apr 30, 18:15","fd":"Apr 30, 19:46","dur":40.0,"ot":true,"resp":125.0,"hr":17,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":2785.0,"transit_kind":"shift_break"},{"tl":"Bobbie Jackson III","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F4","eng":100.0,"prod":155.0,"inb":"","outb":"110","fa":"Apr 30, 18:39","delay":null,"sched_fa":"","ma":"Apr 30, 16:39","tarr":"Apr 30, 16:55","ms":"Apr 30, 17:53","mc":"Apr 30, 18:06","fd":"Apr 30, 19:39","dur":13.0,"ot":true,"resp":16.0,"hr":17,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":4275.0,"transit_kind":"shift_break"},{"tl":"Issa Camara","al":"AA","mt":"TNC","ws":"ATL","ast":"157","atype":"A321","loc":"Gate T10","eng":100.0,"prod":65.0,"inb":"1802","outb":"1805","fa":"Apr 30, 17:18","delay":null,"sched_fa":"","ma":"Apr 30, 15:06","tarr":"Apr 30, 17:22","ms":"Apr 30, 17:22","mc":"Apr 30, 17:53","fd":"Apr 30, 18:08","dur":31.0,"ot":true,"resp":136.0,"hr":17,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":62.0,"transit_kind":"intra"},{"tl":"Christian Lawson","al":"VS","mt":"INC","ws":"ATL","ast":"330UNK","atype":"A330","loc":"Gate F4","eng":100.0,"prod":63.0,"inb":"","outb":"110","fa":"Apr 30, 18:39","delay":null,"sched_fa":"","ma":"Apr 30, 17:08","tarr":"Apr 30, 17:08","ms":"Apr 30, 17:08","mc":"Apr 30, 17:40","fd":"Apr 30, 19:39","dur":32.0,"ot":true,"resp":0.0,"hr":17,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":2833.0,"transit_kind":"shift_break"},{"tl":"Abdou Diakhate","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":104.0,"inb":"","outb":"104","fa":"Apr 30, 17:06","delay":null,"sched_fa":"","ma":"Apr 30, 16:32","tarr":"Apr 30, 16:37","ms":"Apr 30, 16:37","mc":"Apr 30, 16:56","fd":"Apr 30, 18:06","dur":19.0,"ot":true,"resp":5.0,"hr":16,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":1409.0,"transit_kind":"shift_break"},{"tl":"Claudette St. Juste","al":"VS","mt":"INC","ws":"ATL","ast":"A350_2","atype":"A350","loc":"Gate F2","eng":100.0,"prod":101.0,"inb":"","outb":"104","fa":"Apr 30, 17:06","delay":null,"sched_fa":"","ma":"Apr 30, 16:08","tarr":"Apr 30, 16:08","ms":"Apr 30, 16:10","mc":"Apr 30, 16:30","fd":"Apr 30, 18:06","dur":20.0,"ot":true,"resp":0.0,"hr":16,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":1399.0,"transit_kind":"shift_break"},{"tl":"Issa Camara","al":"AA","mt":"TNC","ws":"ATL","ast":"897","atype":"A321","loc":"Gate T14","eng":100.0,"prod":57.0,"inb":"3295","outb":"1256","fa":"Apr 30, 15:41","delay":null,"sched_fa":"","ma":"Apr 30, 15:05","tarr":"Apr 30, 15:45","ms":"Apr 30, 15:45","mc":"Apr 30, 16:20","fd":"Apr 30, 16:40","dur":35.0,"ot":true,"resp":40.0,"hr":15,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":1342.0,"transit_kind":"shift_break"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"584","atype":"A321","loc":"Gate T15","eng":100.0,"prod":116.0,"inb":"3212","outb":"1567","fa":"Apr 30, 00:03","delay":null,"sched_fa":"","ma":"Apr 30, 03:08","tarr":"Apr 30, 04:46","ms":"Apr 30, 04:46","mc":"Apr 30, 05:04","fd":"Apr 30, 08:25","dur":18.0,"ot":true,"resp":98.0,"hr":4,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":14.0,"transit_kind":"intra"},{"tl":"Walter Tardieff III","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"3FD","atype":"737","loc":"Gate T12","eng":100.0,"prod":152.0,"inb":"2749","outb":"3190","fa":"Apr 30, 00:29","delay":null,"sched_fa":"","ma":"Apr 30, 03:08","tarr":"Apr 30, 04:19","ms":"Apr 30, 04:19","mc":"Apr 30, 04:32","fd":"Apr 30, 07:59","dur":13.0,"ot":true,"resp":71.0,"hr":4,"mo":"Apr 2026","mo_idx":24316,"proper":true,"transit":0.0,"transit_kind":"intra"},{"tl":"Khanh Bui","al":"AA","mt":"GAT_ORIG","ws":"ATL","ast":"027","atype":"A319","loc":"Gate T14","eng":1
