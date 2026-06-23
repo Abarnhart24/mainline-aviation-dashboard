@@ -410,11 +410,52 @@ function renderCharts(){
   });
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ── INIT — load from data/hub_data.json if available ─────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
-  renderPanels();
-  renderCharts();
-  document.getElementById('stamp').textContent='ATL · Jan–May 2026';
+  fetch('data/hub_data.json?v='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(json){
+      // Merge JSON into CITIES / AIRLINES globals
+      if(json.cities){
+        Object.keys(json.cities).forEach(function(ck){
+          var jc=json.cities[ck];
+          if(!CITIES[ck]) CITIES[ck]={name:jc.name,airport:jc.airport,active:jc.active,airlines:{},labor:null};
+          CITIES[ck].active=jc.active;
+          CITIES[ck].labor=jc.labor||null;
+          if(jc.airlines){
+            Object.keys(jc.airlines).forEach(function(ak){
+              var ja=jc.airlines[ak];
+              if(!CITIES[ck].airlines[ak]) CITIES[ck].airlines[ak]={};
+              CITIES[ck].airlines[ak].label=ja.label;
+              CITIES[ck].airlines[ak].color=ja.color;
+              CITIES[ck].airlines[ak].missions=ja.missions||0;
+              CITIES[ck].airlines[ak].ot=ja.ontime_pct||null;
+              CITIES[ck].airlines[ak].months=(ja.months||[]).map(function(m){
+                return{m:m.month.substring(0,3),rev:m.revenue,food:m.food_cost};
+              });
+              // Keep AIRLINES in sync for chart
+              if(!AIRLINES[ak]) AIRLINES[ak]={};
+              AIRLINES[ak].label=ja.label;
+              AIRLINES[ak].color=ja.color;
+              AIRLINES[ak].missions=ja.missions||0;
+              AIRLINES[ak].ot=ja.ontime_pct||null;
+              AIRLINES[ak].months=CITIES[ck].airlines[ak].months;
+            });
+          }
+        });
+        var meta=json._meta||{};
+        var updated=meta.last_updated||'';
+        document.getElementById('stamp').textContent='Updated: '+updated;
+      }
+    })
+    .catch(function(){
+      // No JSON file yet — use hardcoded data, that's fine
+      document.getElementById('stamp').textContent='ATL · Jan–May 2026';
+    })
+    .finally(function(){
+      renderPanels();
+      renderCharts();
+    });
 });
 </script>
 </body>
