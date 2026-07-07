@@ -4,13 +4,10 @@ import { prisma } from "@/lib/prisma";
 
 const BASE = "https://secure6.saashr.com/ta/rest";
 const COMPANY = process.env.UKG_COMPANY ?? "6176876";
-// Internal company ID (cid) from the JWT — used for v2 endpoints.
-// This differs from the login company ID (6176876).
 const INTERNAL_CID = process.env.UKG_INTERNAL_CID ?? "100695260";
 const API_KEY = process.env.UKG_API_KEY!;
 
 // Cost center ID → department name for the 6 Mainline Aviation - AA sub-departments.
-// Derived by cross-referencing UKG time entries against the saved labor report.
 const AA_COST_CENTER_MAP = new Map<number, string>([
   [55951086058, "Assembly"],
   [60230517464, "Food Production"],
@@ -19,25 +16,17 @@ const AA_COST_CENTER_MAP = new Map<number, string>([
   [60230716237, "Security"],
   [55951086057, "Transportation"],
 ]);
-const AA_COST_CENTER_IDS = new Set(AA_COST_CENTER_MAP.keys());
 
-// In-process cache keyed by weekStart. Survives across requests until the
-// server restarts or the TTL expires. Makes repeat "Fetch Payroll" calls instant.
-type CacheEntry = {
-  entries: PayrollEntry[];
-  weekEnd: string;
-  count: number;
-  fetchedAt: number;
-};
+// In-process cache keyed by date string. 20-min TTL.
+type CacheEntry = { entries: PayrollEntry[]; count: number; fetchedAt: number };
 const teCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 20 * 60 * 1000; // 20 minutes
+const CACHE_TTL_MS = 20 * 60 * 1000;
 
 type PayrollEntry = {
   empCode: string;
   name: string;
   position: string;
-  regHours: number;
-  otHours: number;
+  hours: number; // total hours for the day (OT calculated at week-aggregate level)
 };
 
 async function ukgLogin(): Promise<string> {
@@ -75,10 +64,8 @@ type UKGEmployee = {
 };
 
 type UKGTimeEntry = {
-  total: number;       // raw punch duration in ms
-  calc_total?: number; // payroll-calculated duration in ms (more accurate)
-  type?: string;
-  pay_category?: { id: number };
+  total: number;
+  calc_total?: number;
   cost_centers?: { index: number; value: { id: number } }[];
 };
 
@@ -87,133 +74,116 @@ type UKGTimeEntrySet = {
   time_entries: UKGTimeEntry[];
 };
 
+// Core fetch+save logic — shared by the HTTP route and the cron script
+export async function fetchAndSaveDay(
+  date: string,
+  bust = false
+): Promise<{ entries: PayrollEntry[]; count: number; cached: boolean }> {
+  const cached = teCache.get(date);
+  if (cached && !bust && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+    return { entries: cached.entries, count: cached.count, cached: true };
+  }
+
+  const token = await ukgLogin();
+  const headers = {
+    "Content-Type": "application/json",
+    "Api-Key": API_KEY,
+    "Authorization": `Bearer ${token}`,
+    "Accept": "application/json",
+  };
+
+  // Single-day range: start_date = end_date = date
+  const teUrl = `${BASE}/v2/companies/${INTERNAL_CID}/time-entries?start_date=${date}&end_date=${date}`;
+  const [empRes, teRes] = await Promise.all([
+    fetch(`${BASE}/v1/employees?limit=500&status=Active`, { headers, cache: "no-store" }),
+    fetch(teUrl, { headers, cache: "no-store" }),
+  ]);
+
+  if (!teRes.ok) {
+    const msg = await teRes.text().catch(() => String(teRes.status));
+    throw new Error(`UKG time entries failed (${teRes.status}): ${msg.slice(0, 300)}`);
+  }
+
+  const [empData, teData] = await Promise.all([
+    empRes.json() as Promise<{ employees?: UKGEmployee[] }>,
+    teRes.json() as Promise<{ time_entry_sets?: UKGTimeEntrySet[] }>,
+  ]);
+
+  // Build account_id → employee map
+  const empMap = new Map<number, { name: string; employeeId: string; position: string }>();
+  for (const emp of empData.employees ?? []) {
+    empMap.set(emp.account_id, {
+      name: emp.full_name,
+      employeeId: emp.employee_id,
+      position: emp.job_title ?? emp.position ?? "",
+    });
+  }
+
+  // Aggregate hours — AA cost center employees only
+  const totals = new Map<number, number>();
+  const deptMap = new Map<number, string>();
+  for (const set of teData.time_entry_sets ?? []) {
+    const accId = set.employee.account_id;
+    let dept: string | undefined;
+    for (const e of set.time_entries) {
+      for (const cc of e.cost_centers ?? []) {
+        const d = AA_COST_CENTER_MAP.get(cc.value?.id);
+        if (d) { dept = d; break; }
+      }
+      if (dept) break;
+    }
+    if (!dept) continue;
+
+    deptMap.set(accId, dept);
+    const dayTotal = set.time_entries.reduce((sum, e) => sum + msToHours(e.calc_total ?? e.total), 0);
+    totals.set(accId, (totals.get(accId) ?? 0) + dayTotal);
+  }
+
+  const entries: PayrollEntry[] = Array.from(totals.entries())
+    .filter(([, h]) => h > 0)
+    .map(([accId, hours]) => {
+      const emp = empMap.get(accId);
+      return {
+        empCode: emp?.employeeId ?? String(accId),
+        name: emp?.name ?? `Employee ${accId}`,
+        position: deptMap.get(accId) ?? emp?.position ?? "",
+        hours: Math.round(hours * 100) / 100,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Save one record per employee per day
+  const d = new Date(date + "T00:00:00Z");
+  for (const e of entries) {
+    const emp = await prisma.employee.upsert({
+      where: { employeeId: e.empCode },
+      update: { name: e.name, position: e.position || null },
+      create: { employeeId: e.empCode, name: e.name, position: e.position || null },
+    });
+    await prisma.payrollEntry.upsert({
+      where: { employeeId_date: { employeeId: emp.id, date: d } },
+      update: { position: e.position, regHours: e.hours, otHours: 0 },
+      create: { employeeId: emp.id, date: d, position: e.position, regHours: e.hours, otHours: 0 },
+    });
+  }
+
+  teCache.set(date, { entries, count: entries.length, fetchedAt: Date.now() });
+  return { entries, count: entries.length, cached: false };
+}
+
 export async function POST(req: Request) {
-  // Admin only
   const store = await cookies();
   if (store.get("role")?.value !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
-  const body = await req.json() as { weekStart: string; bust?: boolean };
-  const { weekStart, bust } = body;
-  if (!weekStart) return NextResponse.json({ error: "weekStart required" }, { status: 400 });
-
-  // Build date range (Mon–Sun)
-  const start = new Date(weekStart + "T00:00:00Z");
-  const end = new Date(start.getTime() + 6 * 86_400_000);
-  const endStr = end.toISOString().slice(0, 10);
-
-  // Return cached result if fresh and not busting
-  const cached = teCache.get(weekStart);
-  if (cached && !bust && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
-    return NextResponse.json({
-      entries: cached.entries,
-      weekStart,
-      weekEnd: cached.weekEnd,
-      count: cached.count,
-      cached: true,
-    });
-  }
+  const body = await req.json() as { date?: string; bust?: boolean };
+  const date = body.date ?? new Date().toISOString().slice(0, 10);
+  const bust = body.bust ?? false;
 
   try {
-    const token = await ukgLogin();
-    const headers = {
-      "Content-Type": "application/json",
-      "Api-Key": API_KEY,
-      "Authorization": `Bearer ${token}`,
-      "Accept": "application/json",
-    };
-
-    // Fetch employees and time entries in parallel to save time
-    const teUrl = `${BASE}/v2/companies/${INTERNAL_CID}/time-entries?start_date=${weekStart}&end_date=${endStr}`;
-    const [empRes, teRes] = await Promise.all([
-      fetch(`${BASE}/v1/employees?limit=500&status=Active`, { headers, cache: "no-store" }),
-      fetch(teUrl, { headers, cache: "no-store" }),
-    ]);
-
-    if (!teRes.ok) {
-      const msg = await teRes.text().catch(() => String(teRes.status));
-      return NextResponse.json(
-        { error: `UKG time entries failed (${teRes.status}): ${msg.slice(0, 300)}` },
-        { status: 502 }
-      );
-    }
-
-    const [empData, teData] = await Promise.all([
-      empRes.json() as Promise<{ employees?: UKGEmployee[] }>,
-      teRes.json() as Promise<{ time_entry_sets?: UKGTimeEntrySet[] }>,
-    ]);
-
-    // Build account_id → employee details map
-    const empMap = new Map<number, { name: string; employeeId: string; position: string }>();
-    for (const emp of empData.employees ?? []) {
-      empMap.set(emp.account_id, {
-        name: emp.full_name,
-        employeeId: emp.employee_id,
-        position: emp.job_title ?? emp.position ?? "",
-      });
-    }
-
-    // Aggregate hours — only for employees in AA cost centers
-    const totals = new Map<number, number>();
-    const deptMap = new Map<number, string>(); // account_id → department name
-    for (const set of teData.time_entry_sets ?? []) {
-      const accId = set.employee.account_id;
-      let dept: string | undefined;
-      for (const e of set.time_entries) {
-        for (const cc of e.cost_centers ?? []) {
-          const d = AA_COST_CENTER_MAP.get(cc.value?.id);
-          if (d) { dept = d; break; }
-        }
-        if (dept) break;
-      }
-      if (!dept) continue;
-
-      deptMap.set(accId, dept);
-      const current = totals.get(accId) ?? 0;
-      const weekTotal = set.time_entries.reduce((sum, e) => {
-        const ms = e.calc_total ?? e.total;
-        return sum + msToHours(ms);
-      }, 0);
-      totals.set(accId, current + weekTotal);
-    }
-
-    // Build response — only employees with hours
-    const entries: PayrollEntry[] = Array.from(totals.entries())
-      .filter(([, h]) => h > 0)
-      .map(([accId, totalHours]) => {
-        const emp = empMap.get(accId);
-        const regHours = totalHours <= 40 ? totalHours : 40;
-        const otHours = totalHours > 40 ? Math.round((totalHours - 40) * 100) / 100 : 0;
-        return {
-          empCode: emp?.employeeId ?? String(accId),
-          name: emp?.name ?? `Employee ${accId}`,
-          position: deptMap.get(accId) ?? emp?.position ?? "",
-          regHours: Math.round(regHours * 100) / 100,
-          otHours,
-        };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    // Auto-save to DB
-    const ws = new Date(weekStart + "T00:00:00Z");
-    for (const e of entries) {
-      const emp = await prisma.employee.upsert({
-        where: { employeeId: e.empCode },
-        update: { name: e.name, position: e.position || null },
-        create: { employeeId: e.empCode, name: e.name, position: e.position || null },
-      });
-      await prisma.payrollEntry.upsert({
-        where: { employeeId_weekStart: { employeeId: emp.id, weekStart: ws } },
-        update: { position: e.position, regHours: e.regHours, otHours: e.otHours },
-        create: { employeeId: emp.id, weekStart: ws, position: e.position, regHours: e.regHours, otHours: e.otHours },
-      });
-    }
-
-    // Store in cache
-    teCache.set(weekStart, { entries, weekEnd: endStr, count: entries.length, fetchedAt: Date.now() });
-
-    return NextResponse.json({ entries, weekStart, weekEnd: endStr, count: entries.length, saved: true });
+    const result = await fetchAndSaveDay(date, bust);
+    return NextResponse.json({ ...result, date, saved: !result.cached });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ error: msg }, { status: 500 });

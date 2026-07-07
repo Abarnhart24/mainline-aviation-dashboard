@@ -1,0 +1,254 @@
+// Sullivan Road Billing — data model
+// Codes are the stable backbone; prices are versioned by effective date/cycle.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Airline {
+  id              Int      @id @default(autoincrement())
+  code            String   @unique // ET, AA, SAS, VA
+  name            String
+  customerId      String? // e.g. C0594 (ET)
+  terms           String? // Net 30
+  intacctLocation String? // GG10M2
+  intacctDept     String? // 6001
+  invoicePrefix   String? // ET, AA, SAS, VA
+  bumpRule        String   @default("none") // none | bill_used | bill_loaded
+  createdAt       DateTime @default(now())
+
+  billingCodes  BillingCode[]
+  cycles        Cycle[]
+  priceVersions PriceVersion[]
+  flights       Flight[]
+  invoices      Invoice[]
+  scheduled     ScheduledFlight[]
+}
+
+model ScheduledFlight {
+  id        Int     @id @default(autoincrement())
+  airline   Airline @relation(fields: [airlineId], references: [id])
+  airlineId Int
+  flightNo  String
+  route     String // e.g. ATL-ADD
+  aircraft  String?
+
+  @@unique([airlineId, flightNo])
+}
+
+model BillingCode {
+  id              Int     @id @default(autoincrement())
+  airline         Airline @relation(fields: [airlineId], references: [id])
+  airlineId       Int
+  code            String // stable key (spec/service/internal code)
+  description     String?
+  category        String  @default("meal") // meal | special_meal | beverage | service | charge | bump
+  serviceClass    String? // BC/EY or J/W/Y/Crew
+  unit            String?
+  glAccount       String? // 411001 / 413909
+  glBucket        String  @default("food") // food | service
+  aircraft        String? // set when this code/charge is specific to one aircraft type
+  intacctLocation String?
+  intacctDept     String?
+  loadingRule     String? // auto-fill rule: fix:N | per_pax:N | pct_up:N | pct_down:N | pct_near:N | scale:IC-27 | scale:IC-29 | manual
+  rawCost         Float? // food/raw-material cost per unit (for margin modeling)
+  laborCost       Float? // labor cost per unit (man-minutes priced)
+
+  prices       Price[]
+  flightLines  FlightLine[]
+  bumpLines    BumpLine[]
+  invoiceLines InvoiceLine[]
+
+  @@unique([airlineId, code])
+}
+
+model Cycle {
+  id             Int       @id @default(autoincrement())
+  airline        Airline   @relation(fields: [airlineId], references: [id])
+  airlineId      Int
+  name           String // "Cycle 2", "J Class Summer 2026"...
+  effectiveStart DateTime
+  effectiveEnd   DateTime?
+
+  priceVersions PriceVersion[]
+
+  @@unique([airlineId, name])
+}
+
+model PriceVersion {
+  id             Int       @id @default(autoincrement())
+  airline        Airline   @relation(fields: [airlineId], references: [id])
+  airlineId      Int
+  cycle          Cycle?    @relation(fields: [cycleId], references: [id])
+  cycleId        Int?
+  label          String
+  effectiveStart DateTime
+  effectiveEnd   DateTime?
+  sourceFile     String?
+
+  prices Price[]
+
+  @@index([airlineId, effectiveStart])
+}
+
+model Price {
+  id             Int          @id @default(autoincrement())
+  priceVersion   PriceVersion @relation(fields: [priceVersionId], references: [id])
+  priceVersionId Int
+  billingCode    BillingCode  @relation(fields: [billingCodeId], references: [id])
+  billingCodeId  Int
+  unitPrice      Float
+
+  @@unique([priceVersionId, billingCodeId])
+}
+
+model Flight {
+  id          Int      @id @default(autoincrement())
+  airline     Airline  @relation(fields: [airlineId], references: [id])
+  airlineId   Int
+  flightNo    String
+  serviceDate DateTime
+  route       String?
+  aircraft    String?
+  status      String   @default("draft") // draft | pending | verified | invoiced
+  notes       String?
+  bumpShort   Boolean  @default(false) // operator flag: bump cart ran short (demand exceeded load)
+  verifiedAt  DateTime?
+  verifiedBy  String?
+  signedDocName     String? // stored filename of the uploaded signed delivery note
+  signedDocOriginal String?
+  signedDocAt       DateTime?
+  // Electronic signatures on the digital delivery note
+  sigCatererName    String?
+  sigCatererData    String? // base64 PNG
+  sigCatererAt      DateTime?
+  sigCrewName       String?
+  sigCrewData       String?
+  sigCrewAt         DateTime?
+  sigStationName    String?
+  sigStationData    String?
+  sigStationAt      DateTime?
+  sigBypassed       Boolean  @default(false)
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id])
+  invoiceId   Int?
+  createdAt   DateTime @default(now())
+
+  lines        FlightLine[]
+  bumpLines    BumpLine[]
+  specialMeals SpecialMeal[]
+  paxCounts    PaxCount[]
+  invoiceLines InvoiceLine[]
+}
+
+// Passenger counts per class — enables true take rate (consumed ÷ pax) and
+// forecast-accuracy modeling (prelim counts vs. final vs. actual loaded).
+model PaxCount {
+  id           Int    @id @default(autoincrement())
+  flight       Flight @relation(fields: [flightId], references: [id])
+  flightId     Int
+  serviceClass String // BC, EY, J, W, Y, Crew, C, M, P, K…
+  interval     String @default("final") // prelim72 | prelim48 | prelim24 | final
+  count        Int
+
+  @@unique([flightId, serviceClass, interval])
+}
+
+model SpecialMeal {
+  id           Int    @id @default(autoincrement())
+  flight       Flight @relation(fields: [flightId], references: [id])
+  flightId     Int
+  mealType     String // GFML, SPML, LCML, AVML, FPML, MOML, DBML, KSML, BBML…
+  serviceClass String // BC | EY
+  leg          Int    // 1, 2, 3 (service legs)
+  qty          Float
+
+  @@unique([flightId, mealType, serviceClass, leg])
+}
+
+model FlightLine {
+  id            Int         @id @default(autoincrement())
+  flight        Flight      @relation(fields: [flightId], references: [id])
+  flightId      Int
+  billingCode   BillingCode @relation(fields: [billingCodeId], references: [id])
+  billingCodeId Int
+  qty           Float
+
+  @@unique([flightId, billingCodeId])
+}
+
+model BumpLine {
+  id            Int         @id @default(autoincrement())
+  flight        Flight      @relation(fields: [flightId], references: [id])
+  flightId      Int
+  billingCode   BillingCode @relation(fields: [billingCodeId], references: [id])
+  billingCodeId Int
+  loadedQty     Float       @default(0)
+  usedQty       Float       @default(0)
+  // wasted = loadedQty - usedQty (computed in app)
+
+  @@unique([flightId, billingCodeId])
+}
+
+model Invoice {
+  id           Int      @id @default(autoincrement())
+  airline      Airline  @relation(fields: [airlineId], references: [id])
+  airlineId    Int
+  number       String   @unique
+  periodStart  DateTime
+  periodEnd    DateTime
+  status       String   @default("draft") // draft | issued | exported
+  total        Float    @default(0)
+  foodTotal    Float    @default(0)
+  serviceTotal Float    @default(0)
+  createdAt    DateTime @default(now())
+
+  flights Flight[]
+  lines   InvoiceLine[]
+}
+
+model InvoiceLine {
+  id            Int         @id @default(autoincrement())
+  invoice       Invoice     @relation(fields: [invoiceId], references: [id])
+  invoiceId     Int
+  flight        Flight?     @relation(fields: [flightId], references: [id])
+  flightId      Int?
+  billingCode   BillingCode @relation(fields: [billingCodeId], references: [id])
+  billingCodeId Int
+  qty           Float
+  unitPrice     Float
+  amount        Float
+  glAccount     String?
+  glBucket      String?
+}
+
+// ── Payroll ──────────────────────────────────────────────────────────────────
+
+model Employee {
+  id         Int      @id @default(autoincrement())
+  employeeId String   @unique // e.g. "EMP-001"
+  name       String
+  position   String?  // default position code
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  entries PayrollEntry[]
+}
+
+model PayrollEntry {
+  id         Int      @id @default(autoincrement())
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employeeId Int
+  date       DateTime // The specific work date (UTC midnight)
+  position   String
+  regHours   Float    @default(0)
+  otHours    Float    @default(0)
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, date])
+}
