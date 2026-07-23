@@ -167,8 +167,18 @@ def springshot_login(email: str, password: str) -> requests.Session:
 
 # ── Step 2: Fetch missions ────────────────────────────────────────────────────
 def fetch_missions(session: requests.Session):
-    end   = datetime.now()
-    start = end - timedelta(days=30)
+    # Normally a rolling 30-day window ending now. For one-off backfills (e.g. after
+    # an outage), override with BACKFILL_START/BACKFILL_END env vars (YYYY-MM-DD).
+    backfill_start = os.environ.get("BACKFILL_START", "").strip()
+    backfill_end   = os.environ.get("BACKFILL_END", "").strip()
+
+    if backfill_start and backfill_end:
+        start = datetime.strptime(backfill_start, "%Y-%m-%d")
+        end   = datetime.strptime(backfill_end, "%Y-%m-%d")
+        log(f"Using manual backfill range: {backfill_start} → {backfill_end}")
+    else:
+        end   = datetime.now()
+        start = end - timedelta(days=30)
     fmt   = lambda d: d.strftime("%Y-%m-%dT%H:%M:%S")
 
     url = SPRINGSHOT_BASE + API_PATTERN.format(start=fmt(start), end=fmt(end))

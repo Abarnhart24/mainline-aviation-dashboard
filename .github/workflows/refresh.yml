@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: '0 5 * * *'
   workflow_dispatch:
+    inputs:
+      backfill_start:
+        description: 'Backfill start date (YYYY-MM-DD, optional — leave blank for normal 30-day window)'
+        required: false
+        type: string
+      backfill_end:
+        description: 'Backfill end date (YYYY-MM-DD, optional — leave blank for normal 30-day window)'
+        required: false
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -32,6 +41,8 @@ jobs:
         env:
           SPRINGSHOT_EMAIL: ${{ secrets.SPRINGSHOT_EMAIL }}
           SPRINGSHOT_PASSWORD: ${{ secrets.SPRINGSHOT_PASSWORD }}
+          BACKFILL_START: ${{ github.event.inputs.backfill_start }}
+          BACKFILL_END: ${{ github.event.inputs.backfill_end }}
         run: python automation/github_action_refresh.py
 
       - name: Commit & push refreshed dashboard
