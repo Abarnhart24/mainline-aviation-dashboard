@@ -246,23 +246,33 @@ def missions_to_csv(missions):
 def merge_and_rebuild(csv_text: str):
     sys.path.insert(0, str(AUTO_DIR))
     import rebuild_dashboard as rd
-    rd.TEST_DIR       = REPO_ROOT
-    rd.MASTER_PATH    = MASTER_PATH
-    rd.DASHBOARD_PATH = DASHBOARD_PATH
-    rd.BACKUP_DIR     = BACKUP_DIR
 
-    # Write incoming CSV to a temp file
+    # Write incoming CSV to a temp file, then read rows the same way rebuild_dashboard.py does
+    # (utf-8-sig, so the BOM missions_to_csv() prepends is handled consistently).
     tmp_csv = REPO_ROOT / "MissionsSummary_latest.csv"
     tmp_csv.write_text(csv_text, encoding="utf-8")
-
-    added, skipped, total = rd.merge_incoming(tmp_csv)
+    incoming = rd.read_csv(tmp_csv)
     tmp_csv.unlink(missing_ok=True)
 
-    master_rows = list(csv.DictReader(open(MASTER_PATH, encoding="utf-8-sig")))
-    enriched = rd.enrich(master_rows)
+    master = rd.read_csv(MASTER_PATH) if MASTER_PATH.exists() else []
+    before = len(master)
+
+    merged = rd.merge_incoming(master, incoming)
+    added = len(merged) - before
+    skipped = len(incoming) - added
+
+    enriched = rd.enrich(merged)
     log(f"Enriched {len(enriched)} master records.")
     rd.rewrite_dashboard(enriched)
-    return added, skipped, total
+
+    # Persist merged rows back to the master CSV (mirrors rebuild_dashboard.py's own __main__).
+    fieldnames = list(incoming[0].keys()) if incoming else list(master[0].keys())
+    with open(MASTER_PATH, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(merged)
+
+    return added, skipped, len(merged)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
