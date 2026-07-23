@@ -1,27 +1,40 @@
-﻿# Credentials - never commit these
-automation/github_config.py
-automation/azure_config.py
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.env
+venv/
+.venv/
 
-# Data files
-*.csv
-
-# Logs
-automation/refresh.log
-automation/backups/
-
-# Browser download cache / Excel Online artifacts
-*.download
-*.crdownload
-
-# OS junk
-.DS_Store
-Thumbs.db
-desktop.ini
+# Terraform state (sensitive)
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform.lock.hcl
 
 # Excel temp files
 ~$*.xlsx
 ~$*.xls
+.~lock.*#
 
-# Python cache
-__pycache__/
-*.pyc
+# Browser cache artifacts (from viewing files in Office/Excel Online)
+*.js.download
+*_files/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets — never commit these
+*.pem
+*.key
+secrets.json
+.env.local
+
+# Large PDF source files — stored in SharePoint, not Git
+Delivery Notes/
+*.pdf
+
+# OCR temp files
+*.ppm
