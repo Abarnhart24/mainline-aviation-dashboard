@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mainline Aviation — BI Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">✈</span>
+      <span class="logo-text">Mainline Aviation</span>
+      <span class="logo-sub">BI Dashboard</span>
+    </div>
+    <div class="header-right">
+      <span id="last-updated">Loading...</span>
+      <button class="refresh-btn" onclick="loadAllData()">↻ Refresh</button>
+    </div>
+  </div>
+</header>
+
+<nav class="airline-tabs">
+  <button class="tab active" data-airline="sas" onclick="switchAirline('sas', this)">SAS</button>
+  <button class="tab" data-airline="et" onclick="switchAirline('et', this)">Ethiopian</button>
+  <button class="tab coming-soon" disabled>American Airlines</button>
+  <button class="tab coming-soon" disabled>Virgin Atlantic</button>
+</nav>
+
+<main id="main-content">
+
+  <!-- KPI Cards -->
+  <section class="kpi-row" id="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value" id="kpi-revenue">—</div>
+      <div class="kpi-sub" id="kpi-revenue-sub"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Cost</div>
+      <div class="kpi-value" id="kpi-cost">—</div>
+      <div class="kpi-sub" id="kpi-cost-sub"></div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">Gross Profit</div>
+      <div class="kpi-value" id="kpi-profit">—</div>
+      <div class="kpi-sub" id="kpi-margin-sub"></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Flights Tracked</div>
+      <div class="kpi-value" id="kpi-flights">—</div>
+      <div class="kpi-sub" id="kpi-flights-sub"></div>
+    </div>
+  </section>
+
+  <!-- Charts Row -->
+  <section class="charts-row">
+    <div class="chart-card wide">
+      <div class="chart-title">Revenue vs Cost vs Profit — by Month</div>
+      <canvas id="monthlyChart" height="90"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Margin % by Month</div>
+      <canvas id="marginChart" height="160"></canvas>
+    </div>
+  </section>
+
+  <!-- Pax Load Factors -->
+  <section class="charts-row">
+    <div class="chart-card">
+      <div class="chart-title">Avg Pax Load — Business Class</div>
+      <canvas id="bcChart" height="160"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Avg Pax Load — Premium Economy</div>
+      <canvas id="pyChart" height="160"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Avg Pax Load — Economy</div>
+      <canvas id="eyChart" height="160"></canvas>
+    </div>
+  </section>
+
+  <!-- Flight Table -->
+  <section class="table-section">
+    <div class="table-header">
+      <div class="table-title">All Flights</div>
+      <div class="table-controls">
+        <input type="text" id="search-input" placeholder="Search date, flight..." oninput="filterTable()" />
+        <select id="month-filter" onchange="filterTable()">
+          <option value="">All Months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrapper">
+      <table id="flight-table">
+        <thead>
+          <tr>
+            <th onclick="sortTable('date')">Date ↕</th>
+            <th onclick="sortTable('flt')">Flight ↕</th>
+            <th>Cycle</th>
+            <th onclick="sortTable('bc')">BC Pax ↕</th>
+            <th onclick="sortTable('py')">PY Pax ↕</th>
+            <th onclick="sortTable('ey')">EY Pax ↕</th>
+            <th onclick="sortTable('total_cost')">Prod Cost ↕</th>
+            <th onclick="sortTable('total_rev')">Billed Rev ↕</th>
+            <th onclick="sortTable('profit')">Profit ↕</th>
+            <th onclick="sortTable('margin')">Margin ↕</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="flight-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+name: Deploy Dashboard to AWS
+
+on:
+  # Called by process-files.yml after pipeline runs
+  workflow_call:
+
+  # Also deploy on any push to main that changes the dashboard
+  push:
+    branches: [main]
+    paths:
+      - 'dashboard/**'
+      - 'data/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Sync dashboard to S3
+        run: |
+          aws s3 sync dashboard/ s3://${{ secrets.S3_BUCKET_NAME }}/ \
+            --delete \
+            --cache-control "max-age=300"
+          # Sync data files (no cache — always fresh)
+          aws s3 sync data/ s3://${{ secrets.S3_BUCKET_NAME }}/data/ \
+            --cache-control "no-cache, no-store"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      - name: Print dashboard URL
+        run: |
+          echo "Dashboard deployed:"
+          echo "https://${{ secrets.CLOUDFRONT_DOMAIN }}"

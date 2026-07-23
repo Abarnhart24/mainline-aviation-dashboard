@@ -1,0 +1,73 @@
+name: Process Delivery Notes & Rebuild Trackers
+
+on:
+  # Triggered by Power Automate when a file is uploaded to SharePoint
+  workflow_dispatch:
+    inputs:
+      file_name:
+        description: 'Name of the uploaded file (e.g. SAS_DN_Jan2026.pdf)'
+        required: false
+        type: string
+      airline:
+        description: 'Airline code (SAS, ET, AA, VS)'
+        required: false
+        default: 'SAS'
+        type: string
+
+  # Also runs automatically when files are pushed to the pipeline folder
+  push:
+    paths:
+      - 'pipeline/**'
+      - 'data/raw/**'
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies (OCR tools)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y tesseract-ocr poppler-utils qpdf
+
+      - name: Install Python dependencies
+        run: pip install -r pipeline/requirements.txt
+
+      - name: Run OCR pipeline
+        run: python pipeline/ocr/extract_pax.py
+        env:
+          AIRLINE: ${{ github.event.inputs.airline || 'ALL' }}
+
+      - name: Rebuild SAS tracker
+        run: python pipeline/trackers/build_sas_tracker.py
+
+      - name: Rebuild Ethiopian tracker
+        run: python pipeline/trackers/build_et_tracker.py
+
+      - name: Export dashboard JSON data
+        run: python pipeline/trackers/generate_dashboard_data.py
+
+      - name: Commit updated outputs
+        run: |
+          git config user.name "Mainline Dashboard Bot"
+          git config user.email "bot@mainlineaviation.com"
+          git add data/ Pricing/
+          git diff --staged --quiet || git commit -m "Auto-update: processed new delivery notes [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: process
+    uses: ./.github/workflows/deploy-dashboard.yml
+    secrets: inherit
