@@ -1,75 +1,63 @@
-# Mainline Aviation — Business Intelligence Hub
+# Mainline Aviation BI Dashboard
 
-## How it works
+Automated flight cost tracking and profitability dashboard for Mainline Aviation catering operations.
 
-The dashboard reads from `data/hub_data.json`.
-That file is rebuilt automatically when you run `UPDATE_DASHBOARD.bat`.
+## Airlines Tracked
+- **SAS** (SK0930 ATL→CPH) — Jan–Jun 2026
+- **Ethiopian Airlines** — Active
+- **American Airlines** — Coming soon
+- **Virgin Atlantic** — Coming soon
 
----
-
-## Where to put things
+## Architecture
 
 ```
-mainline-aviation-dashboard/
-│
-│  ← DROP REPORTS INTO THESE FOLDERS ─────────────────────────────────────────
-│
-├── Reports/
-│   ├── ATL/                        Atlanta operations
-│   │   ├── Revenue/                Sage Intacct invoice exports (CSV or XLSX)
-│   │   ├── FoodCost/               Food & beverage cost reports (CSV or XLSX)
-│   │   ├── Labor/                  Payroll reports (CSV or XLSX)
-│   │   └── Missions/               Springshot mission exports (CSV)
-│   │
-│   └── BNA/                        Nashville (when operations begin)
-│       ├── Revenue/
-│       ├── FoodCost/
-│       ├── Labor/
-│       └── Missions/
-│
-│  ← AFTER DROPPING FILES, DOUBLE-CLICK THIS ─────────────────────────────────
-│
-├── UPDATE_DASHBOARD.bat            ← Double-click to rebuild & push to GitHub
-│
-│  ← DASHBOARD FILES (don't edit) ────────────────────────────────────────────
-│
-├── index.html                      Company hub (main entry point)
-├── Missions_Operations_Dashboard.html   ATL detail dashboard
-├── MissionsSummary_master.csv      ATL missions master data
-├── data/
-│   └── hub_data.json               Auto-generated — feeds the hub dashboard
-│
-│  ← AUTOMATION SCRIPTS (don't touch) ────────────────────────────────────────
-│
-└── automation/
-    ├── build_hub_data.py           Reads Reports/ → builds hub_data.json
-    ├── merge_new_invoices.py       Merges new invoice CSVs
-    └── merge_new_missions.py       Merges new mission CSVs
+SharePoint (team file uploads)
+       │
+       ▼ Power Automate webhook
+GitHub Actions (pipeline)
+       │  ├── OCR: extract pax counts from delivery note PDFs
+       │  ├── Rebuild Excel cost trackers
+       │  └── Generate dashboard JSON data
+       ▼
+AWS S3 + CloudFront (web dashboard)
+       │
+       ▼
+Browser dashboard — charts, tables, profit/cost/revenue by flight
 ```
 
----
+## Repo Structure
 
-## Workflow — adding new data
+```
+├── .github/workflows/       GitHub Actions (pipeline + deploy)
+├── pipeline/
+│   ├── ocr/                 PDF → pax count extraction
+│   └── trackers/            Excel tracker builders + JSON export
+├── dashboard/               Static web app (HTML/JS/CSS)
+├── data/                    Generated JSON (updated by pipeline)
+├── terraform/               AWS infrastructure as code
+└── docs/SETUP.md            Full setup instructions
+```
 
-1. Export your report from Sage Intacct / Springshot
-2. Drop the file into the correct `Reports/ATL/` subfolder
-3. Double-click **UPDATE_DASHBOARD.bat**
-4. Dashboard updates on GitHub Pages within 1–2 minutes
+## Quick Start
 
----
+See [docs/SETUP.md](docs/SETUP.md) for full instructions including:
+- Pushing this repo to GitHub
+- Deploying to AWS
+- Connecting SharePoint via Power Automate
+- Configuring GitHub Secrets
 
-## Expected file formats
+## Local Development
 
-| Folder | File type | Required columns |
-|--------|-----------|-----------------|
-| Revenue/ | CSV or XLSX | Airline, Month, Revenue, FoodCost |
-| FoodCost/ | CSV or XLSX | Airline, Month, Amount |
-| Labor/ | CSV or XLSX | Month, Amount |
-| Missions/ | CSV | al_code, on_time, date |
+```bash
+# Install Python dependencies
+pip install -r pipeline/requirements.txt
 
----
+# Run OCR on a delivery note PDF
+python pipeline/ocr/extract_pax.py --pdf "path/to/delivery_note.pdf"
 
-## URLs
+# Rebuild a tracker
+python pipeline/trackers/build_sas_tracker.py
 
-- **Hub dashboard:** https://abarnhart24.github.io/mainline-aviation-dashboard/
-- **ATL detail:** https://abarnhart24.github.io/mainline-aviation-dashboard/Missions_Operations_Dashboard.html
+# Export dashboard data
+python pipeline/trackers/generate_dashboard_data.py
+```

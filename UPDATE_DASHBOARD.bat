@@ -10,6 +10,11 @@ cd /d "%~dp0.."
 python automation\build_hub_data.py
 
 echo.
+echo Reading Ethiopian delivery note costs...
+echo.
+python automation\build_et_costs.py
+
+echo.
 echo ================================================
 echo  Committing and pushing to GitHub...
 echo ================================================
